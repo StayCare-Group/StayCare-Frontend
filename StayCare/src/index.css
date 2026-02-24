@@ -2,5 +2,7 @@
 
 /* Optional: global styles */
 html, body, #app {
-  
+    height: 100vh;
+    background: linear-gradient(to right, #ff56b0, #00f5f3);
+    padding: 20px;
 }
