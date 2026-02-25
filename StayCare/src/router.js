@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from './stores/auth.js'
 import Login from './Pages/Login.vue'
 import Dashboard from './Pages/Dashboard.vue'
 import CreateAccount from './Pages/CreateAccount.vue'
@@ -12,28 +13,52 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: Login
+    component: Login,
+    meta: { guest: true }
   },
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: Dashboard
+    component: Dashboard,
+    meta: { requiresAuth: true }
   },
   {
     path: '/createaccount',
     name: 'CreateAccount',
-    component: CreateAccount
+    component: CreateAccount,
+    meta: { guest: true }
   },
   {
     path: '/logorcreate',
     name: 'LogorCreate',
-    component: LogorCreate
+    component: LogorCreate,
+    meta: { guest: true }
   }
 ]
 
 const router = createRouter({
   history: createWebHistory('/'),
   routes
+})
+
+// Navigation guard
+router.beforeEach((to) => {
+  const auth = useAuthStore()
+
+  // Protected route — redirect to login if not authenticated
+  if (to.meta.requiresAuth && !auth.isLoggedIn) {
+    return { name: 'LogorCreate' }
+  }
+
+  // Guest-only route — redirect to dashboard if already logged in
+  if (to.meta.guest && auth.isLoggedIn) {
+    return { name: 'Dashboard' }
+  }
+
+  // Role-based guard (e.g. meta: { requiresRole: 'admin' })
+  if (to.meta.requiresRole && auth.userRole !== to.meta.requiresRole) {
+    return { name: 'Dashboard' }
+  }
 })
 
 export default router

@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { registerUser } from '../api/auth'
+import { useAuthStore } from '../stores/auth.js'
 
 const router = useRouter()
+const auth = useAuthStore()
 const email = ref('')
 const password = ref('')
 const error = ref('')
@@ -39,6 +41,8 @@ const handleLogin = async () => {
       password: password.value,
       phone: phone.value || undefined,
     })
+    // Auto-login after registration
+    await auth.login(email.value, password.value)
     router.push('/Dashboard')
   } catch (err) {
     error.value = err?.message || err?.error || 'Registration failed. Please try again.'
