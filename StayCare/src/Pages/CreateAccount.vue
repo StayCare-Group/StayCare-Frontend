@@ -1,6 +1,7 @@
 <script setup>
-import {ref} from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { registerUser } from '../api/auth'
 
 const router = useRouter()
 const email = ref('')
@@ -9,27 +10,40 @@ const error = ref('')
 const username = ref('')
 const phone = ref('')
 
-const handleLogin = () => {
+const handleLogin = async () => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const phonePattern = /^\d{10}$/
 
   if (!password.value || !username.value) {
     error.value = 'Please fill in username and password.'
+    return
   }
-  else if (!email.value && !phone.value) {
+  if (!email.value && !phone.value) {
     error.value = 'Please provide either an email address or phone number.'
+    return
   }
-  else if (email.value && !emailPattern.test(email.value)) {
+  if (email.value && !emailPattern.test(email.value)) {
     error.value = 'Please enter a valid email address.'
-  } 
-  else if (phone.value && !phonePattern.test(phone.value)) {
-    error.value = 'Please enter a valid 10-digit phone number.'
+    return
   }
-  else {
+  if (phone.value && !phonePattern.test(phone.value)) {
+    error.value = 'Please enter a valid 10-digit phone number.'
+    return
+  }
+
+  try {
     error.value = ''
-    console.log('Logging in with:', email.value, password.value)
+    await registerUser({
+      name: username.value,
+      email: email.value,
+      password: password.value,
+      phone: phone.value || undefined,
+    })
     router.push('/Dashboard')
-}}
+  } catch (err) {
+    error.value = err?.message || err?.error || 'Registration failed. Please try again.'
+  }
+}
 </script>
 
 <template>

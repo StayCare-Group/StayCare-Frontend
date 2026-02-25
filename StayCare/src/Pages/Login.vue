@@ -1,27 +1,34 @@
 <script setup>
-import {ref} from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { loginUser } from '../api/auth'
 
 const router = useRouter()
 const email = ref('')
 const password = ref('')
 const error = ref('')
 
-const handleLogin = () => {
+const handleLogin = async () => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const phonePattern = /^\d{10}$/
 
   if (!email.value || !password.value) {
     error.value = 'Please enter both (email or phone number) and password.'
-  } 
-  else if (!emailPattern.test(email.value) && !phonePattern.test(email.value)) {
+    return
+  }
+  if (!emailPattern.test(email.value) && !phonePattern.test(email.value)) {
     error.value = 'Please enter a valid email address or phone number.'
-  } 
-  else {
+    return
+  }
+
+  try {
     error.value = ''
-    console.log('Logging in with:', email.value, password.value)
+    await loginUser({ email: email.value, password: password.value })
     router.push('/Dashboard')
-}}
+  } catch (err) {
+    error.value = err?.message || err?.error || 'Login failed. Please check your credentials.'
+  }
+}
 </script>
 
 <template>
