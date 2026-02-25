@@ -1,7 +1,7 @@
 <script setup></script>
 <template>
   <main>
-    <section class="w-full h-full bg-white rounded-lg p-4">
+    <section class="w-full h-full bg-white rounded-br-lg rounded-bl-lg p-5">
       <h1>Dashboard</h1>
     </section>
   </main>
