@@ -7,10 +7,9 @@ import DriverDashboard from './dashboard/DriverDashboard.vue'
 import FacilityDashboard from './dashboard/FacilityDashboard.vue'
 import AdminDashboard from './dashboard/AdminDashboard.vue'
 
-const props = defineProps({
+defineProps({
   role: String,
 })
-const emit = defineEmits(['update:role'])
 
 const sidebarOpen = ref(false)
 </script>
@@ -22,7 +21,7 @@ const sidebarOpen = ref(false)
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col min-w-0">
-      <TopHeader :role="role" @update:role="emit('update:role', $event)" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
+      <TopHeader :role="role" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
       <main class="flex-1 p-4 overflow-y-auto overflow-x-hidden">
         <ClientDashboard v-if="role === 'Client'" />

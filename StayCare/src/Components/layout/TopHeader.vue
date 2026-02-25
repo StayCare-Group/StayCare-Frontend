@@ -11,14 +11,6 @@
       </div>
     </div>
     <div class="flex items-center gap-2 sm:gap-4">
-      <label class="text-sm text-gray-500 font-medium hidden sm:inline">Role:</label>
-      <select
-        :value="role"
-        @change="$emit('update:role', ($event.target).value)"
-        class="border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 text-sm font-medium text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF56B0]/40 focus:border-[#FF56B0]"
-      >
-        <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
-      </select>
       <button
         @click="handleLogout"
         class="text-sm text-gray-500 hover:text-red-600 font-medium transition-colors"
@@ -29,15 +21,13 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { ROLES } from '../../data/mockData'
 import { useAuthStore } from '../../stores/auth.js'
 
 defineProps({
   role: String,
 })
-defineEmits(['update:role', 'toggle-sidebar'])
+defineEmits(['toggle-sidebar'])
 
-const roles = ROLES
 const router = useRouter()
 const auth = useAuthStore()
 

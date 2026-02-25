@@ -6,10 +6,9 @@ import DriverDashboard from './dashboard/DriverDashboard.vue'
 import FacilityDashboard from './dashboard/FacilityDashboard.vue'
 import AdminDashboard from './dashboard/AdminDashboard.vue'
 
-const props = defineProps({
+defineProps({
   role: String,
 })
-const emit = defineEmits(['update:role'])
 </script>
 
 <template>
@@ -19,7 +18,7 @@ const emit = defineEmits(['update:role'])
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col">
-      <DesktopTopHeader :role="role" @update:role="emit('update:role', $event)" />
+      <DesktopTopHeader :role="role" />
 
       <main class="flex-1 p-6 overflow-y-auto">
         <ClientDashboard v-if="role === 'Client'" />
