@@ -121,7 +121,7 @@ onMounted(async () => {
       fetchUsers().catch(() => []),
     ])
 
-    clientsList.value = (clientsData ?? []).map(c => ({
+    const companyClients = (clientsData ?? []).map(c => ({
       id: c._id,
       name: c.company_name,
       type: c.pricing_tier === 'standard' ? 'Hotel' : c.pricing_tier,
@@ -135,20 +135,37 @@ onMounted(async () => {
     }))
 
     const users = usersData ?? []
+
+    // Also include user accounts with role 'client'
+    const clientUsers = users.filter(u => u.role === 'client').map(u => ({
+      id: u._id ?? u.id,
+      name: u.name,
+      type: 'User',
+      contact: u.email,
+      phone: u.phone ?? '',
+      address: '',
+      creditTerms: '',
+      status: u.is_active !== false ? 'Active' : 'Inactive',
+      totalOrders: 0,
+      outstandingBalance: 0,
+    }))
+
+    clientsList.value = [...companyClients, ...clientUsers]
+
     driversList.value = users.filter(u => u.role === 'driver').map(u => ({
-      id: u._id,
+      id: u._id ?? u.id,
       name: u.name,
       phone: u.phone ?? '',
       email: u.email,
       plate: '',
       zone: '',
-      status: u.is_active ? 'Active' : 'Inactive',
+      status: u.is_active !== false ? 'Active' : 'Inactive',
       todayStops: 0,
       completedStops: 0,
     }))
 
     staffList.value = users.filter(u => u.role === 'staff' || u.role === 'admin').map(u => ({
-      id: u._id,
+      id: u._id ?? u.id,
       name: u.name,
       phone: u.phone ?? '',
       email: u.email,

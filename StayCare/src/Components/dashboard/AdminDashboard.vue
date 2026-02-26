@@ -3,7 +3,7 @@
     <!-- Sub-pages -->
     <OrdersList v-if="navStore.currentPage === 'orders'" />
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
-    <UserManagement v-else-if="navStore.currentPage === 'clients' || navStore.currentPage === 'drivers'" />
+    <UserManagement v-else-if="navStore.currentPage === 'users'" />
     <Reports v-else-if="navStore.currentPage === 'reports'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
 
@@ -18,18 +18,20 @@
         <!-- Bar Chart -->
         <div class="bg-white rounded-xl shadow-sm p-4 sm:p-5">
           <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-4">Orders This Week</h3>
-          <div class="flex items-end gap-2 sm:gap-3 h-40 sm:h-48">
+          <div class="flex gap-2 sm:gap-3 h-40 sm:h-48">
             <div
               v-for="(val, i) in adminChartData.values"
               :key="i"
-              class="flex-1 flex flex-col items-center gap-1"
+              class="flex-1 flex flex-col items-center"
             >
-              <span class="text-xs font-semibold text-gray-600">{{ val }}</span>
-              <div
-                class="w-full rounded-t-md bg-gradient-to-t from-[#FF56B0] to-[#FF89C8] transition-all duration-500"
-                :style="{ height: (val / maxVal) * 100 + '%' }"
-              ></div>
-              <span class="text-xs text-gray-400">{{ adminChartData.labels[i] }}</span>
+              <span class="text-xs font-semibold text-gray-600 shrink-0">{{ val }}</span>
+              <div class="flex-1 w-full flex items-end justify-center">
+                <div
+                  class="w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-[#FF56B0] to-[#FF89C8] transition-all duration-500"
+                  :style="{ height: (val / maxVal) * 100 + '%', minHeight: val > 0 ? '4px' : '0' }"
+                ></div>
+              </div>
+              <span class="text-xs text-gray-400 shrink-0">{{ adminChartData.labels[i] }}</span>
             </div>
           </div>
         </div>
@@ -109,13 +111,26 @@ const adminChartData = computed(() => {
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const dayMap = {}
   for (const l of labels) dayMap[l] = 0
+
+  // Calculate current week bounds (Mon–Sun)
+  const now = new Date()
+  const day = now.getDay() // 0=Sun
+  const diffToMon = day === 0 ? -6 : 1 - day
+  const monday = new Date(now)
+  monday.setHours(0, 0, 0, 0)
+  monday.setDate(now.getDate() + diffToMon)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  sunday.setHours(23, 59, 59, 999)
+
   for (const o of orders.value) {
     if (o.pickupDate) {
       const d = new Date(o.pickupDate)
-      const dayIdx = d.getDay()
-      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-      const dayName = dayNames[dayIdx]
-      if (dayMap[dayName] !== undefined) dayMap[dayName]++
+      if (d >= monday && d <= sunday) {
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        const dayName = dayNames[d.getDay()]
+        if (dayMap[dayName] !== undefined) dayMap[dayName]++
+      }
     }
   }
   return {

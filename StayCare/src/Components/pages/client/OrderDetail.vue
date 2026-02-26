@@ -74,6 +74,9 @@
       </div>
     </div>
 
+    <div v-else-if="loading" class="bg-white rounded-xl shadow-sm p-10 text-center">
+      <p class="text-gray-400">Loading order...</p>
+    </div>
     <div v-else class="bg-white rounded-xl shadow-sm p-10 text-center">
       <p class="text-gray-400">Order not found.</p>
     </div>
@@ -86,6 +89,7 @@ import StatusBadge from '../../ui/StatusBadge.vue'
 import OrderTimeline from '../../ui/OrderTimeline.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchOrderById, mapOrderForDetail } from '../../../api/orders'
+import { fetchClientById } from '../../../api/clients'
 
 const navStore = useNavStore()
 
@@ -98,7 +102,24 @@ async function loadOrder() {
   loading.value = true
   try {
     const data = await fetchOrderById(id)
-    order.value = mapOrderForDetail(data)
+    const mapped = mapOrderForDetail(data)
+
+    // If client name is missing but we have a clientId, fetch client info
+    if (!mapped.client && mapped.clientId) {
+      try {
+        const clientData = await fetchClientById(mapped.clientId)
+        mapped.client = clientData.company_name ?? clientData.name ?? ''
+        if (!mapped.pickupAddress) {
+          const prop = clientData.properties?.[0]
+          mapped.pickupAddress = prop?.address
+            ? `${prop.address}, ${prop.city ?? ''}`
+            : clientData.billing_address ?? clientData.address ?? ''
+          mapped.deliveryAddress = mapped.pickupAddress
+        }
+      } catch { /* client fetch failed, leave empty */ }
+    }
+
+    order.value = mapped
   } catch {
     order.value = null
   } finally {

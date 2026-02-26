@@ -78,8 +78,8 @@ function formatDateTime(dateStr: string): string {
 
 export function mapOrderForList(o: any) {
   return {
-    id: o.order_number ?? o._id,
-    _id: o._id,
+    id: o.order_number ?? o._id ?? o.id,
+    _id: o._id ?? o.id,
     client: o.client?.company_name ?? o.client ?? '',
     clientId: o.client?._id ?? '',
     pickupDate: formatDate(o.pickup_date),
@@ -93,22 +93,24 @@ export function mapOrderForList(o: any) {
 }
 
 export function mapOrderForDetail(o: any) {
-  const clientObj = typeof o.client === 'object' ? o.client : null
+  const clientObj = typeof o.client === 'object' && o.client ? o.client : null
+  const clientId = clientObj?._id ?? clientObj?.id ?? (typeof o.client === 'string' ? o.client : '')
   const driverObj = typeof o.deliver_id === 'object' ? o.deliver_id : null
 
   const property = clientObj?.properties?.[0]
 
+  const clientName = clientObj?.company_name ?? clientObj?.name ?? o.client_name ?? ''
+  const address = property?.address
+    ? `${property.address}, ${property.city ?? ''}`
+    : clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
+
   return {
-    id: o.order_number ?? o._id,
-    _id: o._id,
-    client: clientObj?.company_name ?? '',
-    clientId: clientObj?._id ?? '',
-    pickupAddress: property?.address
-      ? `${property.address}, ${property.city ?? ''}`
-      : clientObj?.billing_address ?? '',
-    deliveryAddress: property?.address
-      ? `${property.address}, ${property.city ?? ''}`
-      : clientObj?.billing_address ?? '',
+    id: o.order_number ?? o._id ?? o.id,
+    _id: o._id ?? o.id,
+    client: clientName,
+    clientId,
+    pickupAddress: address,
+    deliveryAddress: address,
     serviceType: o.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)',
     status: mapStatus(o.status),
     createdAt: o.created_at ?? '',

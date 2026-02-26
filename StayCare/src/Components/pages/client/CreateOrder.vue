@@ -23,7 +23,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">Pickup Date</label>
-            <input v-model="form.pickupDate" type="date" required
+            <input v-model="form.pickupDate" type="date" required :min="today"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
           </div>
           <div>
@@ -124,6 +124,7 @@ const authStore = useAuthStore()
 
 const VAT_RATE = 0.18
 const SERVICE_TYPES = ['Standard (48h)', 'Express (24h)', 'Same-Day']
+const today = new Date().toISOString().split('T')[0]
 const timeWindows = ['08:00 - 10:00', '09:00 - 11:00', '10:00 - 12:00', '13:00 - 15:00', '14:00 - 16:00', '15:00 - 17:00']
 
 const laundryItems = ref([])
