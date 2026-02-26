@@ -95,10 +95,78 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { revenueByMonth, ordersByClient, slaReport, clientsList, driversList } from '../../../data/extendedMockData.js'
+import { ref, computed, onMounted } from 'vue'
+import { fetchOrders, mapOrderForList } from '../../../api/orders'
+import { fetchInvoices, mapInvoiceForList } from '../../../api/invoices'
+import { fetchClients } from '../../../api/clients'
+import { fetchUsers } from '../../../api/users'
 
-const maxRevenue = computed(() => Math.max(...revenueByMonth.values))
-const maxClientRevenue = computed(() => Math.max(...ordersByClient.map(r => r.revenue)))
-const totalRevenue = computed(() => revenueByMonth.values.reduce((a, b) => a + b, 0))
+const orders = ref([])
+const invoices = ref([])
+const clientsList = ref([])
+const driversList = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const [ordersData, invoicesData, clientsData, usersData] = await Promise.all([
+      fetchOrders().catch(() => []),
+      fetchInvoices().catch(() => []),
+      fetchClients().catch(() => []),
+      fetchUsers().catch(() => []),
+    ])
+    orders.value = (ordersData ?? []).map(mapOrderForList)
+    invoices.value = (invoicesData ?? []).map(mapInvoiceForList)
+    clientsList.value = clientsData ?? []
+    driversList.value = (usersData ?? []).filter(u => u.role === 'driver').map(u => ({
+      ...u,
+      status: u.is_active ? 'Active' : 'Inactive',
+    }))
+  } catch { /* stays empty */ } finally {
+    loading.value = false
+  }
+})
+
+const revenueByMonth = computed(() => {
+  const months = {}
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  for (const inv of invoices.value) {
+    if (inv.status === 'Paid' && inv.issueDate) {
+      const d = new Date(inv.issueDate)
+      const label = monthNames[d.getMonth()]
+      months[label] = (months[label] || 0) + (inv.grandTotal ?? 0)
+    }
+  }
+  const labels = Object.keys(months).length ? Object.keys(months) : monthNames.slice(-6)
+  const values = labels.map(l => months[l] || 0)
+  return { labels, values }
+})
+
+const ordersByClient = computed(() => {
+  const map = {}
+  for (const o of orders.value) {
+    const name = o.client || 'Unknown'
+    if (!map[name]) map[name] = { client: name, orders: 0, revenue: 0 }
+    map[name].orders++
+    map[name].revenue += o.total ?? 0
+  }
+  return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 10)
+})
+
+const slaReport = computed(() => {
+  const total = orders.value.length
+  const delivered = orders.value.filter(o => ['Delivered', 'Completed'].includes(o.status)).length
+  const onTime = total > 0 ? Math.round((delivered / total) * 100) : 0
+  return {
+    onTime,
+    late: Math.max(0, 100 - onTime - 2),
+    critical: Math.min(2, 100 - onTime),
+    avgProcessingHours: 0,
+    avgDeliveryHours: 0,
+  }
+})
+
+const maxRevenue = computed(() => Math.max(...revenueByMonth.value.values, 1))
+const maxClientRevenue = computed(() => Math.max(...ordersByClient.value.map(r => r.revenue), 1))
+const totalRevenue = computed(() => revenueByMonth.value.values.reduce((a, b) => a + b, 0))
 </script>

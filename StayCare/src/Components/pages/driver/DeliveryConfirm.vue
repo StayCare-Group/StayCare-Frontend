@@ -90,14 +90,27 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { driverRoute } from '../../../data/extendedMockData.js'
+import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
+import { confirmDelivery as apiConfirmDelivery } from '../../../api/orders'
 
 const navStore = useNavStore()
 const showSuccess = ref(false)
+const stop = ref(null)
+const loading = ref(true)
 
-const stop = computed(() => driverRoute.stops.find(s => s.id === navStore.selectedId))
+onMounted(async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0]
+    const data = await fetchRoutes({ date: today })
+    const routes = (data ?? []).map(mapRouteForDriver)
+    const allStops = routes.flatMap(r => r.stops)
+    stop.value = allStops.find(s => s.id === navStore.selectedId) ?? null
+  } catch { /* stays null */ } finally {
+    loading.value = false
+  }
+})
 
 const form = reactive({
   packagesDelivered: null,
@@ -105,11 +118,19 @@ const form = reactive({
   notes: '',
 })
 
-function confirmDelivery() {
-  showSuccess.value = true
-  setTimeout(() => {
+async function confirmDelivery() {
+  if (!stop.value?._id) return
+  try {
+    await apiConfirmDelivery(stop.value._id, {
+      notes: form.notes,
+    })
+    showSuccess.value = true
+    setTimeout(() => {
+      showSuccess.value = false
+      navStore.goBack('route')
+    }, 1500)
+  } catch {
     showSuccess.value = false
-    navStore.goBack('route')
-  }, 1500)
+  }
 }
 </script>

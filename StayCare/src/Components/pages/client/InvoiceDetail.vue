@@ -82,18 +82,47 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { detailedInvoices } from '../../../data/extendedMockData.js'
+import { fetchInvoiceById, mapInvoiceForDetail, recordPayment } from '../../../api/invoices'
 
 const navStore = useNavStore()
 const showSuccess = ref(false)
 
-const invoice = computed(() => detailedInvoices.find(i => i.id === navStore.selectedId))
+const invoice = ref(null)
+const loading = ref(true)
 
-function markPaid() {
-  showSuccess.value = true
-  setTimeout(() => { showSuccess.value = false }, 2000)
+async function loadInvoice() {
+  const id = navStore.selectedId
+  if (!id) return
+  loading.value = true
+  try {
+    const data = await fetchInvoiceById(id)
+    invoice.value = mapInvoiceForDetail(data)
+  } catch {
+    invoice.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadInvoice)
+watch(() => navStore.selectedId, loadInvoice)
+
+async function markPaid() {
+  if (!invoice.value) return
+  try {
+    await recordPayment(navStore.selectedId, {
+      amount: invoice.value.grandTotal,
+      method: 'card',
+      transaction_reference: `PAY-${Date.now()}`,
+    })
+    showSuccess.value = true
+    await loadInvoice()
+    setTimeout(() => { showSuccess.value = false }, 2000)
+  } catch {
+    showSuccess.value = false
+  }
 }
 </script>

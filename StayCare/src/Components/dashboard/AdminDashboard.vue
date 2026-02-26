@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import KpiCard from '../ui/KpiCard.vue'
 import OrdersList from '../pages/client/OrdersList.vue'
 import OrderDetail from '../pages/client/OrderDetail.vue'
@@ -63,8 +63,84 @@ import UserManagement from '../pages/admin/UserManagement.vue'
 import Reports from '../pages/admin/Reports.vue'
 import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { adminKPIs, adminChartData, adminActivity } from '../../data/mockData'
+import { fetchOrders, mapOrderForList } from '../../api/orders'
+import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
 
 const navStore = useNavStore()
-const maxVal = computed(() => Math.max(...adminChartData.values))
+
+const orders = ref([])
+const invoices = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const [ordersData, invoicesData] = await Promise.all([
+      fetchOrders(),
+      fetchInvoices(),
+    ])
+    orders.value = (ordersData ?? []).map(mapOrderForList)
+    invoices.value = (invoicesData ?? []).map(mapInvoiceForList)
+  } catch { /* stays empty */ } finally {
+    loading.value = false
+  }
+})
+
+const adminKPIs = computed(() => {
+  const today = new Date().toISOString().split('T')[0]
+  const todayOrders = orders.value.filter(o => o.pickupDate === today).length
+  const monthRevenue = invoices.value
+    .filter(i => i.status === 'Paid')
+    .reduce((sum, i) => sum + (i.grandTotal ?? 0), 0)
+  const vatCollected = invoices.value
+    .filter(i => i.status === 'Paid')
+    .reduce((sum, i) => sum + ((i.grandTotal ?? 0) * 0.18 / 1.18), 0)
+  const totalOrders = orders.value.length
+  const delivered = orders.value.filter(o => ['Delivered', 'Completed'].includes(o.status)).length
+  const sla = totalOrders > 0 ? Math.round((delivered / totalOrders) * 100) : 0
+  return [
+    { label: 'Orders Today', value: todayOrders || orders.value.length, color: 'blue' },
+    { label: 'Revenue This Month', value: `€${monthRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'green' },
+    { label: 'VAT Collected', value: `€${vatCollected.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'purple' },
+    { label: 'SLA Compliance', value: `${sla}%`, color: 'yellow' },
+  ]
+})
+
+const adminChartData = computed(() => {
+  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const dayMap = {}
+  for (const l of labels) dayMap[l] = 0
+  for (const o of orders.value) {
+    if (o.pickupDate) {
+      const d = new Date(o.pickupDate)
+      const dayIdx = d.getDay()
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      const dayName = dayNames[dayIdx]
+      if (dayMap[dayName] !== undefined) dayMap[dayName]++
+    }
+  }
+  return {
+    labels,
+    values: labels.map(l => dayMap[l] || 0),
+  }
+})
+
+const maxVal = computed(() => Math.max(...adminChartData.value.values, 1))
+
+const adminActivity = computed(() => {
+  return orders.value.slice(0, 6).map((o, i) => {
+    const statusAction = {
+      'Pending Pickup': 'New order placed',
+      'Delivered': 'Order completed',
+      'Completed': 'Order completed',
+      'In Transit': 'Order in transit',
+      'Ready for Delivery': 'Order ready',
+    }
+    return {
+      id: i + 1,
+      action: statusAction[o.status] || 'Order updated',
+      detail: `${o.id} — ${o.client}`,
+      time: o.pickupDate || '',
+    }
+  })
+})
 </script>

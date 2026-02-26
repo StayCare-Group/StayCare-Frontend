@@ -96,15 +96,31 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useLangStore } from '../../../stores/lang.js'
+import { useAuthStore } from '../../../stores/auth.js'
+import { fetchMe } from '../../../api/users'
 
 const langStore = useLangStore()
+const authStore = useAuthStore()
 
 const profile = reactive({
-  name: 'Mario V.',
-  email: 'mario@grandhotel.mt',
-  phone: '+356 2123 4567',
+  name: '',
+  email: '',
+  phone: '',
+})
+
+onMounted(async () => {
+  try {
+    const data = await fetchMe()
+    const user = data?.user ?? data ?? {}
+    profile.name = user.name ?? authStore.user?.name ?? ''
+    profile.email = user.email ?? authStore.user?.email ?? ''
+    profile.phone = user.phone ?? ''
+  } catch {
+    profile.name = authStore.user?.name ?? ''
+    profile.email = authStore.user?.email ?? ''
+  }
 })
 
 const notificationSettings = reactive([

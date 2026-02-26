@@ -46,7 +46,7 @@
               <td class="px-5 py-3 font-semibold text-gray-800">&euro;{{ order.total.toFixed(2) }}</td>
               <td class="px-5 py-3">
                 <button
-                  @click="navStore.goToDetail('order-detail', order.id)"
+                  @click="navStore.goToDetail('order-detail', order._id)"
                   class="text-[#FF56B0] hover:underline text-sm font-medium"
                 >View</button>
               </td>
@@ -59,23 +59,35 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { detailedOrders } from '../../../data/extendedMockData.js'
+import { fetchOrders, mapOrderForList } from '../../../api/orders'
 
 const navStore = useNavStore()
+
+const orders = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const data = await fetchOrders()
+    orders.value = (data ?? []).map(mapOrderForList)
+  } catch { /* stays empty */ } finally {
+    loading.value = false
+  }
+})
 
 const filters = ['All', 'Pending Pickup', 'In Progress', 'Ready for Delivery', 'Delivered']
 const activeFilter = ref('All')
 
 const filteredOrders = computed(() => {
-  if (activeFilter.value === 'All') return detailedOrders
+  if (activeFilter.value === 'All') return orders.value
   if (activeFilter.value === 'In Progress') {
-    return detailedOrders.filter(o =>
+    return orders.value.filter(o =>
       !['Pending Pickup', 'Ready for Delivery', 'Out for Delivery', 'Delivered'].includes(o.status)
     )
   }
-  return detailedOrders.filter(o => o.status === activeFilter.value)
+  return orders.value.filter(o => o.status === activeFilter.value)
 })
 </script>

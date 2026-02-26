@@ -39,7 +39,7 @@
               <td class="px-5 py-3 font-semibold text-gray-800">&euro;{{ inv.grandTotal.toFixed(2) }}</td>
               <td class="px-5 py-3">
                 <button
-                  @click="navStore.goToDetail('invoice-detail', inv.id)"
+                  @click="navStore.goToDetail('invoice-detail', inv._id)"
                   class="text-[#FF56B0] hover:underline text-sm font-medium"
                 >View</button>
               </td>
@@ -52,18 +52,30 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { detailedInvoices } from '../../../data/extendedMockData.js'
+import { fetchInvoices, mapInvoiceForList } from '../../../api/invoices'
 
 const navStore = useNavStore()
+
+const invoices = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const data = await fetchInvoices()
+    invoices.value = (data ?? []).map(mapInvoiceForList)
+  } catch { /* stays empty */ } finally {
+    loading.value = false
+  }
+})
 
 const filters = ['All', 'Pending', 'Overdue', 'Paid']
 const activeFilter = ref('All')
 
 const filteredInvoices = computed(() => {
-  if (activeFilter.value === 'All') return detailedInvoices
-  return detailedInvoices.filter(i => i.status === activeFilter.value)
+  if (activeFilter.value === 'All') return invoices.value
+  return invoices.value.filter(i => i.status === activeFilter.value)
 })
 </script>

@@ -63,16 +63,30 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { driverRoute } from '../../../data/extendedMockData.js'
+import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
 
 const navStore = useNavStore()
 
+const driverRoute = ref({ driverName: '', date: '', vehiclePlate: '', totalStops: 0, completedStops: 0, stops: [] })
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0]
+    const data = await fetchRoutes({ date: today })
+    const routes = (data ?? []).map(mapRouteForDriver)
+    if (routes.length) driverRoute.value = routes[0]
+  } catch { /* stays default */ } finally {
+    loading.value = false
+  }
+})
+
 const progress = computed(() =>
-  driverRoute.totalStops > 0
-    ? Math.round((driverRoute.completedStops / driverRoute.totalStops) * 100)
+  driverRoute.value.totalStops > 0
+    ? Math.round((driverRoute.value.completedStops / driverRoute.value.totalStops) * 100)
     : 0
 )
 </script>

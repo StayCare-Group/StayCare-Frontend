@@ -113,13 +113,30 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { laundryItems, SERVICE_TYPES, VAT_RATE } from '../../../data/extendedMockData.js'
+import { useAuthStore } from '../../../stores/auth.js'
+import { fetchItems, mapItemForCatalog } from '../../../api/items'
+import { createOrder } from '../../../api/orders'
 
 const navStore = useNavStore()
+const authStore = useAuthStore()
 
+const VAT_RATE = 0.18
+const SERVICE_TYPES = ['Standard (48h)', 'Express (24h)', 'Same-Day']
 const timeWindows = ['08:00 - 10:00', '09:00 - 11:00', '10:00 - 12:00', '13:00 - 15:00', '14:00 - 16:00', '15:00 - 17:00']
+
+const laundryItems = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const data = await fetchItems()
+    laundryItems.value = (data ?? []).map(mapItemForCatalog)
+  } catch { /* stays empty */ } finally {
+    loading.value = false
+  }
+})
 
 const form = reactive({
   pickupAddress: '',
@@ -130,12 +147,10 @@ const form = reactive({
   specialNotes: '',
 })
 
-const itemQtys = reactive(
-  Object.fromEntries(laundryItems.map(i => [i.code, 0]))
-)
+const itemQtys = reactive({})
 
 const subtotal = computed(() =>
-  laundryItems.reduce((sum, item) => sum + (itemQtys[item.code] || 0) * item.unitPrice, 0)
+  laundryItems.value.reduce((sum, item) => sum + (itemQtys[item.code] || 0) * item.unitPrice, 0)
 )
 
 const expressCharge = computed(() =>
@@ -147,12 +162,57 @@ const vat = computed(() => (subtotal.value + expressCharge.value) * VAT_RATE)
 const estimatedTotal = computed(() => subtotal.value + expressCharge.value + vat.value)
 
 const showSuccess = ref(false)
+const submitting = ref(false)
 
-function submitOrder() {
-  showSuccess.value = true
-  setTimeout(() => {
+function parseTimeWindow(tw) {
+  const [start, end] = tw.split(' - ')
+  const date = form.pickupDate || new Date().toISOString().split('T')[0]
+  return {
+    start_time: new Date(`${date}T${start}:00`).toISOString(),
+    end_time: new Date(`${date}T${end}:00`).toISOString(),
+  }
+}
+
+async function submitOrder() {
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    const items = laundryItems.value
+      .filter(i => (itemQtys[i.code] || 0) > 0)
+      .map(i => ({
+        item_code: i.code,
+        name: i.name,
+        quantity: itemQtys[i.code],
+        unit_price: i.unitPrice,
+        total_price: (itemQtys[i.code] || 0) * i.unitPrice,
+      }))
+
+    const payload = {
+      client: authStore.user?.clientId || authStore.user?.id,
+      service_type: form.serviceType.includes('Express') ? 'express' : 'standard',
+      pickup_date: form.pickupDate,
+      pickup_window: form.pickupTimeWindow ? parseTimeWindow(form.pickupTimeWindow) : undefined,
+      estimated_bags: form.estimatedBags,
+      special_notes: form.specialNotes,
+      items,
+      pricing_snapshot: {
+        subtotal: subtotal.value,
+        vat_percentage: 18,
+        vat_amount: vat.value,
+        total: estimatedTotal.value,
+      },
+    }
+
+    await createOrder(payload)
+    showSuccess.value = true
+    setTimeout(() => {
+      showSuccess.value = false
+      navStore.goBack('orders')
+    }, 1500)
+  } catch {
     showSuccess.value = false
-    navStore.goBack('orders')
-  }, 1500)
+  } finally {
+    submitting.value = false
+  }
 }
 </script>

@@ -74,16 +74,38 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
-import { detailedOrders, facilityInventory } from '../../../data/extendedMockData.js'
+import { fetchOrders, mapOrderForList, mapStatus } from '../../../api/orders'
+import { facilityInventory } from '../../../data/extendedMockData.js'
+
+const allOrders = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const data = await fetchOrders()
+    allOrders.value = (data ?? []).map(raw => {
+      const mapped = mapOrderForList(raw)
+      mapped.items = (raw.items ?? []).map(i => ({
+        code: i.item_code,
+        name: i.name,
+        qty: i.quantity ?? 0,
+      }))
+      mapped.serviceType = raw.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)'
+      return mapped
+    })
+  } catch { /* stays empty */ } finally {
+    loading.value = false
+  }
+})
 
 const processingStatuses = ['Received at Facility', 'Sorting', 'Washing', 'Drying', 'Ironing', 'Quality Control']
 
 const columns = computed(() =>
   processingStatuses.map(status => ({
     status,
-    orders: detailedOrders.filter(o => o.status === status),
+    orders: allOrders.value.filter(o => o.status === status),
     assignable: ['Washing', 'Drying', 'Ironing'].includes(status),
   }))
 )

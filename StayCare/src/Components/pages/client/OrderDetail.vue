@@ -81,13 +81,31 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import OrderTimeline from '../../ui/OrderTimeline.vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { detailedOrders } from '../../../data/extendedMockData.js'
+import { fetchOrderById, mapOrderForDetail } from '../../../api/orders'
 
 const navStore = useNavStore()
 
-const order = computed(() => detailedOrders.find(o => o.id === navStore.selectedId))
+const order = ref(null)
+const loading = ref(true)
+
+async function loadOrder() {
+  const id = navStore.selectedId
+  if (!id) return
+  loading.value = true
+  try {
+    const data = await fetchOrderById(id)
+    order.value = mapOrderForDetail(data)
+  } catch {
+    order.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadOrder)
+watch(() => navStore.selectedId, loadOrder)
 </script>

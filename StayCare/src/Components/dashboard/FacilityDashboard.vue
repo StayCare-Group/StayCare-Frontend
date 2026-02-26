@@ -29,13 +29,67 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
 import KpiCard from '../ui/KpiCard.vue'
 import KanbanColumn from '../ui/KanbanColumn.vue'
 import Reception from '../pages/facility/Reception.vue'
 import Processing from '../pages/facility/Processing.vue'
 import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { facilityKPIs, kanbanOrders } from '../../data/mockData'
+import { fetchOrders, mapOrderForList, mapStatus } from '../../api/orders'
 
 const navStore = useNavStore()
+
+const orders = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const data = await fetchOrders()
+    orders.value = (data ?? []).map(mapOrderForList)
+  } catch { /* stays empty */ } finally {
+    loading.value = false
+  }
+})
+
+const facilityStatuses = ['Received at Facility', 'Washing', 'Drying', 'Ironing', 'Quality Control', 'Ready for Delivery']
+
+const facilityKPIs = computed(() => {
+  const counts = {}
+  for (const s of facilityStatuses) counts[s] = 0
+  for (const o of orders.value) {
+    if (counts[o.status] !== undefined) counts[o.status]++
+  }
+  const colors = { 'Received at Facility': 'blue', Washing: 'cyan', Drying: 'yellow', Ironing: 'orange', 'Quality Control': 'purple', 'Ready for Delivery': 'green' }
+  const labels = { 'Received at Facility': 'Incoming', Washing: 'Washing', Drying: 'Drying', Ironing: 'Ironing', 'Quality Control': 'QC', 'Ready for Delivery': 'Ready' }
+  return facilityStatuses.map(s => ({
+    label: labels[s],
+    value: counts[s],
+    color: colors[s],
+  }))
+})
+
+const kanbanOrders = computed(() => {
+  const cols = { Received: [], Washing: [], Drying: [], Ironing: [], QC: [], Ready: [] }
+  const statusMap = {
+    'Received at Facility': 'Received',
+    Washing: 'Washing',
+    Drying: 'Drying',
+    Ironing: 'Ironing',
+    'Quality Control': 'QC',
+    'Ready for Delivery': 'Ready',
+  }
+  for (const o of orders.value) {
+    const col = statusMap[o.status]
+    if (col) {
+      cols[col].push({
+        id: o.id,
+        client: o.client,
+        bags: o.actualBags ?? o.estimatedBags,
+        priority: o.serviceType?.includes('Express') ? 'High' : 'Normal',
+      })
+    }
+  }
+  return cols
+})
 </script>

@@ -106,9 +106,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
-import { detailedOrders } from '../../../data/extendedMockData.js'
+import { fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
+import { receiveAtFacility } from '../../../api/orders'
 
 const manualOrderId = ref('')
 const foundOrder = ref(null)
@@ -116,26 +117,66 @@ const damageNotes = ref('')
 const showSuccess = ref(false)
 const checkinQtys = reactive({})
 
+const allOrders = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const data = await fetchOrders()
+    allOrders.value = data ?? []
+  } catch { /* stays empty */ } finally {
+    loading.value = false
+  }
+})
+
 const recentCheckins = computed(() =>
-  detailedOrders.filter(o =>
-    ['Received at Facility', 'Sorting', 'Washing', 'Drying', 'Ironing', 'Quality Control'].includes(o.status)
-  )
+  allOrders.value
+    .filter(o => ['Arrived', 'Washing', 'Drying', 'Ironing', 'QualityCheck'].includes(o.status))
+    .map(o => ({
+      id: o.order_number ?? o._id,
+      client: o.client?.company_name ?? '',
+      status: mapStatus(o.status),
+    }))
 )
 
 function lookupOrder() {
-  const order = detailedOrders.find(o => o.id === manualOrderId.value.trim())
-  if (order) {
-    foundOrder.value = order
-    order.items.forEach(item => { checkinQtys[item.code] = item.qty })
+  const term = manualOrderId.value.trim()
+  const raw = allOrders.value.find(o => o.order_number === term || o._id === term)
+  if (raw) {
+    const mapped = mapOrderForDetail(raw)
+    foundOrder.value = mapped
+    mapped.items.forEach(item => { checkinQtys[item.code] = item.qty })
   }
 }
 
-function checkIn() {
-  showSuccess.value = true
-  setTimeout(() => {
+async function checkIn() {
+  if (!foundOrder.value) return
+  const rawOrder = allOrders.value.find(
+    o => o.order_number === foundOrder.value.id || o._id === foundOrder.value._id
+  )
+  if (!rawOrder) return
+  try {
+    const items = foundOrder.value.items.map(i => ({
+      item_code: i.code,
+      name: i.name,
+      quantity: checkinQtys[i.code] ?? i.qty,
+      unit_price: i.unitPrice,
+      total_price: (checkinQtys[i.code] ?? i.qty) * i.unitPrice,
+    }))
+    await receiveAtFacility(rawOrder._id, {
+      items,
+      internal_notes: damageNotes.value || undefined,
+    })
+    showSuccess.value = true
+    const refreshed = await fetchOrders()
+    allOrders.value = refreshed ?? []
+    setTimeout(() => {
+      showSuccess.value = false
+      foundOrder.value = null
+      manualOrderId.value = ''
+    }, 1500)
+  } catch {
     showSuccess.value = false
-    foundOrder.value = null
-    manualOrderId.value = ''
-  }, 1500)
+  }
 }
 </script>

@@ -42,6 +42,7 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
 import KpiCard from '../ui/KpiCard.vue'
 import StatusBadge from '../ui/StatusBadge.vue'
 import RouteView from '../pages/driver/RouteView.vue'
@@ -49,7 +50,47 @@ import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { driverKPIs, driverStops } from '../../data/mockData'
+import { fetchRoutes, mapRouteForDriver } from '../../api/routes'
 
 const navStore = useNavStore()
+
+const route = ref(null)
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0]
+    const data = await fetchRoutes({ date: today })
+    const routes = (data ?? []).map(mapRouteForDriver)
+    route.value = routes[0] ?? null
+  } catch { /* stays null */ } finally {
+    loading.value = false
+  }
+})
+
+const driverKPIs = computed(() => {
+  const stops = route.value?.stops ?? []
+  const pickups = stops.filter(s => s.type === 'Pickup').length
+  const deliveries = stops.filter(s => s.type === 'Delivery').length
+  const completed = stops.filter(s => s.status === 'Completed').length
+  const total = stops.length
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+  return [
+    { label: "Today's Pickups", value: pickups, color: 'blue' },
+    { label: "Today's Deliveries", value: deliveries, color: 'green' },
+    { label: 'Route Progress', value: `${pct}%`, color: 'yellow' },
+  ]
+})
+
+const driverStops = computed(() => {
+  const stops = route.value?.stops ?? []
+  return stops.map(s => ({
+    id: s.id,
+    client: s.client,
+    address: s.address,
+    bags: s.estimatedBags,
+    status: s.status,
+    type: s.type,
+  }))
+})
 </script>

@@ -103,15 +103,67 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
-import { clientsList, driversList, staffList } from '../../../data/extendedMockData.js'
+import { fetchClients } from '../../../api/clients'
+import { fetchUsers } from '../../../api/users'
 
 const activeTab = ref('clients')
+const loading = ref(true)
+const clientsList = ref([])
+const driversList = ref([])
+const staffList = ref([])
+
+onMounted(async () => {
+  try {
+    const [clientsData, usersData] = await Promise.all([
+      fetchClients().catch(() => []),
+      fetchUsers().catch(() => []),
+    ])
+
+    clientsList.value = (clientsData ?? []).map(c => ({
+      id: c._id,
+      name: c.company_name,
+      type: c.pricing_tier === 'standard' ? 'Hotel' : c.pricing_tier,
+      contact: c.email,
+      phone: c.phone,
+      address: c.billing_address,
+      creditTerms: `${c.credits_terms_days ?? 30} days`,
+      status: 'Active',
+      totalOrders: 0,
+      outstandingBalance: 0,
+    }))
+
+    const users = usersData ?? []
+    driversList.value = users.filter(u => u.role === 'driver').map(u => ({
+      id: u._id,
+      name: u.name,
+      phone: u.phone ?? '',
+      email: u.email,
+      plate: '',
+      zone: '',
+      status: u.is_active ? 'Active' : 'Inactive',
+      todayStops: 0,
+      completedStops: 0,
+    }))
+
+    staffList.value = users.filter(u => u.role === 'staff' || u.role === 'admin').map(u => ({
+      id: u._id,
+      name: u.name,
+      phone: u.phone ?? '',
+      email: u.email,
+      role: u.role === 'admin' ? 'Admin' : 'Facility Staff',
+      shift: '',
+      status: u.is_active ? 'Active' : 'Inactive',
+    }))
+  } catch { /* stays empty */ } finally {
+    loading.value = false
+  }
+})
 
 const tabs = computed(() => [
-  { key: 'clients', label: 'Clients', count: clientsList.length },
-  { key: 'drivers', label: 'Drivers', count: driversList.length },
-  { key: 'staff', label: 'Staff', count: staffList.length },
+  { key: 'clients', label: 'Clients', count: clientsList.value.length },
+  { key: 'drivers', label: 'Drivers', count: driversList.value.length },
+  { key: 'staff', label: 'Staff', count: staffList.value.length },
 ])
 </script>
