@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-gray-800">Reports</h2>
+    <h2 class="text-lg font-semibold text-white">Reports</h2>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <!-- Revenue Chart -->

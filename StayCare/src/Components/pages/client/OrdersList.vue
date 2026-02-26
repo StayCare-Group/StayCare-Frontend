@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <!-- Header with back button -->
     <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-gray-800">All Orders</h2>
+      <h2 class="text-lg font-semibold text-white">All Orders</h2>
       <button
         @click="navStore.goToDetail('create-order', null)"
         class="bg-[#FF56B0] text-white font-bold py-2 px-5 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm"

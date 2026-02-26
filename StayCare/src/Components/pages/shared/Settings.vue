@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6 max-w-2xl">
-    <h2 class="text-lg font-semibold text-gray-800">Settings</h2>
+    <h2 class="text-lg font-semibold text-white">Settings</h2>
 
     <!-- Profile -->
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">

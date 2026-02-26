@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-gray-800">Processing Board</h2>
+    <h2 class="text-lg font-semibold text-white">Processing Board</h2>
 
     <!-- Kanban Board -->
     <div class="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">

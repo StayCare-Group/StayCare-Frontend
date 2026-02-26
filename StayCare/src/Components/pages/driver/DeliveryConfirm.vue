@@ -2,10 +2,10 @@
   <div class="space-y-6 max-w-2xl">
     <!-- Header -->
     <div class="flex items-center gap-3">
-      <button @click="navStore.goBack('route')" class="text-gray-400 hover:text-gray-600">
+      <button @click="navStore.goBack('route')" class="text-white hover:text-gray-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h2 class="text-lg font-semibold text-gray-800">Confirm Delivery</h2>
+      <h2 class="text-lg font-semibold text-white">Confirm Delivery</h2>
     </div>
 
     <div v-if="stop" class="space-y-6">

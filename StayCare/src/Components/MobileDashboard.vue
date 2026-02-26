@@ -15,7 +15,7 @@ const sidebarOpen = ref(false)
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-gray-100">
+  <div class="flex min-h-screen">
     <!-- Sidebar (drawer style) -->
     <Sidebar :role="role" v-model:open="sidebarOpen" />
 
