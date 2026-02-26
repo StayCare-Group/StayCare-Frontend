@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-gray-800">Reception &amp; Check-In</h2>
+    <h2 class="text-lg font-semibold text-white">Reception &amp; Check-In</h2>
 
     <!-- QR Scan placeholder -->
     <div class="bg-white rounded-xl shadow-sm p-5">

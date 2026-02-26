@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-gray-800">Invoices</h2>
+    <h2 class="text-lg font-semibold text-white">Invoices</h2>
 
     <!-- Filters -->
     <div class="flex flex-wrap gap-2">

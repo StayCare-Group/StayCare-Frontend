@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-gray-800">User Management</h2>
+    <h2 class="text-lg font-semibold text-white">User Management</h2>
 
     <!-- Tabs -->
     <div class="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
