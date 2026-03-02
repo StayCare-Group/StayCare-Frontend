@@ -2,10 +2,83 @@
   <div class="space-y-6">
     <h2 class="text-lg font-semibold text-white">Route Planner</h2>
 
+    <!-- Auto-Assign Section -->
+    <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Auto-Assign Routes</h3>
+          <p class="text-xs text-gray-500 mt-0.5">
+            Groups orders by their pickup window, then splits evenly across drivers (max {{ MAX_PICKUPS_PER_HOUR }}/hr per driver)
+          </p>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <input
+            v-model="autoDate"
+            type="date"
+            class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+          />
+          <button
+            @click="handleAutoAssign"
+            :disabled="autoAssigning || !drivers.length"
+            class="bg-gradient-to-r from-[#FF56B0] to-[#FF89C8] text-white font-bold py-2.5 px-6 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm disabled:opacity-60"
+          >
+            {{ autoAssigning ? 'Assigning...' : 'Auto-Assign' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div v-if="autoPreview" class="border border-gray-200 rounded-lg p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold text-gray-800">Preview — {{ autoPreview.date }}</span>
+          <span class="text-xs text-gray-500">{{ autoPreview.totalOrders }} order(s) across {{ autoPreview.assignments.length }} driver(s)</span>
+        </div>
+        <div v-if="autoPreview.overflow" class="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+          {{ autoPreview.overflow }} order(s) exceed driver capacity and were not assigned.
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div
+            v-for="a in autoPreview.assignments"
+            :key="a.driverId"
+            class="border border-gray-100 rounded-lg p-3"
+          >
+            <p class="text-sm font-medium text-gray-800">{{ a.driverName }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ a.orders.length }} pickup(s)</p>
+            <div class="mt-2 space-y-1 max-h-32 overflow-y-auto">
+              <div v-for="(o, i) in a.orders" :key="o.id" class="text-xs text-gray-600 flex flex-col gap-0.5 py-0.5">
+                <div class="flex items-center gap-1">
+                  <span class="text-gray-400 w-4 shrink-0">{{ i + 1 }}.</span>
+                  <span class="truncate">{{ o.label }}</span>
+                  <span class="text-gray-400 ml-auto shrink-0">{{ o.slot }}</span>
+                </div>
+                <span v-if="o.address" class="text-gray-400 pl-5 truncate">{{ o.address }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button
+            @click="confirmAutoAssign"
+            :disabled="autoConfirming"
+            class="bg-[#FF56B0] text-white font-bold py-2 px-5 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm disabled:opacity-60"
+          >
+            {{ autoConfirming ? 'Creating routes...' : 'Confirm & Create Routes' }}
+          </button>
+          <button
+            @click="autoPreview = null"
+            class="text-sm text-gray-500 hover:text-gray-700"
+          >Cancel</button>
+        </div>
+      </div>
+
+      <p v-if="autoError" class="text-xs text-red-500">{{ autoError }}</p>
+      <p v-if="autoSuccess" class="text-xs text-green-600">{{ autoSuccess }}</p>
+    </div>
+
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-      <!-- Route form -->
+      <!-- Manual route form -->
       <form class="bg-white rounded-xl shadow-sm p-5 space-y-4" @submit.prevent="handleCreateRoute">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Create Route</h3>
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Manual Route</h3>
 
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">Date</label>
@@ -92,7 +165,7 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between">
                 <p class="text-sm font-medium text-gray-800">
-                  {{ o.order_number ?? o._id }} — {{ o.client?.company_name ?? '' }}
+                  {{ o.id }} — {{ o.client }}
                 </p>
                 <span class="text-xs text-gray-500">{{ o.pickupDate }}</span>
               </div>
@@ -138,7 +211,16 @@
               }"
             >{{ route.status }}</span>
           </div>
-          <span class="text-xs text-gray-500">{{ route.totalStops }} stop(s) &middot; {{ route.completedStops }} done</span>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-500">{{ route.totalStops }} stop(s) &middot; {{ route.completedStops }} done</span>
+            <button
+              @click="handleDeleteRoute(route._id)"
+              :disabled="deleting[route._id]"
+              class="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-40"
+            >
+              {{ deleting[route._id] ? 'Deleting...' : 'Delete' }}
+            </button>
+          </div>
         </div>
 
         <!-- Stops with reassign -->
@@ -184,9 +266,12 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { fetchOrders, mapOrderForList, reassignOrder } from '../../../api/orders'
-import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
+import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
 import { fetchUsers } from '../../../api/users'
 import { apiFetch } from '../../../api/client'
+
+/* ── Constants ── */
+const MAX_PICKUPS_PER_HOUR = 4
 
 const drivers = ref([])
 const rawOrders = ref([])
@@ -196,7 +281,17 @@ const routesLoading = ref(false)
 
 const reassignTargets = reactive({})
 const reassigning = reactive({})
+const deleting = reactive({})
 
+/* ── Auto-assign state ── */
+const autoDate = ref(new Date().toISOString().split('T')[0])
+const autoAssigning = ref(false)
+const autoConfirming = ref(false)
+const autoPreview = ref(null)
+const autoError = ref('')
+const autoSuccess = ref('')
+
+/* ── Manual form state ── */
 const form = reactive({
   date: new Date().toISOString().split('T')[0],
   driverId: '',
@@ -243,6 +338,13 @@ async function loadRoutes() {
   }
 }
 
+function resolveAddress(o) {
+  const clientObj = typeof o.client === 'object' && o.client ? o.client : null
+  const prop = clientObj?.properties?.[0]
+  if (prop?.address) return `${prop.address}${prop.city ? ', ' + prop.city : ''}`
+  return clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
+}
+
 const pendingOrders = computed(() => {
   const candidates = rawOrders.value.filter(o =>
     ['Pending', 'Assigned', 'Transit'].includes(o.status)
@@ -252,11 +354,170 @@ const pendingOrders = computed(() => {
     return {
       ...mapped,
       _id: o._id ?? mapped._id,
-      pickupAddress: o.pickup_address ?? mapped.pickupAddress,
+      pickupAddress: resolveAddress(o),
     }
   })
 })
 
+/* ─────────────────────────────────────────────
+   Auto-Assign Logic
+   Groups orders by their pickup window hour,
+   then round-robins across drivers.
+   Max 4 pickups per hour per driver.
+   ───────────────────────────────────────────── */
+function getPickupHour(order) {
+  if (order.pickup_window?.start_time) {
+    const d = new Date(order.pickup_window.start_time)
+    if (!isNaN(d.getTime())) return d.getHours()
+  }
+  return null
+}
+
+function formatSlot(order) {
+  const pw = order.pickup_window
+  if (!pw?.start_time) return '—'
+  const s = new Date(pw.start_time)
+  const e = pw.end_time ? new Date(pw.end_time) : null
+  const fmt = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  return e ? `${fmt(s)} – ${fmt(e)}` : fmt(s)
+}
+
+function getOrderAddress(o) {
+  const clientObj = typeof o.client === 'object' ? o.client : null
+  const prop = clientObj?.properties?.[0]
+  return prop?.address
+    ? `${prop.address}${prop.city ? ', ' + prop.city : ''}`
+    : clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
+}
+
+function buildAutoPreview(targetDate) {
+  const targetStr = targetDate // YYYY-MM-DD
+  const ordersForDate = rawOrders.value.filter(o => {
+    if (!['Pending', 'Assigned'].includes(o.status)) return false
+    const pDate = o.pickup_date
+      ? new Date(o.pickup_date).toISOString().split('T')[0]
+      : ''
+    return pDate === targetStr
+  })
+
+  if (!ordersForDate.length) return null
+  if (!drivers.value.length) return null
+
+  const driverCount = drivers.value.length
+
+  // Sort orders by pickup window start time so early windows go first
+  const sorted = [...ordersForDate].sort((a, b) => {
+    const ha = getPickupHour(a) ?? 99
+    const hb = getPickupHour(b) ?? 99
+    return ha - hb
+  })
+
+  // Track how many pickups each driver has per hour
+  // driverSlots[driverIdx][hour] = count
+  const driverSlots = drivers.value.map(() => ({}))
+
+  const buckets = drivers.value.map(d => ({
+    driverId: d.id,
+    driverName: d.name,
+    orders: [],
+  }))
+
+  let overflow = 0
+
+  for (const o of sorted) {
+    const hour = getPickupHour(o)
+    let assigned = false
+
+    // Try each driver round-robin style, starting from the one with fewest total orders
+    const driverOrder = buckets
+      .map((b, i) => ({ idx: i, count: b.orders.length }))
+      .sort((a, b) => a.count - b.count)
+
+    for (const { idx } of driverOrder) {
+      if (hour !== null) {
+        const hourCount = driverSlots[idx][hour] ?? 0
+        if (hourCount >= MAX_PICKUPS_PER_HOUR) continue
+        driverSlots[idx][hour] = hourCount + 1
+      }
+
+      const mapped = mapOrderForList(o)
+      const address = getOrderAddress(o)
+      buckets[idx].orders.push({
+        id: o._id ?? o.id,
+        label: `${mapped.id} — ${mapped.client}`,
+        address,
+        slot: formatSlot(o),
+      })
+      assigned = true
+      break
+    }
+
+    if (!assigned) overflow++
+  }
+
+  return {
+    date: targetStr,
+    totalOrders: sorted.length - overflow,
+    overflow,
+    assignments: buckets.filter(b => b.orders.length > 0),
+  }
+}
+
+function handleAutoAssign() {
+  autoError.value = ''
+  autoSuccess.value = ''
+  autoAssigning.value = true
+  try {
+    if (!drivers.value.length) {
+      autoError.value = 'No drivers available.'
+      return
+    }
+    const preview = buildAutoPreview(autoDate.value)
+    if (!preview || !preview.assignments.length) {
+      autoError.value = `No pending orders found for ${autoDate.value}.`
+      return
+    }
+    autoPreview.value = preview
+  } finally {
+    autoAssigning.value = false
+  }
+}
+
+async function confirmAutoAssign() {
+  if (!autoPreview.value) return
+  autoConfirming.value = true
+  autoError.value = ''
+  autoSuccess.value = ''
+  try {
+    const routeDate = new Date(autoPreview.value.date).toISOString()
+    let created = 0
+    for (const a of autoPreview.value.assignments) {
+      await apiFetch('/api/routes', {
+        method: 'POST',
+        body: JSON.stringify({
+          route_date: routeDate,
+          driver: a.driverId,
+          area: 'Auto-assigned',
+          orders: a.orders.map(o => o.id),
+        }),
+      })
+      created++
+    }
+    autoSuccess.value = `${created} route(s) created for ${autoPreview.value.date}.`
+    autoPreview.value = null
+    // Refresh data
+    const ordersData = await fetchOrders().catch(() => [])
+    rawOrders.value = ordersData ?? []
+    await loadRoutes()
+  } catch (err) {
+    autoError.value =
+      err?.message || err?.error || 'Failed to create auto-assigned routes.'
+  } finally {
+    autoConfirming.value = false
+  }
+}
+
+/* ── Manual route creation ── */
 async function handleCreateRoute() {
   if (!form.driverId || !form.date || !form.area || !selectedOrderIds.value.length) return
   submitting.value = true
@@ -275,7 +536,6 @@ async function handleCreateRoute() {
     })
     successMessage.value = 'Route created and orders assigned to driver.'
     selectedOrderIds.value = []
-    // Refresh orders and routes
     const ordersData = await fetchOrders().catch(() => [])
     rawOrders.value = ordersData ?? []
     await loadRoutes()
@@ -295,13 +555,29 @@ async function handleReassign(orderId, driverId) {
   reassigning[orderId] = true
   try {
     await reassignOrder(orderId, driverId)
-    // Refresh routes to show updated assignment
     await loadRoutes()
     reassignTargets[orderId] = ''
   } catch (err) {
     alert(err?.message || err?.error || 'Reassign failed')
   } finally {
     reassigning[orderId] = false
+  }
+}
+
+async function handleDeleteRoute(routeId) {
+  if (!routeId) return
+  if (!confirm('Delete this route? Orders will be unassigned.')) return
+  deleting[routeId] = true
+  try {
+    await deleteRoute(routeId)
+    await loadRoutes()
+    // Refresh orders so they reappear in pending list
+    const ordersData = await fetchOrders().catch(() => [])
+    rawOrders.value = ordersData ?? []
+  } catch (err) {
+    alert(err?.message || err?.error || 'Failed to delete route')
+  } finally {
+    deleting[routeId] = false
   }
 }
 </script>

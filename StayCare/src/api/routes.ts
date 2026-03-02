@@ -17,6 +17,10 @@ export async function updateRouteStatus(id: string, status: string) {
   })
 }
 
+export async function deleteRoute(id: string) {
+  return apiFetch(`/api/routes/${id}`, { method: 'DELETE' })
+}
+
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
   return new Date(dateStr).toISOString().split('T')[0]
@@ -56,12 +60,15 @@ export function mapRouteForDriver(route: any) {
     stops: orders.map((o: any, idx: number) => {
       const clientObj = typeof o.client === 'object' ? o.client : null
       const property = clientObj?.properties?.[0]
+      const addr = property?.address
+        ? `${property.address}${property.city ? ', ' + property.city : ''}`
+        : clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? o.delivery_address ?? ''
       return {
         id: idx + 1,
         orderId: o.order_number ?? o._id,
         _id: o._id,
-        client: clientObj?.company_name ?? '',
-        address: property?.address ?? '',
+        client: clientObj?.company_name ?? clientObj?.name ?? '',
+        address: addr,
         type: resolveStopType(o.status),
         timeWindow: o.pickup_window
           ? `${formatTime(o.pickup_window?.start_time)} - ${formatTime(o.pickup_window?.end_time)}`
