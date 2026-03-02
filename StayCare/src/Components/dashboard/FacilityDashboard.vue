@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import KanbanColumn from '../ui/KanbanColumn.vue'
@@ -45,13 +45,21 @@ const navStore = useNavStore()
 const orders = ref([])
 const loading = ref(true)
 
-onMounted(async () => {
+async function loadOrders() {
   try {
+    loading.value = true
     const data = await fetchOrders()
     orders.value = (data ?? []).map(mapOrderForList)
   } catch { /* stays empty */ } finally {
     loading.value = false
   }
+}
+
+onMounted(loadOrders)
+
+// Re-fetch when navigating back to the dashboard overview
+watch(() => navStore.currentPage, (page) => {
+  if (page === 'dashboard') loadOrders()
 })
 
 const facilityStatuses = ['Received at Facility', 'Washing', 'Drying', 'Ironing', 'Quality Control', 'Ready for Delivery']
