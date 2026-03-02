@@ -1,6 +1,10 @@
-const API = import.meta.env.VITE_API_URL || ''
+const API = import.meta.env.VITE_BACKEND_URL || ''
 
-// All requests use credentials: 'include' so httpOnly cookies are sent/received
+async function unwrap(res: Response) {
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw json
+  return json.data ?? json
+}
 
 export async function loginUser(payload: { email: string; password: string }) {
   const res = await fetch(`${API}/api/auth/login`, {
@@ -9,11 +13,7 @@ export async function loginUser(payload: { email: string; password: string }) {
     credentials: 'include',
     body: JSON.stringify(payload),
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw err
-  }
-  return res.json() // { user: { id, role, email, name } }
+  return unwrap(res)
 }
 
 export async function refreshAuth() {
@@ -22,7 +22,8 @@ export async function refreshAuth() {
     credentials: 'include',
   })
   if (!res.ok) throw new Error('refresh failed')
-  return res.json() // { user: { id, role, email, name } }
+  const json = await res.json()
+  return json.data ?? json
 }
 
 export async function logoutUser() {
@@ -30,11 +31,7 @@ export async function logoutUser() {
     method: 'POST',
     credentials: 'include',
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw err
-  }
-  return res.json()
+  return unwrap(res)
 }
 
 export async function registerUser(payload: {
@@ -44,15 +41,11 @@ export async function registerUser(payload: {
   phone?: string
   language?: string
 }) {
-  const res = await fetch(`${API}/api/users/`, {
+  const res = await fetch(`${API}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(payload),
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw err
-  }
-  return res.json()
+  return unwrap(res)
 }

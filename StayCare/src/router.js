@@ -4,6 +4,7 @@ import Login from './Pages/Login.vue'
 import Dashboard from './Pages/Dashboard.vue'
 import CreateAccount from './Pages/CreateAccount.vue'
 import LogorCreate from './Pages/LogorCreate.vue'
+import InviteRegister from './Pages/InviteRegister.vue'
 
 const routes = [
   {
@@ -32,6 +33,12 @@ const routes = [
     path: '/logorcreate',
     name: 'LogorCreate',
     component: LogorCreate,
+    meta: { guest: true }
+  },
+  {
+    path: '/invite/:token',
+    name: 'InviteRegister',
+    component: InviteRegister,
     meta: { guest: true }
   }
 ]

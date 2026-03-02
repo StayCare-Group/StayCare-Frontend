@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { registerUser } from '../api/auth'
 import { useAuthStore } from '../stores/auth.js'
 
@@ -27,19 +28,19 @@ const handleLogin = async () => {
   const phonePattern = /^\d{10}$/
 
   if (!password.value || !username.value) {
-    error.value = 'Please fill in username and password.'
+    error.value = t('auth.errorUsernamePassword')
     return
   }
   if (!email.value && !phone.value) {
-    error.value = 'Please provide either an email address or phone number.'
+    error.value = t('auth.errorEmailOrPhone')
     return
   }
   if (email.value && !emailPattern.test(email.value)) {
-    error.value = 'Please enter a valid email address.'
+    error.value = t('auth.errorInvalidEmail')
     return
   }
   if (phone.value && !phonePattern.test(phone.value)) {
-    error.value = 'Please enter a valid 10-digit phone number.'
+    error.value = t('auth.errorInvalidPhone')
     return
   }
 
@@ -51,11 +52,10 @@ const handleLogin = async () => {
       password: password.value,
       phone: phone.value || undefined,
     })
-    // Auto-login after registration
     await auth.login(email.value, password.value)
     router.push('/Dashboard')
   } catch (err) {
-    error.value = err?.message || err?.error || 'Registration failed. Please try again.'
+    error.value = err?.message || err?.error || t('auth.errorRegistration')
   }
 }
 </script>
@@ -75,13 +75,13 @@ const handleLogin = async () => {
       }"
     />
     <div class="flex flex-col items-center justify-center bg-white px-8 py-12 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
-      <h1 class="text-3xl font-bold text-center text-[#FF56B0]">Login for <span class="text-[#00F5F3]">StayCare</span> laundry management</h1>
-      <input type="text" placeholder="Username" v-model="username" class="flex justify-center items-center mt-9 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
-      <input type="email" required placeholder="Email" v-model="email" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
-      <input type="tel" placeholder="Phone Number (optinal)" v-model="phone" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
-      <input type="password" placeholder="Password" v-model="password" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
+      <i18n-t keypath="auth.loginHeading" tag="h1" class="text-3xl font-bold text-center text-[#FF56B0]"><template #brand><span class="text-[#00F5F3]">StayFresh</span></template></i18n-t>
+      <input type="text" :placeholder="$t('auth.username')" v-model="username" class="flex justify-center items-center mt-9 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
+      <input type="email" required :placeholder="$t('auth.email')" v-model="email" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
+      <input type="tel" :placeholder="$t('auth.phone')" v-model="phone" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
+      <input type="password" :placeholder="$t('auth.password')" v-model="password" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
       <p v-if="error" class="text-red-500 text-sm mt-2">{{ error }}</p>
-      <button @click="handleLogin" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-half shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">Create Account</button>
+      <button @click="handleLogin" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-half shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">{{ $t('auth.createAccount') }}</button>
      </div>
   </div>
 </template>

@@ -1,18 +1,51 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { loginUser, refreshAuth, logoutUser } from '../api/auth'
+import { fetchMe } from '../api/users'
+import { useLangStore } from './lang.js'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null)       // { id, role, email, name } | null
-  const loading = ref(true)    // true while checking session on boot
+  const user = ref(null)
+  const loading = ref(true)
 
   const isLoggedIn = computed(() => !!user.value)
   const userRole = computed(() => user.value?.role ?? null)
 
+  function applyLanguage(lang) {
+    if (lang && ['en', 'es'].includes(lang)) {
+      const langStore = useLangStore()
+      langStore.setLocale(lang, { persist: false })
+    }
+  }
+
+  async function loadCurrentUser() {
+    const data = await fetchMe()
+    const raw = data?.user ?? data ?? null
+    if (!raw) {
+      user.value = null
+      return null
+    }
+
+    const clientObj = raw.client && typeof raw.client === 'object' ? raw.client : null
+
+    user.value = {
+      id: raw._id ?? raw.id,
+      name: raw.name,
+      email: raw.email,
+      role: raw.role,
+      phone: raw.phone,
+      language: raw.language ?? 'en',
+      clientId: clientObj?._id ?? (typeof raw.client === 'string' ? raw.client : null),
+      client: clientObj ?? null,
+    }
+
+    applyLanguage(user.value.language)
+    return user.value
+  }
+
   async function login(email, password) {
-    const data = await loginUser({ email, password })
-    user.value = data.user
-    return data.user
+    await loginUser({ email, password })
+    return loadCurrentUser()
   }
 
   async function logout() {
@@ -27,8 +60,8 @@ export const useAuthStore = defineStore('auth', () => {
   async function tryRefresh() {
     loading.value = true
     try {
-      const data = await refreshAuth()
-      user.value = data.user
+      await refreshAuth()
+      await loadCurrentUser()
     } catch {
       user.value = null
     } finally {
@@ -36,5 +69,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, loading, isLoggedIn, userRole, login, logout, tryRefresh }
+  return { user, loading, isLoggedIn, userRole, login, logout, tryRefresh, loadCurrentUser, applyLanguage }
 })
