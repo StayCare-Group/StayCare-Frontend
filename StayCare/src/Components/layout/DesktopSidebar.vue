@@ -1,5 +1,5 @@
 <template>
-  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col min-h-screen">
+  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col h-screen shrink-0">
     <!-- Logo -->
     <div class="p-5 border-b border-gray-100">
       <h1 class="text-xl font-bold">

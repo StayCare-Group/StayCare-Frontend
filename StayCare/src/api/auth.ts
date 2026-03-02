@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL || ''
+const API = import.meta.env.VITE_BACKEND_URL || ''
 
 async function unwrap(res: Response) {
   const json = await res.json().catch(() => ({}))
