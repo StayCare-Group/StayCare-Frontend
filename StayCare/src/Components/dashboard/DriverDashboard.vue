@@ -22,17 +22,44 @@
           <div
             v-for="stop in driverStops"
             :key="stop.id"
-            class="border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
+            class="border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col justify-between"
           >
-            <div class="flex items-center justify-between mb-2">
-              <StatusBadge :status="stop.type" />
-              <StatusBadge :status="stop.status" />
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <StatusBadge :status="stop.type" />
+                <StatusBadge :status="stop.status" />
+              </div>
+              <h4 class="text-sm font-semibold text-gray-800">{{ stop.client }}</h4>
+              <p class="text-xs text-gray-500 mt-1">{{ stop.address }}</p>
+              <div class="mt-3 flex items-center justify-between">
+                <span class="text-xs text-gray-500">Expected bags</span>
+                <span class="text-sm font-bold text-gray-700">{{ stop.bags }}</span>
+              </div>
             </div>
-            <h4 class="text-sm font-semibold text-gray-800">{{ stop.client }}</h4>
-            <p class="text-xs text-gray-500 mt-1">{{ stop.address }}</p>
-            <div class="mt-3 flex items-center justify-between">
-              <span class="text-xs text-gray-500">Expected bags</span>
-              <span class="text-sm font-bold text-gray-700">{{ stop.bags }}</span>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button
+                v-if="stop.type === 'Pickup' && stop.status !== 'Completed'"
+                @click="navStore.goToDetail('pickup-confirm', stop.id)"
+                class="bg-[#FF56B0] text-white font-medium py-1.5 px-3 rounded-lg text-xs hover:opacity-90 transition"
+              >
+                Confirm Pickup
+              </button>
+              <button
+                v-if="stop.type === 'Delivery' && stop.status !== 'Completed'"
+                @click="navStore.goToDetail('delivery-confirm', stop.id)"
+                class="bg-[#00F5F3] text-gray-800 font-medium py-1.5 px-3 rounded-lg text-xs hover:opacity-90 transition"
+              >
+                Confirm Delivery
+              </button>
+              <span
+                v-if="stop.status === 'Completed'"
+                class="text-xs text-green-600 font-medium flex items-center gap-1"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Done
+              </span>
             </div>
           </div>
         </div>
