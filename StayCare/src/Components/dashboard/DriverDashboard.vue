@@ -16,7 +16,7 @@
       <!-- Stops List -->
       <div class="bg-white rounded-xl shadow-sm">
         <div class="px-5 py-4 border-b border-gray-100">
-          <h3 class="text-base font-semibold text-gray-800">Assigned Stops</h3>
+          <h3 class="text-base font-semibold text-gray-800">{{ $t('driver.assignedStops') }}</h3>
         </div>
         <div class="p-3 sm:p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <div
@@ -32,7 +32,7 @@
               <h4 class="text-sm font-semibold text-gray-800">{{ stop.client }}</h4>
               <p class="text-xs text-gray-500 mt-1">{{ stop.address }}</p>
               <div class="mt-3 flex items-center justify-between">
-                <span class="text-xs text-gray-500">Expected bags</span>
+                <span class="text-xs text-gray-500">{{ $t('driver.expectedBags') }}</span>
                 <span class="text-sm font-bold text-gray-700">{{ stop.bags }}</span>
               </div>
             </div>
@@ -42,14 +42,14 @@
                 @click="navStore.goToDetail('pickup-confirm', stop.id)"
                 class="bg-[#FF56B0] text-white font-medium py-1.5 px-3 rounded-lg text-xs hover:opacity-90 transition"
               >
-                Confirm Pickup
+                {{ $t('driver.confirmPickup') }}
               </button>
               <button
                 v-if="stop.type === 'Delivery' && stop.status !== 'Completed'"
                 @click="navStore.goToDetail('delivery-confirm', stop.id)"
                 class="bg-[#00F5F3] text-gray-800 font-medium py-1.5 px-3 rounded-lg text-xs hover:opacity-90 transition"
               >
-                Confirm Delivery
+                {{ $t('driver.confirmDelivery') }}
               </button>
               <span
                 v-if="stop.status === 'Completed'"
@@ -58,7 +58,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                Done
+                {{ $t('common.done') }}
               </span>
             </div>
           </div>
@@ -70,6 +70,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import StatusBadge from '../ui/StatusBadge.vue'
 import RouteView from '../pages/driver/RouteView.vue'
@@ -79,6 +80,7 @@ import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchRoutes, mapRouteForDriver } from '../../api/routes'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 
 const route = ref(null)
@@ -103,9 +105,9 @@ const driverKPIs = computed(() => {
   const total = stops.length
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0
   return [
-    { label: "Today's Pickups", value: pickups, color: 'blue' },
-    { label: "Today's Deliveries", value: deliveries, color: 'green' },
-    { label: 'Route Progress', value: `${pct}%`, color: 'yellow' },
+    { label: t('driver.todaysPickups'), value: pickups, color: 'blue' },
+    { label: t('driver.todaysDeliveries'), value: deliveries, color: 'green' },
+    { label: t('driver.routeProgress'), value: `${pct}%`, color: 'yellow' },
   ]
 })
 

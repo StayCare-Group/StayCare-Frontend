@@ -12,3 +12,10 @@ export async function fetchUserById(id: string) {
 export async function fetchMe() {
   return apiFetch('/api/auth/me')
 }
+
+export async function updateMe(data: Record<string, any>) {
+  return apiFetch('/api/auth/me', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}

@@ -18,14 +18,14 @@
       <!-- Create Order Button -->
       <div>
         <button @click="navStore.goToDetail('create-order', null)" class="bg-[#FF56B0] text-white font-bold py-2.5 px-6 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition">
-          + Create Order
+          {{ $t('client.createOrder') }}
         </button>
       </div>
 
       <!-- Tables -->
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-        <DataTable title="Recent Orders" :columns="orderCols" :rows="recentOrders" />
-        <DataTable title="Open Invoices" :columns="invoiceCols" :rows="openInvoices" />
+        <DataTable :title="$t('client.recentOrders')" :columns="orderCols" :rows="recentOrders" />
+        <DataTable :title="$t('client.openInvoices')" :columns="invoiceCols" :rows="openInvoices" />
       </div>
     </div>
   </div>
@@ -33,6 +33,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import DataTable from '../ui/DataTable.vue'
 import OrdersList from '../pages/client/OrdersList.vue'
@@ -45,6 +46,7 @@ import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList, mapStatus } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 
 const orders = ref([])
@@ -74,10 +76,10 @@ const clientKPIs = computed(() => {
     .filter(i => i.status !== 'Paid')
     .reduce((sum, i) => sum + (i.grandTotal ?? 0), 0)
   return [
-    { label: 'Active Orders', value: active, color: 'blue' },
-    { label: 'In Progress', value: inProgress, color: 'yellow' },
-    { label: 'Ready for Delivery', value: ready, color: 'green' },
-    { label: 'Outstanding Balance', value: `€${outstanding.toFixed(0)}`, color: 'red' },
+    { label: t('client.activeOrders'), value: active, color: 'blue' },
+    { label: t('client.inProgress'), value: inProgress, color: 'yellow' },
+    { label: t('client.readyForDelivery'), value: ready, color: 'green' },
+    { label: t('client.outstandingBalance'), value: `€${outstanding.toFixed(0)}`, color: 'red' },
   ]
 })
 
@@ -100,18 +102,18 @@ const openInvoices = computed(() =>
   }))
 )
 
-const orderCols = [
-  { key: 'id', label: 'Order ID' },
-  { key: 'date', label: 'Date' },
-  { key: 'items', label: 'Items' },
-  { key: 'status', label: 'Status', badge: true },
-  { key: 'total', label: 'Total' },
-]
+const orderCols = computed(() => [
+  { key: 'id', label: t('client.orderId') },
+  { key: 'date', label: t('client.date') },
+  { key: 'items', label: t('client.items') },
+  { key: 'status', label: t('client.status'), badge: true },
+  { key: 'total', label: t('client.total') },
+])
 
-const invoiceCols = [
-  { key: 'id', label: 'Invoice' },
-  { key: 'amount', label: 'Amount' },
-  { key: 'due', label: 'Due Date' },
-  { key: 'status', label: 'Status', badge: true },
-]
+const invoiceCols = computed(() => [
+  { key: 'id', label: t('client.invoice') },
+  { key: 'amount', label: t('client.amount') },
+  { key: 'due', label: t('client.dueDate') },
+  { key: 'status', label: t('client.status'), badge: true },
+])
 </script>

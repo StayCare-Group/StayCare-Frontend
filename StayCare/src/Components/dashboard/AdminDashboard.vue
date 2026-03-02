@@ -18,7 +18,7 @@
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <!-- Bar Chart -->
         <div class="bg-white rounded-xl shadow-sm p-4 sm:p-5">
-          <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-4">Orders This Week</h3>
+          <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-4">{{ $t('admin.ordersThisWeek') }}</h3>
           <div class="flex gap-2 sm:gap-3 h-40 sm:h-48">
             <div
               v-for="(val, i) in adminChartData.values"
@@ -40,7 +40,7 @@
         <!-- Recent Activity -->
         <div class="bg-white rounded-xl shadow-sm">
           <div class="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
-            <h3 class="text-sm sm:text-base font-semibold text-gray-800">Recent Activity</h3>
+            <h3 class="text-sm sm:text-base font-semibold text-gray-800">{{ $t('admin.recentActivity') }}</h3>
           </div>
           <div class="divide-y divide-gray-50">
             <div v-for="a in adminActivity" :key="a.id" class="px-4 sm:px-5 py-3 hover:bg-gray-50 transition-colors">
@@ -59,6 +59,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import OrdersList from '../pages/client/OrdersList.vue'
 import OrderDetail from '../pages/client/OrderDetail.vue'
@@ -70,6 +71,7 @@ import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 
 const orders = ref([])
@@ -102,10 +104,10 @@ const adminKPIs = computed(() => {
   const delivered = orders.value.filter(o => ['Delivered', 'Completed'].includes(o.status)).length
   const sla = totalOrders > 0 ? Math.round((delivered / totalOrders) * 100) : 0
   return [
-    { label: 'Orders Today', value: todayOrders || orders.value.length, color: 'blue' },
-    { label: 'Revenue This Month', value: `€${monthRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'green' },
-    { label: 'VAT Collected', value: `€${vatCollected.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'purple' },
-    { label: 'SLA Compliance', value: `${sla}%`, color: 'yellow' },
+    { label: t('admin.ordersToday'), value: todayOrders || orders.value.length, color: 'blue' },
+    { label: t('admin.revenueThisMonth'), value: `€${monthRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'green' },
+    { label: t('admin.vatCollected'), value: `€${vatCollected.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'purple' },
+    { label: t('admin.slaCompliance'), value: `${sla}%`, color: 'yellow' },
   ]
 })
 
@@ -146,15 +148,15 @@ const maxVal = computed(() => Math.max(...adminChartData.value.values, 1))
 const adminActivity = computed(() => {
   return orders.value.slice(0, 6).map((o, i) => {
     const statusAction = {
-      'Pending Pickup': 'New order placed',
-      'Delivered': 'Order completed',
-      'Completed': 'Order completed',
-      'In Transit': 'Order in transit',
-      'Ready for Delivery': 'Order ready',
+      'Pending Pickup': t('admin.newOrderPlaced'),
+      'Delivered': t('admin.orderCompleted'),
+      'Completed': t('admin.orderCompleted'),
+      'In Transit': t('admin.orderInTransit'),
+      'Ready for Delivery': t('admin.orderReady'),
     }
     return {
       id: i + 1,
-      action: statusAction[o.status] || 'Order updated',
+      action: statusAction[o.status] || t('admin.orderUpdated'),
       detail: `${o.id} — ${o.client}`,
       time: o.pickupDate || '',
     }
