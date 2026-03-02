@@ -44,6 +44,13 @@ export async function confirmDelivery(id: string, payload: any) {
   })
 }
 
+export async function reassignOrder(orderId: string, driverId: string) {
+  return apiFetch(`/api/orders/${orderId}/reassign`, {
+    method: 'PATCH',
+    body: JSON.stringify({ driver_id: driverId }),
+  })
+}
+
 const STATUS_MAP: Record<string, string> = {
   Pending: 'Pending Pickup',
   Assigned: 'Pending Pickup',
