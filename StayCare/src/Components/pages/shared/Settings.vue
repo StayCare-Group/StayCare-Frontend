@@ -1,23 +1,23 @@
 <template>
   <div class="space-y-6 max-w-2xl">
-    <h2 class="text-lg font-semibold text-white">Settings</h2>
+    <h2 class="text-lg font-semibold text-white">{{ $t('settings.title') }}</h2>
 
     <!-- Profile -->
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Profile</h3>
+      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('settings.profile') }}</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Full Name</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.fullName') }}</label>
           <input v-model="profile.name" type="text"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Email</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.email') }}</label>
           <input v-model="profile.email" type="email"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Phone</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.phone') }}</label>
           <input v-model="profile.phone" type="tel"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
         </div>
@@ -26,7 +26,7 @@
 
     <!-- Notifications -->
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Notifications</h3>
+      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('settings.notifications') }}</h3>
       <div class="space-y-3">
         <label v-for="n in notificationSettings" :key="n.key" class="flex items-center justify-between">
           <span class="text-sm text-gray-700">{{ n.label }}</span>
@@ -44,15 +44,15 @@
 
     <!-- Security -->
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Security</h3>
+      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('settings.security') }}</h3>
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Current Password</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.currentPassword') }}</label>
           <input type="password" placeholder="••••••••"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">New Password</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.newPassword') }}</label>
           <input type="password" placeholder="••••••••"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
         </div>
@@ -61,7 +61,7 @@
 
     <!-- Language -->
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Language</h3>
+      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('settings.language') }}</h3>
       <div class="flex gap-2">
         <button
           @click="langStore.setLocale('en')"
@@ -84,23 +84,25 @@
     <div class="flex gap-3">
       <button @click="save"
         class="bg-[#FF56B0] text-white font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm">
-        Save Changes
+        {{ $t('common.save') }}
       </button>
     </div>
 
     <!-- Success toast -->
     <div v-if="showSuccess" class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
-      Settings saved!
+      {{ $t('settings.saved') }}
     </div>
   </div>
 </template>
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useLangStore } from '../../../stores/lang.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchMe } from '../../../api/users'
 
+const { t } = useI18n()
 const langStore = useLangStore()
 const authStore = useAuthStore()
 
@@ -124,10 +126,10 @@ onMounted(async () => {
 })
 
 const notificationSettings = reactive([
-  { key: 'orderUpdates', label: 'Order status updates', enabled: true },
-  { key: 'pickupReminders', label: 'Pickup reminders', enabled: true },
-  { key: 'invoiceAlerts', label: 'Invoice alerts', enabled: true },
-  { key: 'marketingEmails', label: 'Marketing emails', enabled: false },
+  { key: 'orderUpdates', label: t('settings.orderStatusUpdates'), enabled: true },
+  { key: 'pickupReminders', label: t('settings.pickupReminders'), enabled: true },
+  { key: 'invoiceAlerts', label: t('settings.invoiceAlerts'), enabled: true },
+  { key: 'marketingEmails', label: t('settings.marketingEmails'), enabled: false },
 ])
 
 const showSuccess = ref(false)

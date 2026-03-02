@@ -2,13 +2,21 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { loginUser, refreshAuth, logoutUser } from '../api/auth'
 import { fetchMe } from '../api/users'
+import { useLangStore } from './lang.js'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null)       // normalized user with client/clientId when available
-  const loading = ref(true)    // true while checking session on boot
+  const user = ref(null)
+  const loading = ref(true)
 
   const isLoggedIn = computed(() => !!user.value)
   const userRole = computed(() => user.value?.role ?? null)
+
+  function applyLanguage(lang) {
+    if (lang && ['en', 'es'].includes(lang)) {
+      const langStore = useLangStore()
+      langStore.setLocale(lang, { persist: false })
+    }
+  }
 
   async function loadCurrentUser() {
     const data = await fetchMe()
@@ -26,10 +34,12 @@ export const useAuthStore = defineStore('auth', () => {
       email: raw.email,
       role: raw.role,
       phone: raw.phone,
+      language: raw.language ?? 'en',
       clientId: clientObj?._id ?? (typeof raw.client === 'string' ? raw.client : null),
       client: clientObj ?? null,
     }
 
+    applyLanguage(user.value.language)
     return user.value
   }
 
@@ -59,5 +69,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, loading, isLoggedIn, userRole, login, logout, tryRefresh }
+  return { user, loading, isLoggedIn, userRole, login, logout, tryRefresh, applyLanguage }
 })

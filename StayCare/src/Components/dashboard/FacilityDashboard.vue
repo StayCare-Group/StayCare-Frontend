@@ -14,7 +14,7 @@
 
       <!-- Kanban Board -->
       <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4">
-        <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-4">Processing Board</h3>
+        <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-4">{{ $t('facility.processingBoard') }}</h3>
         <div class="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1">
           <KanbanColumn
             v-for="(cards, column) in kanbanOrders"
@@ -30,6 +30,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import KanbanColumn from '../ui/KanbanColumn.vue'
 import Reception from '../pages/facility/Reception.vue'
@@ -38,6 +39,7 @@ import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList, mapStatus } from '../../api/orders'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 
 const orders = ref([])
@@ -61,7 +63,7 @@ const facilityKPIs = computed(() => {
     if (counts[o.status] !== undefined) counts[o.status]++
   }
   const colors = { 'Received at Facility': 'blue', Washing: 'cyan', Drying: 'yellow', Ironing: 'orange', 'Quality Control': 'purple', 'Ready for Delivery': 'green' }
-  const labels = { 'Received at Facility': 'Incoming', Washing: 'Washing', Drying: 'Drying', Ironing: 'Ironing', 'Quality Control': 'QC', 'Ready for Delivery': 'Ready' }
+  const labels = { 'Received at Facility': t('facility.incoming'), Washing: t('facility.washing'), Drying: t('facility.drying'), Ironing: t('facility.ironing'), 'Quality Control': t('facility.qc'), 'Ready for Delivery': t('facility.ready') }
   return facilityStatuses.map(s => ({
     label: labels[s],
     value: counts[s],

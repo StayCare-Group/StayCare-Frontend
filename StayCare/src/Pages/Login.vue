@@ -1,8 +1,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth.js'
 
+const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const email = ref('')
@@ -14,11 +16,11 @@ const handleLogin = async () => {
   const phonePattern = /^\d{10}$/
 
   if (!email.value || !password.value) {
-    error.value = 'Please enter both (email or phone number) and password.'
+    error.value = t('auth.errorBothFields')
     return
   }
   if (!emailPattern.test(email.value) && !phonePattern.test(email.value)) {
-    error.value = 'Please enter a valid email address or phone number.'
+    error.value = t('auth.errorInvalidEmailPhone')
     return
   }
 
@@ -27,7 +29,7 @@ const handleLogin = async () => {
     await auth.login(email.value, password.value)
     router.push('/Dashboard')
   } catch (err) {
-    error.value = err?.message || err?.error || 'Invalid credentials.'
+    error.value = err?.message || err?.error || t('auth.errorInvalidCredentials')
   }
 }
 </script>
@@ -44,11 +46,11 @@ const handleLogin = async () => {
     <div class="bubble" style="left: 80%; animation-delay: 1.2s;"></div>
     <div class="bubble" style="left: 90%; animation-delay: 1.8s;"></div>
     <div class="flex flex-col items-center justify-center bg-white px-8 py-12 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
-      <h1 class="text-3xl font-bold text-center text-[#FF56B0]">Login for <span class="text-[#00F5F3]">StayFresh</span> laundry management</h1>
-      <input type="email" required placeholder="Email or (Phone Number)" v-model="email" class="flex justify-center items-center mt-9 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
-      <input type="password" placeholder="Password" v-model="password" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
+      <h1 class="text-3xl font-bold text-center text-[#FF56B0]">{{ $t('auth.loginHeading', { brand: 'StayFresh' }) }}</h1>
+      <input type="email" required :placeholder="$t('auth.emailOrPhone')" v-model="email" class="flex justify-center items-center mt-9 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
+      <input type="password" :placeholder="$t('auth.password')" v-model="password" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
       <p v-if="error" class="text-red-500 text-sm mt-2">{{ error }}</p>
-      <button @click="handleLogin" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-half shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">Login</button>
+      <button @click="handleLogin" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-half shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">{{ $t('common.login') }}</button>
      </div>
   </div>
 </template>
