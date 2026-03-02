@@ -268,6 +268,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { fetchOrders, mapOrderForList, reassignOrder } from '../../../api/orders'
 import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
 import { fetchUsers } from '../../../api/users'
+import { fetchClients } from '../../../api/clients'
 import { apiFetch } from '../../../api/client'
 
 /* ── Constants ── */
@@ -278,6 +279,7 @@ const rawOrders = ref([])
 const selectedOrderIds = ref([])
 const existingRoutes = ref([])
 const routesLoading = ref(false)
+const clientMap = ref({})  // clientId -> client object
 
 const reassignTargets = reactive({})
 const reassigning = reactive({})
@@ -304,9 +306,10 @@ const successMessage = ref('')
 
 onMounted(async () => {
   try {
-    const [ordersData, usersData] = await Promise.all([
+    const [ordersData, usersData, clientsData] = await Promise.all([
       fetchOrders().catch(() => []),
       fetchUsers().catch(() => []),
+      fetchClients().catch(() => []),
     ])
 
     rawOrders.value = ordersData ?? []
@@ -315,6 +318,14 @@ onMounted(async () => {
       name: u.name,
       email: u.email,
     }))
+
+    // Build client lookup by ID for address resolution
+    const map = {}
+    for (const c of (clientsData ?? [])) {
+      const cid = c._id ?? c.id
+      if (cid) map[cid] = c
+    }
+    clientMap.value = map
   } catch (err) {
     errorMessage.value =
       err?.message ||
@@ -339,20 +350,44 @@ async function loadRoutes() {
 }
 
 function resolveAddress(o) {
-  const clientObj = typeof o.client === 'object' && o.client ? o.client : null
+  // If client is a populated object, use it directly
+  let clientObj = typeof o.client === 'object' && o.client ? o.client : null
+  // If client is just a string ID, look it up from the clients we fetched
+  if (!clientObj && typeof o.client === 'string') {
+    clientObj = clientMap.value[o.client] ?? null
+  }
   const prop = clientObj?.properties?.[0]
   if (prop?.address) return `${prop.address}${prop.city ? ', ' + prop.city : ''}`
   return clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
 }
 
+// Set of order IDs already on a route — prevents duplicates
+const assignedOrderIds = computed(() => {
+  const ids = new Set()
+  for (const route of existingRoutes.value) {
+    for (const stop of (route.stops ?? [])) {
+      if (stop._id) ids.add(stop._id)
+    }
+  }
+  return ids
+})
+
 const pendingOrders = computed(() => {
   const candidates = rawOrders.value.filter(o =>
-    ['Pending', 'Assigned', 'Transit'].includes(o.status)
+    ['Pending', 'Assigned', 'Transit'].includes(o.status) &&
+    !assignedOrderIds.value.has(o._id ?? o.id)
   )
   return candidates.map(o => {
     const mapped = mapOrderForList(o)
+    // If client name is empty (client was just an ID), resolve from client map
+    let clientName = mapped.client
+    if (!clientName && typeof o.client === 'string' && clientMap.value[o.client]) {
+      const c = clientMap.value[o.client]
+      clientName = c.company_name ?? c.name ?? ''
+    }
     return {
       ...mapped,
+      client: clientName,
       _id: o._id ?? mapped._id,
       pickupAddress: resolveAddress(o),
     }
@@ -383,17 +418,16 @@ function formatSlot(order) {
 }
 
 function getOrderAddress(o) {
-  const clientObj = typeof o.client === 'object' ? o.client : null
-  const prop = clientObj?.properties?.[0]
-  return prop?.address
-    ? `${prop.address}${prop.city ? ', ' + prop.city : ''}`
-    : clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
+  // Reuse the same logic as resolveAddress
+  return resolveAddress(o)
 }
 
 function buildAutoPreview(targetDate) {
   const targetStr = targetDate // YYYY-MM-DD
+  const assigned = assignedOrderIds.value
   const ordersForDate = rawOrders.value.filter(o => {
     if (!['Pending', 'Assigned'].includes(o.status)) return false
+    if (assigned.has(o._id ?? o.id)) return false
     const pDate = o.pickup_date
       ? new Date(o.pickup_date).toISOString().split('T')[0]
       : ''

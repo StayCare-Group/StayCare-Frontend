@@ -46,7 +46,7 @@ const handleLogin = async () => {
     <div class="bubble" style="left: 80%; animation-delay: 1.2s;"></div>
     <div class="bubble" style="left: 90%; animation-delay: 1.8s;"></div>
     <div class="flex flex-col items-center justify-center bg-white px-8 py-12 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
-      <h1 class="text-3xl font-bold text-center text-[#FF56B0]">{{ $t('auth.loginHeading', { brand: 'StayFresh' }) }}</h1>
+      <i18n-t keypath="auth.loginHeading" tag="h1" class="text-3xl font-bold text-center text-[#FF56B0]"><template #brand><span class="text-[#00F5F3]">StayFresh</span></template></i18n-t>
       <input type="email" required :placeholder="$t('auth.emailOrPhone')" v-model="email" class="flex justify-center items-center mt-9 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
       <input type="password" :placeholder="$t('auth.password')" v-model="password" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
       <p v-if="error" class="text-red-500 text-sm mt-2">{{ error }}</p>

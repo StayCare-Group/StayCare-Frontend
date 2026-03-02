@@ -24,7 +24,7 @@ const goToCreateAccount = () => {
     <div class="bubble" style="left: 80%; animation-delay: 1.2s;"></div>
     <div class="bubble" style="left: 90%; animation-delay: 1.8s;"></div>
     <div class="flex flex-col items-center justify-center bg-white px-8 py-12 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
-      <h1 class="text-3xl font-bold text-center text-[#FF56B0]">{{ $t('auth.loginHeading', { brand: 'StayFresh' }) }}</h1>
+      <i18n-t keypath="auth.loginHeading" tag="h1" class="text-3xl font-bold text-center text-[#FF56B0]"><template #brand><span class="text-[#00F5F3]">StayFresh</span></template></i18n-t>
       <button @click="goToLogin" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-xs shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">{{ $t('common.signIn') }}</button>
       <button @click="goToCreateAccount" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-xs shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">{{ $t('common.signUp') }}</button>
     </div>
