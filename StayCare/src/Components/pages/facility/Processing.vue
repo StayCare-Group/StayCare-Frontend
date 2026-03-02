@@ -58,7 +58,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr v-for="m in facilityInventory" :key="m.machine" class="hover:bg-gray-50">
+            <tr v-for="m in machines" :key="m.machine" class="hover:bg-gray-50">
               <td class="px-5 py-2 font-medium text-gray-800">{{ m.machine }}</td>
               <td class="px-5 py-2 text-gray-500">{{ m.type }}</td>
               <td class="px-5 py-2 text-gray-500">{{ m.capacity }}</td>
@@ -76,16 +76,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
-import { fetchOrders, mapOrderForList, mapStatus } from '../../../api/orders'
-import { facilityInventory } from '../../../data/extendedMockData.js'
+import { fetchOrders, mapOrderForList } from '../../../api/orders'
+import { fetchMachineStatus } from '../../../api/facility'
 
 const allOrders = ref([])
+const machines = ref([])
 const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const data = await fetchOrders()
-    allOrders.value = (data ?? []).map(raw => {
+    const [ordersData, machinesData] = await Promise.all([
+      fetchOrders().catch(() => []),
+      fetchMachineStatus().catch(() => []),
+    ])
+
+    allOrders.value = (ordersData ?? []).map(raw => {
       const mapped = mapOrderForList(raw)
       mapped.items = (raw.items ?? []).map(i => ({
         code: i.item_code,
@@ -95,7 +100,12 @@ onMounted(async () => {
       mapped.serviceType = raw.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)'
       return mapped
     })
-  } catch { /* stays empty */ } finally {
+
+    machines.value = machinesData ?? []
+  } catch {
+    allOrders.value = []
+    machines.value = []
+  } finally {
     loading.value = false
   }
 })
@@ -118,6 +128,6 @@ function availableMachines(status) {
   }
   const type = typeMap[status]
   if (!type) return []
-  return facilityInventory.filter(m => m.type === type && (m.status === 'Available'))
+  return machines.value.filter(m => m.type === type && m.status === 'Available')
 }
 </script>

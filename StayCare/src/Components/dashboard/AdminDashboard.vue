@@ -4,6 +4,7 @@
     <OrdersList v-if="navStore.currentPage === 'orders'" />
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
     <UserManagement v-else-if="navStore.currentPage === 'users'" />
+    <RoutePlanner v-else-if="navStore.currentPage === 'routes'" />
     <Reports v-else-if="navStore.currentPage === 'reports'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
 
@@ -62,6 +63,7 @@ import KpiCard from '../ui/KpiCard.vue'
 import OrdersList from '../pages/client/OrdersList.vue'
 import OrderDetail from '../pages/client/OrderDetail.vue'
 import UserManagement from '../pages/admin/UserManagement.vue'
+import RoutePlanner from '../pages/admin/RoutePlanner.vue'
 import Reports from '../pages/admin/Reports.vue'
 import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'

@@ -102,6 +102,7 @@ import { fetchClients } from '../../../api/clients'
 import { fetchUsers } from '../../../api/users'
 
 const orders = ref([])
+const rawOrders = ref([])
 const invoices = ref([])
 const clientsList = ref([])
 const driversList = ref([])
@@ -115,6 +116,8 @@ onMounted(async () => {
       fetchClients().catch(() => []),
       fetchUsers().catch(() => []),
     ])
+
+    rawOrders.value = ordersData ?? []
     orders.value = (ordersData ?? []).map(mapOrderForList)
     invoices.value = (invoicesData ?? []).map(mapInvoiceForList)
     clientsList.value = clientsData ?? []
@@ -154,15 +157,76 @@ const ordersByClient = computed(() => {
 })
 
 const slaReport = computed(() => {
-  const total = orders.value.length
-  const delivered = orders.value.filter(o => ['Delivered', 'Completed'].includes(o.status)).length
-  const onTime = total > 0 ? Math.round((delivered / total) * 100) : 0
+  const MS_PER_HOUR = 1000 * 60 * 60
+  const processingDurations = []
+  const deliveryDurations = []
+
+  let onTimeCount = 0
+  let lateCount = 0
+  let criticalCount = 0
+
+  for (const o of rawOrders.value) {
+    const history = Array.isArray(o.status_history) ? o.status_history : []
+    if (!history.length) continue
+
+    const getFirstTimestamp = (statuses) => {
+      const entry = history.find(h => statuses.includes(h.status))
+      return entry?.timestamp ? new Date(entry.timestamp).getTime() : null
+    }
+
+    // Processing time: Arrived -> ReadyToDeliver/Completed
+    const arrivedAt = getFirstTimestamp(['Arrived'])
+    const processingDoneAt = getFirstTimestamp(['ReadyToDeliver', 'Completed', 'Delivered'])
+    if (arrivedAt && processingDoneAt && processingDoneAt > arrivedAt) {
+      processingDurations.push((processingDoneAt - arrivedAt) / MS_PER_HOUR)
+    }
+
+    // Delivery time: ReadyToDeliver/Collected -> Delivered/Completed
+    const deliveryStart = getFirstTimestamp(['ReadyToDeliver', 'Collected'])
+    const deliveredAt = getFirstTimestamp(['Delivered', 'Completed'])
+    if (deliveryStart && deliveredAt && deliveredAt > deliveryStart) {
+      deliveryDurations.push((deliveredAt - deliveryStart) / MS_PER_HOUR)
+    }
+
+    // SLA classification based on total time from order creation to delivery vs service_type target
+    if (deliveredAt && o.created_at) {
+      const createdAt = new Date(o.created_at).getTime()
+      if (!Number.isNaN(createdAt) && deliveredAt > createdAt) {
+        const totalHours = (deliveredAt - createdAt) / MS_PER_HOUR
+        const targetHours = o.service_type === 'express' ? 24 : 48
+
+        if (totalHours <= targetHours) {
+          onTimeCount++
+        } else if (totalHours <= targetHours * 2) {
+          lateCount++
+        } else {
+          criticalCount++
+        }
+      }
+    }
+  }
+
+  const totalClassified = onTimeCount + lateCount + criticalCount
+  const onTime = totalClassified ? Math.round((onTimeCount / totalClassified) * 100) : 0
+  const late = totalClassified ? Math.round((lateCount / totalClassified) * 100) : 0
+  const critical = Math.max(0, 100 - onTime - late)
+
+  const avgProcessingHours =
+    processingDurations.length > 0
+      ? Number((processingDurations.reduce((a, b) => a + b, 0) / processingDurations.length).toFixed(1))
+      : 0
+
+  const avgDeliveryHours =
+    deliveryDurations.length > 0
+      ? Number((deliveryDurations.reduce((a, b) => a + b, 0) / deliveryDurations.length).toFixed(1))
+      : 0
+
   return {
     onTime,
-    late: Math.max(0, 100 - onTime - 2),
-    critical: Math.min(2, 100 - onTime),
-    avgProcessingHours: 0,
-    avgDeliveryHours: 0,
+    late,
+    critical,
+    avgProcessingHours,
+    avgDeliveryHours,
   }
 })
 

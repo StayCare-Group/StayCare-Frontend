@@ -107,6 +107,8 @@ import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import { fetchClients } from '../../../api/clients'
 import { fetchUsers } from '../../../api/users'
+import { fetchOrders } from '../../../api/orders'
+import { fetchInvoices } from '../../../api/invoices'
 
 const activeTab = ref('clients')
 const loading = ref(true)
@@ -116,39 +118,83 @@ const staffList = ref([])
 
 onMounted(async () => {
   try {
-    const [clientsData, usersData] = await Promise.all([
+    const [clientsData, usersData, ordersData, invoicesData] = await Promise.all([
       fetchClients().catch(() => []),
       fetchUsers().catch(() => []),
+      fetchOrders().catch(() => []),
+      fetchInvoices().catch(() => []),
     ])
 
-    const companyClients = (clientsData ?? []).map(c => ({
-      id: c._id,
-      name: c.company_name,
-      type: c.pricing_tier === 'standard' ? 'Hotel' : c.pricing_tier,
-      contact: c.email,
-      phone: c.phone,
-      address: c.billing_address,
-      creditTerms: `${c.credits_terms_days ?? 30} days`,
-      status: 'Active',
-      totalOrders: 0,
-      outstandingBalance: 0,
-    }))
-
+    const clients = clientsData ?? []
     const users = usersData ?? []
+    const orders = ordersData ?? []
+    const invoices = invoicesData ?? []
 
-    // Also include user accounts with role 'client'
-    const clientUsers = users.filter(u => u.role === 'client').map(u => ({
-      id: u._id ?? u.id,
-      name: u.name,
-      type: 'User',
-      contact: u.email,
-      phone: u.phone ?? '',
-      address: '',
-      creditTerms: '',
-      status: u.is_active !== false ? 'Active' : 'Inactive',
-      totalOrders: 0,
-      outstandingBalance: 0,
-    }))
+    const ordersByClientId = new Map()
+    for (const o of orders) {
+      const clientObj = typeof o.client === 'object' ? o.client : null
+      const clientId = clientObj?._id ?? (typeof o.client === 'string' ? o.client : null)
+      if (!clientId) continue
+
+      const current = ordersByClientId.get(clientId) ?? { count: 0, revenue: 0 }
+      current.count += 1
+      const total = o.pricing_snapshot?.total ?? 0
+      current.revenue += typeof total === 'number' ? total : 0
+      ordersByClientId.set(clientId, current)
+    }
+
+    const balanceByClientId = new Map()
+    for (const inv of invoices) {
+      const clientObj = typeof inv.client === 'object' ? inv.client : null
+      const clientId = clientObj?._id ?? (typeof inv.client === 'string' ? inv.client : null)
+      if (!clientId) continue
+
+      // Treat non-paid invoices as outstanding
+      if (inv.status && inv.status.toLowerCase() === 'paid') continue
+
+      const current = balanceByClientId.get(clientId) ?? 0
+      const total = inv.total ?? inv.grandTotal ?? 0
+      balanceByClientId.set(clientId, current + (typeof total === 'number' ? total : 0))
+    }
+
+    const companyClients = clients.map(c => {
+      const aggregates = ordersByClientId.get(c._id) ?? { count: 0, revenue: 0 }
+      const outstandingBalance = balanceByClientId.get(c._id) ?? 0
+
+      return {
+        id: c._id,
+        name: c.company_name,
+        type: c.pricing_tier === 'standard' ? 'Hotel' : c.pricing_tier,
+        contact: c.email,
+        phone: c.phone,
+        address: c.billing_address,
+        creditTerms: `${c.credits_terms_days ?? 30} days`,
+        status: 'Active',
+        totalOrders: aggregates.count,
+        outstandingBalance,
+      }
+    })
+
+    const clientUsers = users
+      .filter(u => u.role === 'client')
+      .map(u => {
+        const clientId = typeof u.client === 'string' ? u.client : (u.client?._id ?? null)
+        const aggregates = clientId ? ordersByClientId.get(clientId) ?? { count: 0, revenue: 0 } : { count: 0, revenue: 0 }
+        const outstandingBalance = clientId ? balanceByClientId.get(clientId) ?? 0 : 0
+
+        return {
+          id: u._id ?? u.id,
+          name: u.name,
+          type: 'User',
+          contact: u.email,
+          phone: u.phone ?? '',
+          address: '',
+          creditTerms: '',
+          status: u.is_active !== false ? 'Active' : 'Inactive',
+          totalOrders: aggregates.count,
+          outstandingBalance,
+        }
+      })
 
     clientsList.value = [...companyClients, ...clientUsers]
 

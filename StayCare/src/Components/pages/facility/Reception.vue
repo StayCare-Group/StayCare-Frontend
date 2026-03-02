@@ -2,15 +2,38 @@
   <div class="space-y-6">
     <h2 class="text-lg font-semibold text-white">Reception &amp; Check-In</h2>
 
-    <!-- QR Scan placeholder -->
+    <!-- QR Scan -->
     <div class="bg-white rounded-xl shadow-sm p-5">
       <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Scan Order</h3>
-      <div class="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
-        <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-        </svg>
-        <p class="text-sm text-gray-400">Scan QR code or barcode on bag label</p>
-        <p class="text-xs text-gray-300 mt-1">(placeholder — camera integration)</p>
+      <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-5 text-center space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h4m10 0h4M4 9h16M4 15h16M3 19h4m10 0h4"/>
+            </svg>
+            <div class="text-left">
+              <p class="text-sm text-gray-700 font-medium">Camera Scan</p>
+              <p class="text-xs text-gray-400">Scan QR code or barcode on bag label</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="toggleScanner"
+            class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 hover:border-[#FF56B0] hover:text-[#FF56B0] transition"
+          >
+            {{ isScanning ? 'Stop Scan' : 'Start Scan' }}
+          </button>
+        </div>
+
+        <div v-if="isScanning" class="relative mt-3">
+          <video ref="videoRef" class="w-full max-h-64 rounded-lg bg-black object-cover"></video>
+          <div class="absolute inset-4 border-2 border-white border-dashed rounded-lg pointer-events-none"></div>
+        </div>
+
+        <p v-if="scanError" class="text-xs text-red-500 mt-1">{{ scanError }}</p>
+        <p v-if="lastScannedCode" class="text-xs text-gray-500 mt-1">
+          Last scanned: <span class="font-mono">{{ lastScannedCode }}</span>
+        </p>
       </div>
       <div class="mt-3">
         <label class="block text-sm font-medium text-gray-600 mb-1">Or enter Order ID manually</label>
@@ -106,16 +129,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import { fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
 import { receiveAtFacility } from '../../../api/orders'
+import { BrowserMultiFormatReader } from '@zxing/browser'
 
 const manualOrderId = ref('')
 const foundOrder = ref(null)
 const damageNotes = ref('')
 const showSuccess = ref(false)
 const checkinQtys = reactive({})
+
+const isScanning = ref(false)
+const videoRef = ref(null)
+const scanError = ref('')
+const lastScannedCode = ref('')
+let codeReader = null
 
 const allOrders = ref([])
 const loading = ref(true)
@@ -127,6 +157,10 @@ onMounted(async () => {
   } catch { /* stays empty */ } finally {
     loading.value = false
   }
+})
+
+onBeforeUnmount(() => {
+  stopScanner()
 })
 
 const recentCheckins = computed(() =>
@@ -146,6 +180,64 @@ function lookupOrder() {
     const mapped = mapOrderForDetail(raw)
     foundOrder.value = mapped
     mapped.items.forEach(item => { checkinQtys[item.code] = item.qty })
+  }
+}
+
+async function startScanner() {
+  if (isScanning.value) return
+  scanError.value = ''
+  try {
+    if (!codeReader) {
+      codeReader = new BrowserMultiFormatReader()
+    }
+    const videoElement = videoRef.value
+    if (!videoElement) return
+
+    isScanning.value = true
+    const constraints = { video: { facingMode: 'environment' } }
+    const stream = await navigator.mediaDevices.getUserMedia(constraints)
+    videoElement.srcObject = stream
+    videoElement.setAttribute('playsinline', 'true')
+    await videoElement.play()
+
+    codeReader.decodeFromVideoDevice(null, videoElement, (result) => {
+      if (result) {
+        lastScannedCode.value = result.getText()
+        manualOrderId.value = result.getText()
+        lookupOrder()
+        stopScanner()
+      }
+    })
+  } catch (err) {
+    console.error(err)
+    scanError.value = 'Unable to access camera. Check browser permissions.'
+    isScanning.value = false
+  }
+}
+
+function stopScanner() {
+  isScanning.value = false
+  scanError.value = ''
+  if (codeReader) {
+    try {
+      codeReader.reset()
+    } catch {}
+  }
+  const videoElement = videoRef.value
+  const stream = videoElement && videoElement.srcObject
+  if (stream && typeof stream.getTracks === 'function') {
+    stream.getTracks().forEach(t => t.stop())
+  }
+  if (videoElement) {
+    videoElement.srcObject = null
+  }
+}
+
+function toggleScanner() {
+  if (isScanning.value) {
+    stopScanner()
+  } else {
+    startScanner()
   }
 }
 

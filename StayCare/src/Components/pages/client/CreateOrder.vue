@@ -103,6 +103,7 @@
           Cancel
         </button>
       </div>
+      <p v-if="errorMessage" class="text-sm text-red-500 mt-2">{{ errorMessage }}</p>
     </form>
 
     <!-- Success toast -->
@@ -123,7 +124,7 @@ const navStore = useNavStore()
 const authStore = useAuthStore()
 
 const VAT_RATE = 0.18
-const SERVICE_TYPES = ['Standard (48h)', 'Express (24h)', 'Same-Day']
+const SERVICE_TYPES = ['Standard (48h)', 'Express (24h)']
 const today = new Date().toISOString().split('T')[0]
 const timeWindows = ['08:00 - 10:00', '09:00 - 11:00', '10:00 - 12:00', '13:00 - 15:00', '14:00 - 16:00', '15:00 - 17:00']
 
@@ -155,7 +156,7 @@ const subtotal = computed(() =>
 )
 
 const expressCharge = computed(() =>
-  form.serviceType === 'Express (24h)' ? 25 : form.serviceType === 'Same-Day' ? 50 : 0
+  form.serviceType === 'Express (24h)' ? 25 : 0
 )
 
 const vat = computed(() => (subtotal.value + expressCharge.value) * VAT_RATE)
@@ -164,6 +165,7 @@ const estimatedTotal = computed(() => subtotal.value + expressCharge.value + vat
 
 const showSuccess = ref(false)
 const submitting = ref(false)
+const errorMessage = ref('')
 
 function parseTimeWindow(tw) {
   const [start, end] = tw.split(' - ')
@@ -178,6 +180,7 @@ async function submitOrder() {
   if (submitting.value) return
   submitting.value = true
   try {
+    errorMessage.value = ''
     const items = laundryItems.value
       .filter(i => (itemQtys[i.code] || 0) > 0)
       .map(i => ({
@@ -210,8 +213,14 @@ async function submitOrder() {
       showSuccess.value = false
       navStore.goBack('orders')
     }, 1500)
-  } catch {
+  } catch (err) {
     showSuccess.value = false
+    const message =
+      err?.message ||
+      err?.error ||
+      err?.data?.message ||
+      'Failed to create order. Please try again.'
+    errorMessage.value = message
   } finally {
     submitting.value = false
   }
