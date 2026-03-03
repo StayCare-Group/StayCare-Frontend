@@ -49,3 +49,21 @@ export async function registerUser(payload: {
   })
   return unwrap(res)
 }
+
+export async function forgotPassword(email: string) {
+  const res = await fetch(`${API}/api/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  return unwrap(res)
+}
+
+export async function resetPassword(token: string, password: string) {
+  const res = await fetch(`${API}/api/auth/reset-password/${token}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  })
+  return unwrap(res)
+}

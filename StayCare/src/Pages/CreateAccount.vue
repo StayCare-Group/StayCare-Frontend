@@ -15,6 +15,7 @@ const bubbles = computed(() =>
   }))
 )
 
+const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const email = ref('')
@@ -53,7 +54,7 @@ const handleLogin = async () => {
       phone: phone.value || undefined,
     })
     await auth.login(email.value, password.value)
-    router.push('/Dashboard')
+    router.push('/dashboard')
   } catch (err) {
     error.value = err?.message || err?.error || t('auth.errorRegistration')
   }

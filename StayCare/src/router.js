@@ -5,6 +5,8 @@ import Dashboard from './Pages/Dashboard.vue'
 import CreateAccount from './Pages/CreateAccount.vue'
 import LogorCreate from './Pages/LogorCreate.vue'
 import InviteRegister from './Pages/InviteRegister.vue'
+import ForgotPassword from './Pages/ForgotPassword.vue'
+import ResetPassword from './Pages/ResetPassword.vue'
 
 const routes = [
   {
@@ -39,6 +41,18 @@ const routes = [
     path: '/invite/:token',
     name: 'InviteRegister',
     component: InviteRegister,
+    meta: { guest: true }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
+    meta: { guest: true }
+  },
+  {
+    path: '/reset-password/:token',
+    name: 'ResetPassword',
+    component: ResetPassword,
     meta: { guest: true }
   }
 ]

@@ -99,12 +99,23 @@ export function mapOrderForList(o: any) {
   }
 }
 
+function resolveProperty(clientObj: any, propertyId: any): any {
+  if (!clientObj?.properties?.length) return null
+  if (propertyId) {
+    const match = clientObj.properties.find(
+      (p: any) => p._id?.toString() === propertyId?.toString()
+    )
+    if (match) return match
+  }
+  return clientObj.properties[0]
+}
+
 export function mapOrderForDetail(o: any) {
   const clientObj = typeof o.client === 'object' && o.client ? o.client : null
   const clientId = clientObj?._id ?? clientObj?.id ?? (typeof o.client === 'string' ? o.client : '')
   const driverObj = typeof o.deliver_id === 'object' ? o.deliver_id : null
 
-  const property = clientObj?.properties?.[0]
+  const property = resolveProperty(clientObj, o.property)
 
   const clientName = clientObj?.company_name ?? clientObj?.name ?? o.client_name ?? ''
   const address = property?.address

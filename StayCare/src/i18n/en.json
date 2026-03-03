@@ -6,6 +6,7 @@
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "save": "Save Changes",
+    "saving": "Saving...",
     "cancel": "Cancel",
     "done": "Done",
     "welcomeBack": "Welcome back",
@@ -28,7 +29,16 @@
     "errorEmailOrPhone": "Please provide either an email address or phone number.",
     "errorInvalidEmail": "Please enter a valid email address.",
     "errorInvalidPhone": "Please enter a valid 10-digit phone number.",
-    "errorRegistration": "Registration failed. Please try again."
+    "errorRegistration": "Registration failed. Please try again.",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordDesc": "Enter your email and we'll send you a link to reset your password.",
+    "sendResetLink": "Send Reset Link",
+    "resetLinkSent": "If that email is registered, a reset link has been sent. Check your inbox.",
+    "backToLogin": "Back to Login",
+    "resetPassword": "Reset Password",
+    "newPassword": "New Password",
+    "passwordResetSuccess": "Your password has been reset successfully!",
+    "redirectingToLogin": "Redirecting you to login..."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -59,6 +69,10 @@
     "currentPassword": "Current Password",
     "newPassword": "New Password",
     "language": "Language",
+    "confirmPassword": "Confirm New Password",
+    "passwordMismatch": "New passwords do not match",
+    "passwordTooShort": "New password must be at least 6 characters",
+    "saveFailed": "Failed to save settings. Please try again.",
     "saved": "Settings saved!"
   },
   "admin": {
@@ -98,7 +112,12 @@
     "assignedStops": "Assigned Stops",
     "expectedBags": "Expected bags",
     "confirmPickup": "Confirm Pickup",
-    "confirmDelivery": "Confirm Delivery"
+    "confirmDelivery": "Confirm Delivery",
+    "history": "Delivery History",
+    "noHistory": "No past routes found.",
+    "stops": "stops",
+    "bags": "bags",
+    "noAddress": "No address"
   },
   "facility": {
     "processingBoard": "Processing Board",

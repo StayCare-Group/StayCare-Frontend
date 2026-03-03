@@ -14,10 +14,21 @@
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Pickup Details</h3>
 
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Pickup Address</label>
-          <input v-model="form.pickupAddress" type="text" required
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
-            placeholder="e.g. 45 Triq il-Kbira, Valletta VLT 1432" />
+          <label class="block text-sm font-medium text-gray-600 mb-1">Property</label>
+          <select v-model="form.propertyId" required
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none">
+            <option value="">Select property</option>
+            <option v-for="p in properties" :key="p._id" :value="p._id">
+              {{ p.property_name }} — {{ p.address }}, {{ p.city }}
+            </option>
+          </select>
+          <p v-if="selectedProperty" class="text-xs text-gray-400 mt-1">
+            {{ selectedProperty.address }}, {{ selectedProperty.city }} {{ selectedProperty.area ? '(' + selectedProperty.area + ')' : '' }}
+            <span v-if="selectedProperty.access_notes"> &middot; {{ selectedProperty.access_notes }}</span>
+          </p>
+          <p v-if="!properties.length && !loading" class="text-xs text-amber-500 mt-1">
+            No properties found. Ask your admin to add properties to your client profile.
+          </p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -119,6 +130,7 @@ import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchItems, mapItemForCatalog } from '../../../api/items'
 import { createOrder } from '../../../api/orders'
+import { fetchMe } from '../../../api/users'
 
 const navStore = useNavStore()
 const authStore = useAuthStore()
@@ -129,25 +141,35 @@ const today = new Date().toISOString().split('T')[0]
 const timeWindows = ['08:00 - 10:00', '09:00 - 11:00', '10:00 - 12:00', '13:00 - 15:00', '14:00 - 16:00', '15:00 - 17:00']
 
 const laundryItems = ref([])
+const properties = ref([])
 const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const data = await fetchItems()
-    laundryItems.value = (data ?? []).map(mapItemForCatalog)
+    const [itemsData, meData] = await Promise.all([
+      fetchItems().catch(() => []),
+      fetchMe().catch(() => null),
+    ])
+    laundryItems.value = (itemsData ?? []).map(mapItemForCatalog)
+    const client = meData?.user?.client ?? authStore.user?.client
+    properties.value = client?.properties ?? []
   } catch { /* stays empty */ } finally {
     loading.value = false
   }
 })
 
 const form = reactive({
-  pickupAddress: '',
+  propertyId: '',
   pickupDate: '',
   pickupTimeWindow: '',
   serviceType: 'Standard (48h)',
   estimatedBags: 1,
   specialNotes: '',
 })
+
+const selectedProperty = computed(() =>
+  properties.value.find(p => p._id === form.propertyId) ?? null
+)
 
 const itemQtys = reactive({})
 
@@ -192,7 +214,8 @@ async function submitOrder() {
       }))
 
     const payload = {
-      client: authStore.user?.clientId || authStore.user?.id,
+      client: authStore.user?.clientId || authStore.user?.client?._id || authStore.user?.id,
+      property: form.propertyId || undefined,
       service_type: form.serviceType.includes('Express') ? 'express' : 'standard',
       pickup_date: form.pickupDate,
       pickup_window: form.pickupTimeWindow ? parseTimeWindow(form.pickupTimeWindow) : undefined,

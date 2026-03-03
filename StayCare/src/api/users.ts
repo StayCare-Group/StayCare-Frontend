@@ -19,3 +19,10 @@ export async function updateMe(data: Record<string, any>) {
     body: JSON.stringify(data),
   })
 }
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  return apiFetch('/api/auth/password', {
+    method: 'PATCH',
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  })
+}

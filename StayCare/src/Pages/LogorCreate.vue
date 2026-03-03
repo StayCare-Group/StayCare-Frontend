@@ -15,11 +15,11 @@ const bubbles = computed(() =>
 const router = useRouter()
 
 const goToLogin = () => {
-  router.push('/Login')
+  router.push('/login')
 }
 
 const goToCreateAccount = () => {
-  router.push('/CreateAccount')
+  router.push('/createaccount')
 }
 </script>
 

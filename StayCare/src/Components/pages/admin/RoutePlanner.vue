@@ -214,6 +214,12 @@
           <div class="flex items-center gap-3">
             <span class="text-xs text-gray-500">{{ route.totalStops }} stop(s) &middot; {{ route.completedStops }} done</span>
             <button
+              @click="toggleRouteMap(route._id)"
+              class="text-xs text-[#FF56B0] hover:underline font-medium"
+            >
+              {{ showRouteMap[route._id] ? 'Hide Map' : 'Show Map' }}
+            </button>
+            <button
               @click="handleDeleteRoute(route._id)"
               :disabled="deleting[route._id]"
               class="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-40"
@@ -222,6 +228,17 @@
             </button>
           </div>
         </div>
+
+        <!-- Route map -->
+        <MiniMap
+          v-if="showRouteMap[route._id] && getRouteMarkers(route).length"
+          :markers="getRouteMarkers(route)"
+          height="240px"
+          class="mt-2"
+        />
+        <p v-if="showRouteMap[route._id] && !getRouteMarkers(route).length" class="text-xs text-gray-400">
+          No stops have map coordinates yet. Add coordinates to client properties for them to appear on the map.
+        </p>
 
         <!-- Stops with reassign -->
         <div class="divide-y divide-gray-50">
@@ -270,6 +287,7 @@ import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes
 import { fetchUsers } from '../../../api/users'
 import { fetchClients } from '../../../api/clients'
 import { apiFetch } from '../../../api/client'
+import MiniMap from '../../ui/MiniMap.vue'
 
 /* ── Constants ── */
 const MAX_PICKUPS_PER_HOUR = 4
@@ -350,13 +368,17 @@ async function loadRoutes() {
 }
 
 function resolveAddress(o) {
-  // If client is a populated object, use it directly
   let clientObj = typeof o.client === 'object' && o.client ? o.client : null
-  // If client is just a string ID, look it up from the clients we fetched
   if (!clientObj && typeof o.client === 'string') {
     clientObj = clientMap.value[o.client] ?? null
   }
-  const prop = clientObj?.properties?.[0]
+  let prop = null
+  if (clientObj?.properties?.length) {
+    if (o.property) {
+      prop = clientObj.properties.find(p => p._id?.toString() === o.property?.toString())
+    }
+    if (!prop) prop = clientObj.properties[0]
+  }
   if (prop?.address) return `${prop.address}${prop.city ? ', ' + prop.city : ''}`
   return clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
 }
@@ -596,6 +618,30 @@ async function handleReassign(orderId, driverId) {
   } finally {
     reassigning[orderId] = false
   }
+}
+
+const showRouteMap = reactive({})
+
+function toggleRouteMap(routeId) {
+  showRouteMap[routeId] = !showRouteMap[routeId]
+}
+
+function getRouteMarkers(route) {
+  const markers = []
+  for (const stop of (route.stops ?? [])) {
+    const rawOrder = rawOrders.value.find(o => (o._id ?? o.id) === stop._id)
+    if (!rawOrder) continue
+    let clientObj = typeof rawOrder.client === 'object' ? rawOrder.client : clientMap.value[rawOrder.client]
+    if (!clientObj?.properties?.length) continue
+    let prop = rawOrder.property
+      ? clientObj.properties.find(p => p._id?.toString() === rawOrder.property?.toString())
+      : clientObj.properties[0]
+    if (!prop) prop = clientObj.properties[0]
+    if (prop?.lat && prop?.lng) {
+      markers.push({ lat: prop.lat, lng: prop.lng, label: `${stop.orderId} — ${stop.client}` })
+    }
+  }
+  return markers
 }
 
 async function handleDeleteRoute(routeId) {

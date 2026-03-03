@@ -81,7 +81,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr v-for="c in clientsList" :key="c.id" class="hover:bg-gray-50">
+            <tr v-for="c in clientsList" :key="c.id" class="hover:bg-gray-50 cursor-pointer" @click="navStore.goToDetail('client-detail', c.id)">
               <td class="px-5 py-3 font-mono text-xs text-gray-500">{{ c.id }}</td>
               <td class="px-5 py-3 font-medium text-gray-800">{{ c.name }}</td>
               <td class="px-5 py-3 text-gray-500">{{ c.type }}</td>
@@ -158,11 +158,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import { useNavStore } from '../../../stores/nav.js'
 import { fetchClients } from '../../../api/clients'
 import { fetchUsers } from '../../../api/users'
 import { fetchOrders } from '../../../api/orders'
 import { fetchInvoices } from '../../../api/invoices'
 import { createInvitation } from '../../../api/invitations'
+
+const navStore = useNavStore()
 
 const activeTab = ref('clients')
 const loading = ref(true)

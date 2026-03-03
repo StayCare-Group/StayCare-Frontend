@@ -6,6 +6,7 @@
     "signIn": "Iniciar sesión",
     "signUp": "Registrarse",
     "save": "Guardar cambios",
+    "saving": "Guardando...",
     "cancel": "Cancelar",
     "done": "Hecho",
     "welcomeBack": "Bienvenido de nuevo",
@@ -28,7 +29,16 @@
     "errorEmailOrPhone": "Por favor proporcione un correo electrónico o un número de teléfono.",
     "errorInvalidEmail": "Por favor ingrese un correo electrónico válido.",
     "errorInvalidPhone": "Por favor ingrese un número de teléfono de 10 dígitos válido.",
-    "errorRegistration": "Error en el registro. Por favor intente de nuevo."
+    "errorRegistration": "Error en el registro. Por favor intente de nuevo.",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "forgotPasswordDesc": "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+    "sendResetLink": "Enviar enlace",
+    "resetLinkSent": "Si ese correo está registrado, se ha enviado un enlace. Revisa tu bandeja de entrada.",
+    "backToLogin": "Volver al inicio de sesión",
+    "resetPassword": "Restablecer contraseña",
+    "newPassword": "Nueva contraseña",
+    "passwordResetSuccess": "¡Tu contraseña se ha restablecido correctamente!",
+    "redirectingToLogin": "Redirigiendo al inicio de sesión..."
   },
   "nav": {
     "dashboard": "Panel",
@@ -59,6 +69,10 @@
     "currentPassword": "Contraseña actual",
     "newPassword": "Nueva contraseña",
     "language": "Idioma",
+    "confirmPassword": "Confirmar nueva contraseña",
+    "passwordMismatch": "Las contraseñas nuevas no coinciden",
+    "passwordTooShort": "La nueva contraseña debe tener al menos 6 caracteres",
+    "saveFailed": "Error al guardar la configuración. Inténtalo de nuevo.",
     "saved": "¡Configuración guardada!"
   },
   "admin": {
@@ -98,7 +112,12 @@
     "assignedStops": "Paradas asignadas",
     "expectedBags": "Bolsas esperadas",
     "confirmPickup": "Confirmar recogida",
-    "confirmDelivery": "Confirmar entrega"
+    "confirmDelivery": "Confirmar entrega",
+    "history": "Historial de entregas",
+    "noHistory": "No se encontraron rutas pasadas.",
+    "stops": "paradas",
+    "bags": "bolsas",
+    "noAddress": "Sin dirección"
   },
   "facility": {
     "processingBoard": "Tablero de procesamiento",

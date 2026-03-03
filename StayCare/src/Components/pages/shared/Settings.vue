@@ -48,14 +48,20 @@
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.currentPassword') }}</label>
-          <input type="password" placeholder="••••••••"
+          <input v-model="passwords.current" type="password" placeholder="••••••••"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.newPassword') }}</label>
-          <input type="password" placeholder="••••••••"
+          <input v-model="passwords.newPass" type="password" placeholder="••••••••"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.confirmPassword') }}</label>
+          <input v-model="passwords.confirm" type="password" placeholder="••••••••"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+        </div>
+        <p v-if="passwordError" class="text-xs text-red-500">{{ passwordError }}</p>
       </div>
     </div>
 
@@ -82,15 +88,19 @@
 
     <!-- Save -->
     <div class="flex gap-3">
-      <button @click="save"
-        class="bg-[#FF56B0] text-white font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm">
-        {{ $t('common.save') }}
+      <button @click="save" :disabled="saving"
+        class="bg-[#FF56B0] text-white font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm disabled:opacity-60">
+        {{ saving ? $t('common.saving') : $t('common.save') }}
       </button>
     </div>
 
     <!-- Success toast -->
     <div v-if="showSuccess" class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
       {{ $t('settings.saved') }}
+    </div>
+    <!-- Error toast -->
+    <div v-if="showError" class="fixed bottom-6 right-6 bg-red-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
+      {{ showError }}
     </div>
   </div>
 </template>
@@ -100,7 +110,7 @@ import { reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLangStore } from '../../../stores/lang.js'
 import { useAuthStore } from '../../../stores/auth.js'
-import { fetchMe } from '../../../api/users'
+import { fetchMe, updateMe, changePassword } from '../../../api/users'
 
 const { t } = useI18n()
 const langStore = useLangStore()
@@ -111,6 +121,15 @@ const profile = reactive({
   email: '',
   phone: '',
 })
+
+const passwords = reactive({
+  current: '',
+  newPass: '',
+  confirm: '',
+})
+
+const passwordError = ref('')
+const saving = ref(false)
 
 onMounted(async () => {
   try {
@@ -133,9 +152,48 @@ const notificationSettings = reactive([
 ])
 
 const showSuccess = ref(false)
+const showError = ref('')
 
-function save() {
-  showSuccess.value = true
-  setTimeout(() => { showSuccess.value = false }, 2000)
+async function save() {
+  if (saving.value) return
+  saving.value = true
+  passwordError.value = ''
+  showError.value = ''
+
+  try {
+    await updateMe({
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone,
+    })
+
+    if (passwords.current && passwords.newPass) {
+      if (passwords.newPass !== passwords.confirm) {
+        passwordError.value = t('settings.passwordMismatch')
+        saving.value = false
+        return
+      }
+      if (passwords.newPass.length < 6) {
+        passwordError.value = t('settings.passwordTooShort')
+        saving.value = false
+        return
+      }
+      await changePassword(passwords.current, passwords.newPass)
+      passwords.current = ''
+      passwords.newPass = ''
+      passwords.confirm = ''
+    }
+
+    await authStore.loadCurrentUser()
+    showSuccess.value = true
+    setTimeout(() => { showSuccess.value = false }, 2000)
+  } catch (err) {
+    showError.value = err?.message || err?.error || t('settings.saveFailed')
+    if (err?.message?.toLowerCase().includes('password')) {
+      passwordError.value = err.message
+    }
+  } finally {
+    saving.value = false
+  }
 }
 </script>

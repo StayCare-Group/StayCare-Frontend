@@ -1,6 +1,17 @@
 import { apiFetch } from './client'
 import { mapStatus } from './orders'
 
+function resolveProperty(clientObj: any, propertyId: any): any {
+  if (!clientObj?.properties?.length) return null
+  if (propertyId) {
+    const match = clientObj.properties.find(
+      (p: any) => p._id?.toString() === propertyId?.toString()
+    )
+    if (match) return match
+  }
+  return clientObj.properties[0]
+}
+
 export async function fetchRoutes(params?: Record<string, string>) {
   const query = params ? '?' + new URLSearchParams(params).toString() : ''
   return apiFetch(`/api/routes${query}`)
@@ -59,7 +70,7 @@ export function mapRouteForDriver(route: any) {
     status: route.status,
     stops: orders.map((o: any, idx: number) => {
       const clientObj = typeof o.client === 'object' ? o.client : null
-      const property = clientObj?.properties?.[0]
+      const property = resolveProperty(clientObj, o.property)
       const addr = property?.address
         ? `${property.address}${property.city ? ', ' + property.city : ''}`
         : clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? o.delivery_address ?? ''
