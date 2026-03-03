@@ -9,7 +9,7 @@
         class="min-w-[240px] flex-shrink-0 bg-gray-50 rounded-xl p-3"
       >
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ col.status }}</h3>
+          <h3 class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ col.label }}</h3>
           <span class="text-xs text-gray-400 bg-white px-2 py-0.5 rounded-full">{{ col.orders.length }}</span>
         </div>
         <div class="space-y-2">
@@ -31,9 +31,17 @@
             <div v-if="col.assignable" class="mt-2">
               <select class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#FF56B0] outline-none">
                 <option value="">Assign machine...</option>
-                <option v-for="m in availableMachines(col.status)" :key="m.machine" :value="m.machine">{{ m.machine }} ({{ m.capacity }})</option>
+                <option v-for="m in availableMachines(col.label)" :key="m.machine" :value="m.machine">{{ m.machine }} ({{ m.capacity }})</option>
               </select>
             </div>
+            <button
+              v-if="col.nextStatus"
+              :disabled="advancing === order._id"
+              class="mt-2 w-full text-xs font-medium text-white bg-[#FF56B0] hover:bg-[#e04d9e] disabled:opacity-50 rounded px-2 py-1.5 transition-colors"
+              @click="advanceOrder(order._id, col.nextStatus)"
+            >
+              {{ advancing === order._id ? 'Moving…' : `Move to ${nextLabel(col.nextStatus)}` }}
+            </button>
           </div>
           <div v-if="col.orders.length === 0" class="text-xs text-gray-300 text-center py-4">No orders</div>
         </div>
@@ -76,30 +84,48 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
-import { fetchOrders, mapOrderForList } from '../../../api/orders'
+import { fetchOrders, updateOrderStatus } from '../../../api/orders'
 import { fetchMachineStatus } from '../../../api/facility'
 
 const allOrders = ref([])
 const machines = ref([])
 const loading = ref(true)
+const advancing = ref(null)
 
-onMounted(async () => {
+const PIPELINE = [
+  { status: 'Arrived',        label: 'Received at Facility', nextStatus: 'Washing',        assignable: false },
+  { status: 'Washing',        label: 'Washing',              nextStatus: 'Drying',          assignable: true  },
+  { status: 'Drying',         label: 'Drying',               nextStatus: 'Ironing',         assignable: true  },
+  { status: 'Ironing',        label: 'Ironing',              nextStatus: 'QualityCheck',    assignable: true  },
+  { status: 'QualityCheck',   label: 'Quality Check',        nextStatus: 'ReadyToDeliver',  assignable: false },
+  { status: 'ReadyToDeliver', label: 'Ready for Delivery',   nextStatus: null,              assignable: false },
+]
+
+const LABEL_MAP = Object.fromEntries(PIPELINE.map(p => [p.status, p.label]))
+
+function nextLabel(backendStatus) {
+  return LABEL_MAP[backendStatus] ?? backendStatus
+}
+
+async function loadOrders() {
   try {
     const [ordersData, machinesData] = await Promise.all([
       fetchOrders().catch(() => []),
       fetchMachineStatus().catch(() => []),
     ])
 
-    allOrders.value = (ordersData ?? []).map(raw => {
-      const mapped = mapOrderForList(raw)
-      mapped.items = (raw.items ?? []).map(i => ({
+    allOrders.value = (ordersData ?? []).map(raw => ({
+      id: raw.order_number ?? raw._id ?? raw.id,
+      _id: raw._id ?? raw.id,
+      client: raw.client?.company_name ?? raw.client ?? '',
+      status: raw.status,
+      serviceType: raw.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)',
+      items: (raw.items ?? []).map(i => ({
         code: i.item_code,
         name: i.name,
         qty: i.quantity ?? 0,
-      }))
-      mapped.serviceType = raw.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)'
-      return mapped
-    })
+      })),
+    }))
 
     machines.value = machinesData ?? []
   } catch {
@@ -108,25 +134,36 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
 
-const processingStatuses = ['Received at Facility', 'Sorting', 'Washing', 'Drying', 'Ironing', 'Quality Control']
+onMounted(loadOrders)
 
 const columns = computed(() =>
-  processingStatuses.map(status => ({
-    status,
-    orders: allOrders.value.filter(o => o.status === status),
-    assignable: ['Washing', 'Drying', 'Ironing'].includes(status),
+  PIPELINE.map(col => ({
+    ...col,
+    orders: allOrders.value.filter(o => o.status === col.status),
   }))
 )
 
-function availableMachines(status) {
+async function advanceOrder(orderId, nextStatus) {
+  advancing.value = orderId
+  try {
+    await updateOrderStatus(orderId, nextStatus)
+    await loadOrders()
+  } catch (err) {
+    alert('Failed to update status: ' + (err?.message ?? 'Unknown error'))
+  } finally {
+    advancing.value = null
+  }
+}
+
+function availableMachines(label) {
   const typeMap = {
     Washing: 'Industrial Washer',
     Drying: 'Industrial Dryer',
     Ironing: 'Steam Iron',
   }
-  const type = typeMap[status]
+  const type = typeMap[label]
   if (!type) return []
   return machines.value.filter(m => m.type === type && m.status === 'Available')
 }
