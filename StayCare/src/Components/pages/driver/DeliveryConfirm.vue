@@ -121,6 +121,13 @@
       </form>
 
       <!-- Success toast -->
+      <!-- Error toast -->
+      <div v-if="errorMsg" class="fixed bottom-6 right-6 bg-red-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50 max-w-sm">
+        <p class="font-bold">Error:</p>
+        <p>{{ errorMsg }}</p>
+      </div>
+
+      <!-- Success toast -->
       <div v-if="showSuccess" class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
         Delivery confirmed!
       </div>
@@ -140,6 +147,7 @@ import { confirmDelivery as apiConfirmDelivery } from '../../../api/orders'
 
 const navStore = useNavStore()
 const showSuccess = ref(false)
+const errorMsg = ref('')
 const stop = ref(null)
 const loading = ref(true)
 
@@ -236,44 +244,27 @@ function clearSignature() {
 
 async function confirmDelivery() {
   if (!stop.value?._id) return
+  errorMsg.value = ''
   try {
     const payload = {
-      notes: form.notes,
+      packages_delivered: form.packagesDelivered,
+      received_by: form.receivedBy,
+      notes: form.notes || undefined,
       confirmation_method: form.confirmationMethod,
     }
 
-    const photos = []
-    if (photoPreview.value) {
-      photos.push({
-        photo_url: photoPreview.value,
-        type: 'after',
-      })
-    }
-
-    const canvas = signatureCanvas.value
-    if (canvas) {
-      const blank = document.createElement('canvas')
-      blank.width = canvas.width
-      blank.height = canvas.height
-      if (canvas.toDataURL() !== blank.toDataURL()) {
-        photos.push({
-          photo_url: canvas.toDataURL('image/png'),
-          type: 'after',
-        })
-      }
-    }
-
-    if (photos.length > 0) {
-      payload.photos = photos
-    }
-
+    console.log('Delivery payload:', JSON.stringify(payload, null, 2))
+    console.log('Order _id:', stop.value._id)
     await apiConfirmDelivery(stop.value._id, payload)
+    errorMsg.value = ''
     showSuccess.value = true
     setTimeout(() => {
       showSuccess.value = false
       navStore.goBack('route')
     }, 1500)
-  } catch {
+  } catch (err) {
+    console.error('Delivery error:', err)
+    errorMsg.value = err?.message || err?.error || JSON.stringify(err)
     showSuccess.value = false
   }
 }
