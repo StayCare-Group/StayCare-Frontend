@@ -18,6 +18,8 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   })
 
   if (res.status === 401) {
+    // Redirect to login on auth failure
+    window.location.href = '/LogorCreate'
     throw new Error('Unauthorized')
   }
 

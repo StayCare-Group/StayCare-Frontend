@@ -5,62 +5,62 @@
       <button @click="navStore.goBack('route')" class="text-white hover:text-gray-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h2 class="text-lg font-semibold text-white">Confirm Delivery</h2>
+      <h2 class="text-lg font-semibold text-white">{{ $t('driver.confirmDelivery') }}</h2>
     </div>
 
     <div v-if="stop" class="space-y-6">
       <!-- Stop Info -->
       <div class="bg-white rounded-xl shadow-sm p-5">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div><span class="text-gray-400">Client</span><p class="font-medium text-gray-800">{{ stop.client }}</p></div>
-          <div><span class="text-gray-400">Order</span><p class="font-medium text-gray-800">{{ stop.orderId }}</p></div>
-          <div><span class="text-gray-400">Address</span><p class="font-medium text-gray-800">{{ stop.address }}</p></div>
-          <div><span class="text-gray-400">Time Window</span><p class="font-medium text-gray-800">{{ stop.timeWindow }}</p></div>
-          <div><span class="text-gray-400">Packages</span><p class="font-medium text-gray-800">{{ stop.estimatedBags }}</p></div>
+          <div><span class="text-gray-400">{{ $t('common.client') }}</span><p class="font-medium text-gray-800">{{ stop.client }}</p></div>
+          <div><span class="text-gray-400">{{ $t('common.order') }}</span><p class="font-medium text-gray-800">{{ stop.orderId }}</p></div>
+          <div><span class="text-gray-400">{{ $t('common.address') }}</span><p class="font-medium text-gray-800">{{ stop.address }}</p></div>
+          <div><span class="text-gray-400">{{ $t('driver.timeWindow') }}</span><p class="font-medium text-gray-800">{{ stop.timeWindow }}</p></div>
+          <div><span class="text-gray-400">{{ $t('driver.packages') }}</span><p class="font-medium text-gray-800">{{ stop.estimatedBags }}</p></div>
         </div>
       </div>
 
       <!-- Delivery Form -->
       <form @submit.prevent="confirmDelivery" class="space-y-5">
         <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Delivery Confirmation</h3>
+          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('driver.deliveryConfirmation') }}</h3>
 
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Packages Delivered</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.packagesDelivered') }}</label>
             <input v-model.number="form.packagesDelivered" type="number" min="1" required
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#00F5F3] focus:border-transparent outline-none"
-              placeholder="Number of packages delivered" />
+              :placeholder="$t('driver.packagesDeliveredPlaceholder')" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Received By</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.receivedBy') }}</label>
             <input v-model="form.receivedBy" type="text" required
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#00F5F3] focus:border-transparent outline-none"
-              placeholder="Name of person receiving" />
+              :placeholder="$t('driver.receivedByPlaceholder')" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Delivery Notes</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.deliveryNotes') }}</label>
             <textarea v-model="form.notes" rows="2"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#00F5F3] focus:border-transparent outline-none resize-none"
-              placeholder="Any issues or observations..."></textarea>
+              :placeholder="$t('driver.notesPlaceholder')"></textarea>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Confirmation Method</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.confirmationMethod') }}</label>
             <select
               v-model="form.confirmationMethod"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#00F5F3] focus:border-transparent outline-none"
             >
-              <option value="photo">Photo</option>
-              <option value="signature">Signature</option>
-              <option value="pin">PIN</option>
+              <option value="photo">{{ $t('common.photo') }}</option>
+              <option value="signature">{{ $t('common.signature') }}</option>
+              <option value="pin">{{ $t('driver.pin') }}</option>
             </select>
           </div>
 
           <!-- Photo proof -->
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Proof of Delivery (optional)</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.proofOfDeliveryOptional') }}</label>
             <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center space-y-2">
               <input
                 type="file"
@@ -69,7 +69,7 @@
                 @change="onPhotoChange"
                 class="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
               />
-              <p class="text-xs text-gray-400">Capture or upload a photo as proof of delivery.</p>
+              <p class="text-xs text-gray-400">{{ $t('driver.deliveryPhotoHint') }}</p>
               <img
                 v-if="photoPreview"
                 :src="photoPreview"
@@ -81,7 +81,7 @@
 
           <!-- Digital signature -->
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Recipient Signature</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.recipientSignature') }}</label>
             <div class="border border-gray-200 rounded-lg bg-gray-50 p-2">
               <canvas
                 ref="signatureCanvas"
@@ -95,13 +95,13 @@
                 @touchend.prevent="endSignature"
               ></canvas>
               <div class="flex items-center justify-between mt-2">
-                <p class="text-xs text-gray-400">Have the recipient sign in the box.</p>
+                <p class="text-xs text-gray-400">{{ $t('driver.recipientSignHint') }}</p>
                 <button
                   type="button"
                   @click="clearSignature"
                   class="text-xs text-gray-500 hover:text-gray-700"
                 >
-                  Clear
+                  {{ $t('common.clear') }}
                 </button>
               </div>
             </div>
@@ -111,37 +111,44 @@
         <div class="flex gap-3">
           <button type="submit"
             class="bg-[#00F5F3] text-gray-800 font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#00D4D2] hover:opacity-90 transition text-sm">
-            Confirm Delivery
+            {{ $t('driver.confirmDelivery') }}
           </button>
           <button type="button" @click="navStore.goBack('route')"
             class="bg-gray-100 text-gray-600 font-medium py-2.5 px-6 rounded-lg hover:bg-gray-200 transition text-sm">
-            Cancel
+            {{ $t('common.cancel') }}
           </button>
         </div>
       </form>
 
       <!-- Success toast -->
       <!-- Error toast -->
-      <div v-if="errorMsg" class="fixed bottom-6 right-6 bg-red-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50 max-w-sm">
-        <p class="font-bold">Error:</p>
-        <p>{{ errorMsg }}</p>
+      <div v-if="errorMsg" class="fixed bottom-6 right-6 bg-red-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50 max-w-sm flex items-start gap-2">
+        <div>
+          <p class="font-bold">{{ $t('common.error') }}:</p>
+          <p>{{ errorMsg }}</p>
+        </div>
+        <button @click="errorMsg = ''" class="text-white/70 hover:text-white ml-2 shrink-0">&times;</button>
       </div>
 
       <!-- Success toast -->
-      <div v-if="showSuccess" class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
-        Delivery confirmed!
+      <div v-if="showSuccess" class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50 flex items-center gap-2">
+        {{ $t('driver.confirmDelivery') }} ✓
+        <button @click="showSuccess = false" class="text-white/70 hover:text-white ml-2">&times;</button>
       </div>
     </div>
 
     <div v-else class="bg-white rounded-xl shadow-sm p-10 text-center">
-      <p class="text-gray-400">Stop not found.</p>
+      <p class="text-gray-400">{{ $t('driver.stopNotFound') }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useNavStore } from '../../../stores/nav.js'
+
+const { t } = useI18n()
 import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
 import { confirmDelivery as apiConfirmDelivery } from '../../../api/orders'
 
@@ -158,7 +165,8 @@ let isDrawing = false
 
 onMounted(async () => {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
     const data = await fetchRoutes({ date: today })
     const routes = (data ?? []).map(mapRouteForDriver)
     const allStops = routes.flatMap(r => r.stops)
@@ -253,8 +261,6 @@ async function confirmDelivery() {
       confirmation_method: form.confirmationMethod,
     }
 
-    console.log('Delivery payload:', JSON.stringify(payload, null, 2))
-    console.log('Order _id:', stop.value._id)
     await apiConfirmDelivery(stop.value._id, payload)
     errorMsg.value = ''
     showSuccess.value = true
@@ -263,7 +269,6 @@ async function confirmDelivery() {
       navStore.goBack('route')
     }, 1500)
   } catch (err) {
-    console.error('Delivery error:', err)
     errorMsg.value = err?.message || err?.error || JSON.stringify(err)
     showSuccess.value = false
   }

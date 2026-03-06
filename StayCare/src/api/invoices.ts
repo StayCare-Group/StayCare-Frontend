@@ -18,7 +18,13 @@ export async function recordPayment(id: string, payload: any) {
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
-  return new Date(dateStr).toISOString().split('T')[0]
+  const s = String(dateStr)
+  // Plain YYYY-MM-DD with no time component – return as-is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  // ISO datetime – parse and use LOCAL date parts (browser timezone)
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
 function capitalize(s: string): string {

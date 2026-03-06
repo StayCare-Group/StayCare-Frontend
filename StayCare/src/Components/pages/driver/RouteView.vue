@@ -86,7 +86,8 @@ const showMap = ref(false)
 
 onMounted(async () => {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
     const data = await fetchRoutes({ date: today })
     if (data?.length) {
       rawRouteOrders.value = data[0].orders ?? []

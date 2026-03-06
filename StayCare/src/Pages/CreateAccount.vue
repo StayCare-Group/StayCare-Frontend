@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { registerUser } from '../api/auth'
 import { useAuthStore } from '../stores/auth.js'
 
-const bubbles = computed(() =>
+const bubbles = ref(
   Array.from({ length: 15 }, (_, i) => ({
     id: i,
     left: Math.random() * 96 + 2,
@@ -24,7 +24,7 @@ const error = ref('')
 const username = ref('')
 const phone = ref('')
 
-const handleLogin = async () => {
+const handleRegister = async () => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const phonePattern = /^\d{10}$/
 
@@ -82,7 +82,7 @@ const handleLogin = async () => {
       <input type="tel" :placeholder="$t('auth.phone')" v-model="phone" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
       <input type="password" :placeholder="$t('auth.password')" v-model="password" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
       <p v-if="error" class="text-red-500 text-sm mt-2">{{ error }}</p>
-      <button @click="handleLogin" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-half shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">{{ $t('auth.createAccount') }}</button>
+      <button @click="handleRegister" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-half shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">{{ $t('auth.createAccount') }}</button>
      </div>
   </div>
 </template>

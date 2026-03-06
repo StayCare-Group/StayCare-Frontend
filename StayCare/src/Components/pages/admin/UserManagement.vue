@@ -1,21 +1,21 @@
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-white">User Management</h2>
+      <h2 class="text-lg font-semibold text-white">{{ $t('admin.userManagement') }}</h2>
       <button
         @click="showInviteModal = true"
         class="px-4 py-2 bg-[#FF56B0] text-white text-sm font-semibold rounded-lg shadow-[0_3px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300"
       >
-        + Invite User
+        {{ $t('admin.inviteUser') }}
       </button>
     </div>
 
     <!-- Invite Modal -->
     <div v-if="showInviteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="closeInviteModal">
       <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Invite a New User</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ $t('admin.inviteNewUser') }}</h3>
 
-        <label class="block text-sm font-medium text-gray-600 mb-1">Email</label>
+        <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.email') }}</label>
         <input
           type="email"
           v-model="inviteEmail"
@@ -23,7 +23,7 @@
           class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
         />
 
-        <label class="block text-sm font-medium text-gray-600 mt-4 mb-1">Role</label>
+        <label class="block text-sm font-medium text-gray-600 mt-4 mb-1">{{ $t('common.role') }}</label>
         <div class="flex gap-2">
           <button
             v-for="r in roleOptions" :key="r.value"
@@ -38,19 +38,19 @@
         <p v-if="inviteError" class="text-red-500 text-sm mt-3">{{ inviteError }}</p>
         <p v-if="inviteSuccess" class="text-green-600 text-sm mt-3">{{ inviteSuccess }}</p>
         <p v-if="inviteLink" class="text-xs text-gray-500 mt-2 break-all bg-gray-50 p-2 rounded">
-          <span class="font-medium text-gray-700">Backup link:</span> {{ inviteLink }}
+          <span class="font-medium text-gray-700">{{ $t('admin.backupLink') }}</span> {{ inviteLink }}
         </p>
 
         <div class="flex gap-3 mt-6">
           <button
             @click="closeInviteModal"
             class="flex-1 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
-          >Cancel</button>
+          >{{ $t('common.cancel') }}</button>
           <button
             @click="handleInvite"
             :disabled="inviteSending"
             class="flex-1 py-2 bg-[#FF56B0] text-white rounded-lg text-sm font-semibold shadow-[0_3px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >{{ inviteSending ? 'Sending...' : 'Send Invitation' }}</button>
+          >{{ inviteSending ? $t('common.sending') : $t('admin.sendInvitation') }}</button>
         </div>
       </div>
     </div>
@@ -71,13 +71,13 @@
         <table class="w-full text-sm text-left min-w-[800px]">
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
-              <th class="px-5 py-3 font-medium">ID</th>
-              <th class="px-5 py-3 font-medium">Name</th>
-              <th class="px-5 py-3 font-medium">Type</th>
-              <th class="px-5 py-3 font-medium">Contact</th>
-              <th class="px-5 py-3 font-medium">Status</th>
-              <th class="px-5 py-3 font-medium">Orders</th>
-              <th class="px-5 py-3 font-medium">Balance</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.id') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.name') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.type') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.contact') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.status') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.orders') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.balance') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -101,13 +101,13 @@
         <table class="w-full text-sm text-left min-w-[700px]">
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
-              <th class="px-5 py-3 font-medium">ID</th>
-              <th class="px-5 py-3 font-medium">Name</th>
-              <th class="px-5 py-3 font-medium">Contact</th>
-              <th class="px-5 py-3 font-medium">Vehicle</th>
-              <th class="px-5 py-3 font-medium">Zone</th>
-              <th class="px-5 py-3 font-medium">Status</th>
-              <th class="px-5 py-3 font-medium">Today</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.id') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.name') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.contact') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('admin.vehicle') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('admin.zone') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.status') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.today') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -131,12 +131,12 @@
         <table class="w-full text-sm text-left min-w-[600px]">
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
-              <th class="px-5 py-3 font-medium">ID</th>
-              <th class="px-5 py-3 font-medium">Name</th>
-              <th class="px-5 py-3 font-medium">Contact</th>
-              <th class="px-5 py-3 font-medium">Role</th>
-              <th class="px-5 py-3 font-medium">Shift</th>
-              <th class="px-5 py-3 font-medium">Status</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.id') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.name') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.contact') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.role') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('admin.shift') }}</th>
+              <th class="px-5 py-3 font-medium">{{ $t('common.status') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -157,8 +157,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import { useNavStore } from '../../../stores/nav.js'
+
+const { t } = useI18n()
 import { fetchClients } from '../../../api/clients'
 import { fetchUsers } from '../../../api/users'
 import { fetchOrders } from '../../../api/orders'
@@ -181,11 +184,11 @@ const inviteSuccess = ref('')
 const inviteLink = ref('')
 const inviteSending = ref(false)
 
-const roleOptions = [
-  { value: 'driver', label: 'Driver' },
-  { value: 'staff', label: 'Staff' },
-  { value: 'admin', label: 'Admin' },
-]
+const roleOptions = computed(() => [
+  { value: 'driver', label: t('admin.driver') },
+  { value: 'staff', label: t('admin.staff') },
+  { value: 'admin', label: t('admin.admin') },
+])
 
 function closeInviteModal() {
   showInviteModal.value = false
@@ -199,7 +202,7 @@ function closeInviteModal() {
 async function handleInvite() {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!inviteEmail.value || !emailPattern.test(inviteEmail.value)) {
-    inviteError.value = 'Please enter a valid email address.'
+    inviteError.value = t('admin.invalidEmailError')
     return
   }
 
@@ -214,12 +217,12 @@ async function handleInvite() {
       role: inviteRole.value,
     })
 
-    inviteSuccess.value = 'Invitation sent successfully!'
+    inviteSuccess.value = t('admin.invitationSentSuccess')
     if (data?.invitation?.invite_url) {
       inviteLink.value = data.invitation.invite_url
     }
   } catch (err) {
-    inviteError.value = err?.message || 'Failed to send invitation.'
+    inviteError.value = err?.message || t('admin.invitationSentError')
   } finally {
     inviteSending.value = false
   }
@@ -273,7 +276,7 @@ onMounted(async () => {
       return {
         id: c._id,
         name: c.company_name,
-        type: c.pricing_tier === 'standard' ? 'Hotel' : c.pricing_tier,
+        type: c.pricing_tier === 'standard' ? t('admin.hotel') : c.pricing_tier,
         contact: c.email,
         phone: c.phone,
         address: c.billing_address,
@@ -324,9 +327,9 @@ onMounted(async () => {
       name: u.name,
       phone: u.phone ?? '',
       email: u.email,
-      role: u.role === 'admin' ? 'Admin' : 'Facility Staff',
+      role: u.role === 'admin' ? t('admin.admin') : t('admin.facilityStaff'),
       shift: '',
-      status: u.is_active ? 'Active' : 'Inactive',
+      status: u.is_active !== false ? 'Active' : 'Inactive',
     }))
   } catch { /* stays empty */ } finally {
     loading.value = false
@@ -334,8 +337,8 @@ onMounted(async () => {
 })
 
 const tabs = computed(() => [
-  { key: 'clients', label: 'Clients', count: clientsList.value.length },
-  { key: 'drivers', label: 'Drivers', count: driversList.value.length },
-  { key: 'staff', label: 'Staff', count: staffList.value.length },
+  { key: 'clients', label: t('admin.clients'), count: clientsList.value.length },
+  { key: 'drivers', label: t('admin.drivers'), count: driversList.value.length },
+  { key: 'staff', label: t('admin.staff'), count: staffList.value.length },
 ])
 </script>

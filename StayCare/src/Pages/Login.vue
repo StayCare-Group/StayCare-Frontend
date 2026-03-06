@@ -1,12 +1,12 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth.js'
 
 const { t } = useI18n()
 
-const bubbles = computed(() =>
+const bubbles = ref(
   Array.from({ length: 15 }, (_, i) => ({
     id: i,
     left: Math.random() * 96 + 2,

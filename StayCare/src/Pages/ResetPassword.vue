@@ -14,6 +14,16 @@ const error = ref('')
 const success = ref(false)
 const loading = ref(false)
 
+const bubbles = ref(
+  Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    left: Math.random() * 96 + 2,
+    size: Math.random() * 30 + 15,
+    delay: Math.random() * 5,
+    duration: Math.random() * 4 + 4,
+  }))
+)
+
 async function handleReset() {
   error.value = ''
   if (!password.value || !confirmPassword.value) {
@@ -43,8 +53,20 @@ async function handleReset() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
-    <div class="bg-white px-8 py-10 rounded-lg shadow-lg max-w-md w-full">
+  <div class="template">
+    <div
+      v-for="b in bubbles"
+      :key="b.id"
+      class="bubble"
+      :style="{
+        left: b.left + '%',
+        width: b.size + 'px',
+        height: b.size + 'px',
+        animationDelay: b.delay + 's',
+        animationDuration: b.duration + 's',
+      }"
+    />
+    <div class="bg-white px-8 py-10 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
       <h1 class="text-2xl font-bold text-center text-[#FF56B0] mb-6">{{ t('auth.resetPassword') }}</h1>
 
       <template v-if="!success">
@@ -81,3 +103,29 @@ async function handleReset() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.template {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #FF56B0 0%, #FF8DD2 50%, #FFB6E4 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 1rem;
+}
+.bubble {
+  position: absolute;
+  bottom: -150px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  animation: float linear infinite;
+  pointer-events: none;
+}
+@keyframes float {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+  100% { transform: translateY(-110vh) rotate(720deg); opacity: 0; }
+}
+</style>

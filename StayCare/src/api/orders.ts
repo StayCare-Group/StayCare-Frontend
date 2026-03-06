@@ -5,6 +5,49 @@ export async function fetchOrders(params?: Record<string, string>) {
   return apiFetch(`/api/orders${query}`)
 }
 
+/**
+ * Fetches ALL orders by requesting a large limit and iterating pages.
+ */
+export async function fetchAllOrders(params?: Record<string, string>) {
+  const allOrders: any[] = []
+  let page = 1
+  const maxPages = 50
+
+  while (page <= maxPages) {
+    const merged: Record<string, string> = {
+      ...params,
+      page: String(page),
+      limit: '200',
+      per_page: '200',
+      pageSize: '200',
+    }
+    const query = '?' + new URLSearchParams(merged).toString()
+    const data = await apiFetch(`/api/orders${query}`)
+    const items = Array.isArray(data) ? data : []
+
+    if (items.length === 0) break
+
+    // Detect duplicate pages (backend ignores page param)
+    if (page > 1) {
+      const firstId = items[0]?._id ?? items[0]?.id
+      if (allOrders.some(o => (o._id ?? o.id) === firstId)) break
+    }
+
+    allOrders.push(...items)
+
+    const pagination = (data as any)?._pagination
+    if (pagination) {
+      const totalPages = pagination.totalPages ?? pagination.pages ?? pagination.total_pages ?? pagination.lastPage ?? 0
+      if (totalPages && page >= totalPages) break
+    }
+
+    if (items.length < 200) break
+    page++
+  }
+
+  return allOrders
+}
+
 export async function fetchOrderById(id: string) {
   return apiFetch(`/api/orders/${id}`)
 }
@@ -68,7 +111,14 @@ export function mapStatus(backendStatus: string): string {
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
-  return new Date(dateStr).toISOString().split('T')[0]
+  const s = String(dateStr)
+  // Plain YYYY-MM-DD with no time component – return as-is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  // ISO datetime (e.g. "2026-03-09T23:00:00.000Z") – parse and use LOCAL date parts
+  // so the browser's timezone (Malta UTC+1) resolves to the correct calendar day
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
 function formatTime(dateStr: string): string {
@@ -113,7 +163,7 @@ function resolveProperty(clientObj: any, propertyId: any): any {
 export function mapOrderForDetail(o: any) {
   const clientObj = typeof o.client === 'object' && o.client ? o.client : null
   const clientId = clientObj?._id ?? clientObj?.id ?? (typeof o.client === 'string' ? o.client : '')
-  const driverObj = typeof o.deliver_id === 'object' ? o.deliver_id : null
+  const driverObj = typeof o.driver === 'object' ? o.driver : (typeof o.assigned_driver === 'object' ? o.assigned_driver : null)
 
   const property = resolveProperty(clientObj, o.property)
 

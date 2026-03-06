@@ -76,7 +76,8 @@ async function loadHistory() {
     if (dateFilter.value) {
       pastRoutes.value = all
     } else {
-      const today = new Date().toISOString().split('T')[0]
+      const _d = new Date()
+      const today = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`
       pastRoutes.value = all.filter(r => r.date < today || r.status === 'completed')
     }
   } catch {

@@ -43,7 +43,7 @@ import InvoicesList from '../pages/client/InvoicesList.vue'
 import InvoiceDetail from '../pages/client/InvoiceDetail.vue'
 import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { fetchOrders, mapOrderForList, mapStatus } from '../../api/orders'
+import { fetchOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
 
 const { t } = useI18n()

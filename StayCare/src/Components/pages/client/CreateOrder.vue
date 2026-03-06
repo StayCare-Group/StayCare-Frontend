@@ -137,7 +137,8 @@ const authStore = useAuthStore()
 
 const VAT_RATE = 0.18
 const SERVICE_TYPES = ['Standard (48h)', 'Express (24h)']
-const today = new Date().toISOString().split('T')[0]
+const _now = new Date()
+const today = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')}`
 const timeWindows = ['08:00 - 10:00', '09:00 - 11:00', '10:00 - 12:00', '13:00 - 15:00', '14:00 - 16:00', '15:00 - 17:00']
 
 const laundryItems = ref([])
@@ -191,7 +192,8 @@ const errorMessage = ref('')
 
 function parseTimeWindow(tw) {
   const [start, end] = tw.split(' - ')
-  const date = form.pickupDate || new Date().toISOString().split('T')[0]
+  const _d = new Date()
+  const date = form.pickupDate || `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`
   return {
     start_time: new Date(`${date}T${start}:00`).toISOString(),
     end_time: new Date(`${date}T${end}:00`).toISOString(),

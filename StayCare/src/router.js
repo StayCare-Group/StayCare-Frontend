@@ -54,6 +54,11 @@ const routes = [
     name: 'ResetPassword',
     component: ResetPassword,
     meta: { guest: true }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    redirect: '/LogorCreate'
   }
 ]
 
