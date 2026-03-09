@@ -9,6 +9,13 @@ export async function fetchInvoiceById(id: string) {
   return apiFetch(`/api/invoices/${id}`)
 }
 
+export async function createInvoice(payload: any) {
+  return apiFetch('/api/invoices', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function recordPayment(id: string, payload: any) {
   return apiFetch(`/api/invoices/${id}/payments`, {
     method: 'POST',
