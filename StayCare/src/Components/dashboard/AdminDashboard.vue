@@ -5,6 +5,7 @@
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
     <InvoicesList v-else-if="navStore.currentPage === 'invoices'" />
     <InvoiceDetail v-else-if="navStore.currentPage === 'invoice-detail'" />
+    <CreateInvoice v-else-if="navStore.currentPage === 'create-invoice'" />
     <UserManagement v-else-if="navStore.currentPage === 'users'" />
     <ClientDetail v-else-if="navStore.currentPage === 'client-detail'" />
     <Processing v-else-if="navStore.currentPage === 'processing'" />
@@ -75,6 +76,7 @@ import Reports from '../pages/admin/Reports.vue'
 import Settings from '../pages/shared/Settings.vue'
 import InvoicesList from '../pages/client/InvoicesList.vue'
 import InvoiceDetail from '../pages/client/InvoiceDetail.vue'
+import CreateInvoice from '../pages/admin/CreateInvoice.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
