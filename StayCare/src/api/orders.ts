@@ -94,6 +94,13 @@ export async function reassignOrder(orderId: string, driverId: string) {
   })
 }
 
+export async function rescheduleOrder(id: string, payload: { pickup_date: string; pickup_window?: any }) {
+  return apiFetch(`/api/orders/${id}/reschedule`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
 const STATUS_MAP: Record<string, string> = {
   Pending: 'Pending Pickup',
   Assigned: 'Pending Pickup',

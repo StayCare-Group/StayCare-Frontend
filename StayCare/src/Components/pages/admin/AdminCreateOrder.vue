@@ -5,19 +5,30 @@
       <button @click="navStore.goBack('orders')" class="text-white hover:text-gray-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h2 class="text-lg font-semibold text-white">Create New Order</h2>
+      <h2 class="text-lg font-semibold text-white">{{ $t('admin.createOrderTitle') }}</h2>
     </div>
 
     <form @submit.prevent="submitOrder" class="space-y-6">
-      <!-- Pickup Details -->
+      <!-- Client & Property Selection -->
       <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Pickup Details</h3>
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('admin.selectClient') }}</h3>
 
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Property</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.client') }}</label>
+          <select v-model="form.clientId" required
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none">
+            <option value="">{{ $t('admin.selectClientPlaceholder') }}</option>
+            <option v-for="c in clients" :key="c._id" :value="c._id">
+              {{ c.company_name || c.name }}
+            </option>
+          </select>
+        </div>
+
+        <div v-if="properties.length">
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.selectProperty') }}</label>
           <select v-model="form.propertyId" required
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none">
-            <option value="">Select property</option>
+            <option value="">{{ $t('admin.selectPropertyPlaceholder') }}</option>
             <option v-for="p in properties" :key="p._id" :value="p._id">
               {{ p.property_name }} — {{ p.address }}, {{ p.city }}
             </option>
@@ -26,38 +37,44 @@
             {{ selectedProperty.address }}, {{ selectedProperty.city }} {{ selectedProperty.area ? '(' + selectedProperty.area + ')' : '' }}
             <span v-if="selectedProperty.access_notes"> &middot; {{ selectedProperty.access_notes }}</span>
           </p>
-          <p v-if="!properties.length && !loading" class="text-xs text-amber-500 mt-1">
-            No properties found. Ask your admin to add properties to your client profile.
-          </p>
         </div>
+        <p v-if="form.clientId && !loadingClient && !properties.length" class="text-xs text-amber-500 mt-1">
+          {{ $t('admin.noPropertiesFound') }}
+        </p>
+        <p v-if="loadingClient" class="text-xs text-gray-400 mt-1">{{ $t('common.loading') }}</p>
+      </div>
+
+      <!-- Pickup Details -->
+      <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('admin.pickupDetails') }}</h3>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Pickup Date</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.pickupDate') }}</label>
             <input v-model="form.pickupDate" type="date" required :min="today"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Time Window</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.timeWindow') }}</label>
             <select v-model="form.pickupTimeWindow" required
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none">
-              <option value="">Select time window</option>
+              <option value="">{{ $t('admin.selectTimeWindow') }}</option>
               <option v-for="tw in timeWindows" :key="tw" :value="tw">{{ tw }}</option>
             </select>
-            <p v-if="!timeWindows.length" class="text-xs text-amber-500 mt-1">No time windows available for today — please choose a later date.</p>
+            <p v-if="!timeWindows.length" class="text-xs text-amber-500 mt-1">{{ $t('admin.noTimeWindows') }}</p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Service Type</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.serviceType') }}</label>
             <select v-model="form.serviceType" required
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none">
               <option v-for="s in SERVICE_TYPES" :key="s" :value="s">{{ s }}</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Estimated Bags</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.estimatedBags') }}</label>
             <input v-model.number="form.estimatedBags" type="number" min="1" required
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
               placeholder="e.g. 5" />
@@ -67,8 +84,8 @@
 
       <!-- Item Selection -->
       <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Estimated Items</h3>
-        <p class="text-xs text-gray-400">Add quantities for each item type to get a price estimate.</p>
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('admin.estimatedItems') }}</h3>
+        <p class="text-xs text-gray-400">{{ $t('admin.itemQuantityHint') }}</p>
 
         <div class="divide-y divide-gray-100">
           <div v-for="item in laundryItems" :key="item.code"
@@ -87,32 +104,32 @@
 
       <!-- Special Notes -->
       <div class="bg-white rounded-xl shadow-sm p-5 space-y-3">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Special Notes</h3>
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('admin.specialNotes') }}</h3>
         <textarea v-model="form.specialNotes" rows="3"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none resize-none"
-          placeholder="e.g. Wine stains on sheets, low-temperature wash needed..."></textarea>
+          :placeholder="$t('admin.specialNotesPlaceholder')"></textarea>
       </div>
 
       <!-- Price Estimate -->
       <div v-if="estimatedTotal > 0" class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Price Estimate</h3>
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">{{ $t('admin.priceEstimate') }}</h3>
         <div class="space-y-1 text-sm">
-          <div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span class="font-medium">&euro;{{ subtotal.toFixed(2) }}</span></div>
-          <div v-if="expressCharge > 0" class="flex justify-between"><span class="text-gray-500">Express surcharge</span><span class="font-medium">&euro;{{ expressCharge.toFixed(2) }}</span></div>
-          <div class="flex justify-between"><span class="text-gray-500">VAT (18%)</span><span class="font-medium">&euro;{{ vat.toFixed(2) }}</span></div>
-          <div class="flex justify-between border-t border-gray-100 pt-2 mt-2"><span class="font-semibold text-gray-800">Estimated Total</span><span class="font-bold text-gray-800">&euro;{{ estimatedTotal.toFixed(2) }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">{{ $t('admin.subtotal') }}</span><span class="font-medium">&euro;{{ subtotal.toFixed(2) }}</span></div>
+          <div v-if="expressCharge > 0" class="flex justify-between"><span class="text-gray-500">{{ $t('admin.expressSurcharge') }}</span><span class="font-medium">&euro;{{ expressCharge.toFixed(2) }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">{{ $t('admin.vat') }}</span><span class="font-medium">&euro;{{ vat.toFixed(2) }}</span></div>
+          <div class="flex justify-between border-t border-gray-100 pt-2 mt-2"><span class="font-semibold text-gray-800">{{ $t('admin.estimatedTotal') }}</span><span class="font-bold text-gray-800">&euro;{{ estimatedTotal.toFixed(2) }}</span></div>
         </div>
       </div>
 
       <!-- Submit -->
       <div class="flex gap-3">
-        <button type="submit"
-          class="bg-[#FF56B0] text-white font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm">
-          Place Order
+        <button type="submit" :disabled="submitting"
+          class="bg-[#FF56B0] text-white font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm disabled:opacity-50">
+          {{ submitting ? $t('common.saving') : $t('admin.placeOrder') }}
         </button>
         <button type="button" @click="navStore.goBack('orders')"
           class="bg-gray-100 text-gray-600 font-medium py-2.5 px-6 rounded-lg hover:bg-gray-200 transition text-sm">
-          Cancel
+          {{ $t('common.cancel') }}
         </button>
       </div>
       <p v-if="errorMessage" class="text-sm text-red-500 mt-2">{{ errorMessage }}</p>
@@ -120,7 +137,7 @@
 
     <!-- Success toast -->
     <div v-if="showSuccess" class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
-      Order submitted successfully!
+      {{ $t('admin.orderCreatedSuccess') }}
     </div>
   </div>
 </template>
@@ -128,13 +145,11 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { useAuthStore } from '../../../stores/auth.js'
 import { fetchItems, mapItemForCatalog } from '../../../api/items'
 import { createOrder } from '../../../api/orders'
-import { fetchMe } from '../../../api/users'
+import { fetchClients, fetchClientById } from '../../../api/clients'
 
 const navStore = useNavStore()
-const authStore = useAuthStore()
 
 const VAT_RATE = 0.18
 const SERVICE_TYPES = ['Standard (48h)', 'Express (24h)']
@@ -143,6 +158,7 @@ const today = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')
 const ALL_TIME_WINDOWS = ['08:00 - 10:00', '09:00 - 11:00', '10:00 - 12:00', '13:00 - 15:00', '14:00 - 16:00', '15:00 - 17:00']
 
 const form = reactive({
+  clientId: '',
   propertyId: '',
   pickupDate: '',
   pickupTimeWindow: '',
@@ -159,7 +175,7 @@ const timeWindows = computed(() => {
   return ALL_TIME_WINDOWS.filter(tw => {
     const [startStr] = tw.split(' - ')
     const [h, m] = startStr.split(':').map(Number)
-    return (h * 60 + m + 30) > nowMinutes   // still available if less than 30 min into the window
+    return (h * 60 + m + 30) > nowMinutes
   })
 })
 
@@ -170,21 +186,40 @@ watch(() => form.pickupDate, () => {
   }
 })
 
-const laundryItems = ref([])
+const clients = ref([])
 const properties = ref([])
+const laundryItems = ref([])
 const loading = ref(true)
+const loadingClient = ref(false)
 
 onMounted(async () => {
   try {
-    const [itemsData, meData] = await Promise.all([
+    const [itemsData, clientsData] = await Promise.all([
       fetchItems().catch(() => []),
-      fetchMe().catch(() => null),
+      fetchClients().catch(() => []),
     ])
     laundryItems.value = (itemsData ?? []).map(mapItemForCatalog)
-    const client = meData?.user?.client ?? authStore.user?.client
-    properties.value = client?.properties ?? []
+    clients.value = clientsData ?? []
   } catch { /* stays empty */ } finally {
     loading.value = false
+  }
+})
+
+// When client changes, load their properties
+watch(() => form.clientId, async (newId) => {
+  form.propertyId = ''
+  properties.value = []
+  if (!newId) return
+  loadingClient.value = true
+  try {
+    const clientData = await fetchClientById(newId)
+    properties.value = clientData?.properties ?? []
+    // Auto-select first property if only one
+    if (properties.value.length === 1) {
+      form.propertyId = properties.value[0]._id
+    }
+  } catch { /* stays empty */ } finally {
+    loadingClient.value = false
   }
 })
 
@@ -212,8 +247,7 @@ const errorMessage = ref('')
 
 function parseTimeWindow(tw) {
   const [start, end] = tw.split(' - ')
-  const _d = new Date()
-  const date = form.pickupDate || `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`
+  const date = form.pickupDate || today
   return {
     start_time: new Date(`${date}T${start}:00`).toISOString(),
     end_time: new Date(`${date}T${end}:00`).toISOString(),
@@ -236,7 +270,7 @@ async function submitOrder() {
       }))
 
     const payload = {
-      client: authStore.user?.clientId || authStore.user?.client?._id || authStore.user?.id,
+      client: form.clientId,
       property: form.propertyId || undefined,
       service_type: form.serviceType.includes('Express') ? 'express' : 'standard',
       pickup_date: form.pickupDate,

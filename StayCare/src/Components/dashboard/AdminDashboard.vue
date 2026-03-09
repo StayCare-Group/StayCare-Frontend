@@ -3,6 +3,8 @@
     <!-- Sub-pages -->
     <OrdersList v-if="navStore.currentPage === 'orders'" />
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
+    <AdminCreateOrder v-else-if="navStore.currentPage === 'create-order'" />
+    <ItemManagement v-else-if="navStore.currentPage === 'items'" />
     <InvoicesList v-else-if="navStore.currentPage === 'invoices'" />
     <InvoiceDetail v-else-if="navStore.currentPage === 'invoice-detail'" />
     <UserManagement v-else-if="navStore.currentPage === 'users'" />
@@ -67,6 +69,8 @@ import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import OrdersList from '../pages/client/OrdersList.vue'
 import OrderDetail from '../pages/client/OrderDetail.vue'
+import AdminCreateOrder from '../pages/admin/AdminCreateOrder.vue'
+import ItemManagement from '../pages/admin/ItemManagement.vue'
 import UserManagement from '../pages/admin/UserManagement.vue'
 import ClientDetail from '../pages/admin/ClientDetail.vue'
 import Processing from '../pages/facility/Processing.vue'

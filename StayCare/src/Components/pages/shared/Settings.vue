@@ -29,7 +29,7 @@
       <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('settings.notifications') }}</h3>
       <div class="space-y-3">
         <label v-for="n in notificationSettings" :key="n.key" class="flex items-center justify-between">
-          <span class="text-sm text-gray-700">{{ n.label }}</span>
+          <span class="text-sm text-gray-700">{{ $t('settings.' + n.key) }}</span>
           <button
             @click="n.enabled = !n.enabled"
             class="relative w-10 h-5 rounded-full transition-colors"
@@ -145,10 +145,10 @@ onMounted(async () => {
 })
 
 const notificationSettings = reactive([
-  { key: 'orderUpdates', label: t('settings.orderStatusUpdates'), enabled: true },
-  { key: 'pickupReminders', label: t('settings.pickupReminders'), enabled: true },
-  { key: 'invoiceAlerts', label: t('settings.invoiceAlerts'), enabled: true },
-  { key: 'marketingEmails', label: t('settings.marketingEmails'), enabled: false },
+  { key: 'orderStatusUpdates', enabled: true },
+  { key: 'pickupReminders', enabled: true },
+  { key: 'invoiceAlerts', enabled: true },
+  { key: 'marketingEmails', enabled: false },
 ])
 
 const showSuccess = ref(false)
