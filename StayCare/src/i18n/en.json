@@ -172,7 +172,22 @@
     "itemFieldsRequired": "Item code and name are required.",
     "itemCreated": "Item created successfully!",
     "itemUpdated": "Item updated successfully!",
-    "itemDeleted": "Item deleted successfully!"
+    "itemDeleted": "Item deleted successfully!",
+    "createInvoice": "Create Invoice",
+    "newInvoice": "New Invoice",
+    "dueDate": "Due Date",
+    "lineItems": "Line Items",
+    "description": "Description",
+    "quantity": "Quantity",
+    "lineTotal": "Line Total",
+    "addLineItem": "+ Add Line Item",
+    "removeItem": "Remove",
+    "vatPercent": "VAT (18%)",
+    "grandTotal": "Grand Total",
+    "placeInvoice": "Create Invoice",
+    "invoiceCreated": "Invoice created successfully!",
+    "noClients": "No clients found.",
+    "noOrdersForClient": "No unbilled orders for this client."
   },
   "client": {
     "activeOrders": "Active Orders",
