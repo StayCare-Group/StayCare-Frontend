@@ -187,7 +187,11 @@
     "placeInvoice": "Create Invoice",
     "invoiceCreated": "Invoice created successfully!",
     "noClients": "No clients found.",
-    "noOrdersForClient": "No unbilled orders for this client."
+    "noOrdersForClient": "No unbilled orders for this client.",
+    "exportExcel": "Export to Excel",
+    "selectMonth": "Select Month",
+    "reportByMonth": "By Month",
+    "reportByYear": "By Year"
   },
   "client": {
     "activeOrders": "Active Orders",
