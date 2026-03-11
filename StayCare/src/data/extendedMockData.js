@@ -412,16 +412,16 @@ export const clientsList = [
 
 // ---------- DRIVERS (Admin) ----------
 export const driversList = [
-  { id: 'DRV-001', name: 'Erik N.', phone: '+356 7999 1234', email: 'erik@staycare.mt', plate: 'MLA-2234', zone: 'Valletta / Sliema / St. Julian\'s', status: 'Active', todayStops: 6, completedStops: 2 },
-  { id: 'DRV-002', name: 'John D.', phone: '+356 7988 5678', email: 'john@staycare.mt', plate: 'MLA-3345', zone: 'Marsaxlokk / Birgu / Gzira', status: 'Active', todayStops: 5, completedStops: 3 },
-  { id: 'DRV-003', name: 'Carlos M.', phone: '+356 7977 9012', email: 'carlos@staycare.mt', plate: 'MLA-4456', zone: 'Mdina / Rabat / Mosta', status: 'Off Duty', todayStops: 0, completedStops: 0 },
+  { id: 'DRV-001', name: 'Erik N.', phone: '+356 7999 1234', email: 'erik@stayfresh.mt', plate: 'MLA-2234', zone: 'Valletta / Sliema / St. Julian\'s', status: 'Active', todayStops: 6, completedStops: 2 },
+  { id: 'DRV-002', name: 'John D.', phone: '+356 7988 5678', email: 'john@stayfresh.mt', plate: 'MLA-3345', zone: 'Marsaxlokk / Birgu / Gzira', status: 'Active', todayStops: 5, completedStops: 3 },
+  { id: 'DRV-003', name: 'Carlos M.', phone: '+356 7977 9012', email: 'carlos@stayfresh.mt', plate: 'MLA-4456', zone: 'Mdina / Rabat / Mosta', status: 'Off Duty', todayStops: 0, completedStops: 0 },
 ]
 
 // ---------- STAFF (Admin) ----------
 export const staffList = [
-  { id: 'STF-001', name: 'Maria S.', phone: '+356 7911 2233', email: 'maria@staycare.mt', role: 'Facility Staff', shift: 'Morning (06:00-14:00)', status: 'Active' },
-  { id: 'STF-002', name: 'Luke Z.', phone: '+356 7922 3344', email: 'luke@staycare.mt', role: 'Facility Staff', shift: 'Afternoon (14:00-22:00)', status: 'Active' },
-  { id: 'STF-003', name: 'Sofia R.', phone: '+356 7933 4455', email: 'sofia@staycare.mt', role: 'Admin', shift: 'Office Hours', status: 'Active' },
+  { id: 'STF-001', name: 'Maria S.', phone: '+356 7911 2233', email: 'maria@stayfresh.mt', role: 'Facility Staff', shift: 'Morning (06:00-14:00)', status: 'Active' },
+  { id: 'STF-002', name: 'Luke Z.', phone: '+356 7922 3344', email: 'luke@stayfresh.mt', role: 'Facility Staff', shift: 'Afternoon (14:00-22:00)', status: 'Active' },
+  { id: 'STF-003', name: 'Sofia R.', phone: '+356 7933 4455', email: 'sofia@stayfresh.mt', role: 'Admin', shift: 'Office Hours', status: 'Active' },
 ]
 
 // ---------- ADMIN REPORTS ----------

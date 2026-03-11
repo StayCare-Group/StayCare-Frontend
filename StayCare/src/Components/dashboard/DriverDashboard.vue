@@ -4,6 +4,7 @@
     <RouteView v-if="navStore.currentPage === 'route'" />
     <PickupConfirm v-else-if="navStore.currentPage === 'pickup-confirm'" />
     <DeliveryConfirm v-else-if="navStore.currentPage === 'delivery-confirm'" />
+    <DriverHistory v-else-if="navStore.currentPage === 'history'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
 
     <!-- Default dashboard overview -->
@@ -76,6 +77,7 @@ import StatusBadge from '../ui/StatusBadge.vue'
 import RouteView from '../pages/driver/RouteView.vue'
 import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
+import DriverHistory from '../pages/driver/DriverHistory.vue'
 import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchRoutes, mapRouteForDriver } from '../../api/routes'
@@ -88,7 +90,8 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
     const data = await fetchRoutes({ date: today })
     const routes = (data ?? []).map(mapRouteForDriver)
     route.value = routes[0] ?? null

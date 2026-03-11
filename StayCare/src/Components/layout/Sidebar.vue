@@ -14,7 +14,7 @@
     <div class="p-5 border-b border-gray-100 flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold">
-          <span class="text-[#FF56B0]">Stay</span><span class="text-[#00F5F3]">Care</span>
+          <span class="text-[#FF56B0]">Stay</span><span class="text-[#00F5F3]">Fresh</span>
         </h1>
         <p class="text-xs text-gray-400 mt-0.5">{{ $t('common.laundryManagement') }}</p>
       </div>
@@ -41,7 +41,7 @@
 
     <!-- Footer -->
     <div class="p-4 border-t border-gray-100 text-xs text-gray-400">
-      &copy; 2026 StayCare
+      &copy; 2026 StayFresh
     </div>
   </aside>
 </template>
@@ -83,6 +83,9 @@ const navItems = computed(() => {
     ],
     Admin: [
       { label: t('nav.orders'), page: 'orders', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+      { label: t('nav.items'), page: 'items', icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z' },
+      { label: t('nav.invoices'), page: 'invoices', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+      { label: t('nav.processing'), page: 'processing', icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' },
       { label: t('nav.routes'), page: 'routes', icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7' },
       { label: t('nav.users'), page: 'users', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
       { label: t('nav.reports'), page: 'reports', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },

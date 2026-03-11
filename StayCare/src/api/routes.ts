@@ -1,6 +1,17 @@
 import { apiFetch } from './client'
 import { mapStatus } from './orders'
 
+function resolveProperty(clientObj: any, propertyId: any): any {
+  if (!clientObj?.properties?.length) return null
+  if (propertyId) {
+    const match = clientObj.properties.find(
+      (p: any) => p._id?.toString() === propertyId?.toString()
+    )
+    if (match) return match
+  }
+  return clientObj.properties[0]
+}
+
 export async function fetchRoutes(params?: Record<string, string>) {
   const query = params ? '?' + new URLSearchParams(params).toString() : ''
   return apiFetch(`/api/routes${query}`)
@@ -23,7 +34,14 @@ export async function deleteRoute(id: string) {
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
-  return new Date(dateStr).toISOString().split('T')[0]
+  const s = String(dateStr)
+  // Plain YYYY-MM-DD with no time component – return as-is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  // ISO datetime (e.g. "2026-03-09T23:00:00.000Z") – parse and use LOCAL date parts
+  // so the browser's timezone (Malta UTC+1) resolves to the correct calendar day
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
 function formatTime(dateStr: string): string {
@@ -59,7 +77,7 @@ export function mapRouteForDriver(route: any) {
     status: route.status,
     stops: orders.map((o: any, idx: number) => {
       const clientObj = typeof o.client === 'object' ? o.client : null
-      const property = clientObj?.properties?.[0]
+      const property = resolveProperty(clientObj, o.property)
       const addr = property?.address
         ? `${property.address}${property.city ? ', ' + property.city : ''}`
         : clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? o.delivery_address ?? ''

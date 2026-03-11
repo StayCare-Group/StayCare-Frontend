@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref } from 'vue'
 import DesktopSidebar from './layout/DesktopSidebar.vue'
 import DesktopTopHeader from './layout/DesktopTopHeader.vue'
 import ClientDashboard from './dashboard/ClientDashboard.vue'
@@ -11,7 +11,7 @@ defineProps({
   role: String,
 })
 
-const bubbles = computed(() =>
+const bubbles = ref(
   Array.from({ length: 15 }, (_, i) => ({
     id: i,
     left: Math.random() * 96 + 2,

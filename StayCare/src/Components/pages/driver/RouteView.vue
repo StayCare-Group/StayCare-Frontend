@@ -14,6 +14,14 @@
       </div>
     </div>
 
+    <!-- Route Map -->
+    <div v-if="routeMarkers.length">
+      <button @click="showMap = !showMap" class="text-xs text-[#FF56B0] hover:underline mb-2">
+        {{ showMap ? 'Hide Map' : 'Show Route on Map' }}
+      </button>
+      <MiniMap v-if="showMap" :markers="routeMarkers" height="260px" class="mb-2" />
+    </div>
+
     <!-- Stops -->
     <div class="space-y-3">
       <div
@@ -65,23 +73,50 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import MiniMap from '../../ui/MiniMap.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
 
 const navStore = useNavStore()
 
 const driverRoute = ref({ driverName: '', date: '', vehiclePlate: '', totalStops: 0, completedStops: 0, stops: [] })
+const rawRouteOrders = ref([])
 const loading = ref(true)
+const showMap = ref(false)
 
 onMounted(async () => {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
     const data = await fetchRoutes({ date: today })
-    const routes = (data ?? []).map(mapRouteForDriver)
-    if (routes.length) driverRoute.value = routes[0]
+    if (data?.length) {
+      rawRouteOrders.value = data[0].orders ?? []
+      const routes = [data[0]].map(mapRouteForDriver)
+      driverRoute.value = routes[0]
+    }
   } catch { /* stays default */ } finally {
     loading.value = false
   }
+})
+
+const routeMarkers = computed(() => {
+  const markers = []
+  for (const o of rawRouteOrders.value) {
+    const clientObj = typeof o.client === 'object' ? o.client : null
+    if (!clientObj?.properties?.length) continue
+    let prop = o.property
+      ? clientObj.properties.find(p => p._id?.toString() === o.property?.toString())
+      : clientObj.properties[0]
+    if (!prop) prop = clientObj.properties[0]
+    if (prop?.lat && prop?.lng) {
+      markers.push({
+        lat: prop.lat,
+        lng: prop.lng,
+        label: `${o.order_number ?? o._id} — ${clientObj.company_name ?? ''}`,
+      })
+    }
+  }
+  return markers
 })
 
 const progress = computed(() =>

@@ -3,7 +3,14 @@
     <!-- Sub-pages -->
     <OrdersList v-if="navStore.currentPage === 'orders'" />
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
+    <AdminCreateOrder v-else-if="navStore.currentPage === 'create-order'" />
+    <ItemManagement v-else-if="navStore.currentPage === 'items'" />
+    <InvoicesList v-else-if="navStore.currentPage === 'invoices'" />
+    <InvoiceDetail v-else-if="navStore.currentPage === 'invoice-detail'" />
+    <CreateInvoice v-else-if="navStore.currentPage === 'create-invoice'" />
     <UserManagement v-else-if="navStore.currentPage === 'users'" />
+    <ClientDetail v-else-if="navStore.currentPage === 'client-detail'" />
+    <Processing v-else-if="navStore.currentPage === 'processing'" />
     <RoutePlanner v-else-if="navStore.currentPage === 'routes'" />
     <Reports v-else-if="navStore.currentPage === 'reports'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
@@ -63,10 +70,17 @@ import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import OrdersList from '../pages/client/OrdersList.vue'
 import OrderDetail from '../pages/client/OrderDetail.vue'
+import AdminCreateOrder from '../pages/admin/AdminCreateOrder.vue'
+import ItemManagement from '../pages/admin/ItemManagement.vue'
 import UserManagement from '../pages/admin/UserManagement.vue'
+import ClientDetail from '../pages/admin/ClientDetail.vue'
+import Processing from '../pages/facility/Processing.vue'
 import RoutePlanner from '../pages/admin/RoutePlanner.vue'
 import Reports from '../pages/admin/Reports.vue'
 import Settings from '../pages/shared/Settings.vue'
+import InvoicesList from '../pages/client/InvoicesList.vue'
+import InvoiceDetail from '../pages/client/InvoiceDetail.vue'
+import CreateInvoice from '../pages/admin/CreateInvoice.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
@@ -92,7 +106,8 @@ onMounted(async () => {
 })
 
 const adminKPIs = computed(() => {
-  const today = new Date().toISOString().split('T')[0]
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   const todayOrders = orders.value.filter(o => o.pickupDate === today).length
   const monthRevenue = invoices.value
     .filter(i => i.status === 'Paid')
@@ -104,7 +119,7 @@ const adminKPIs = computed(() => {
   const delivered = orders.value.filter(o => ['Delivered', 'Completed'].includes(o.status)).length
   const sla = totalOrders > 0 ? Math.round((delivered / totalOrders) * 100) : 0
   return [
-    { label: t('admin.ordersToday'), value: todayOrders || orders.value.length, color: 'blue' },
+    { label: t('admin.ordersToday'), value: todayOrders, color: 'blue' },
     { label: t('admin.revenueThisMonth'), value: `€${monthRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'green' },
     { label: t('admin.vatCollected'), value: `€${vatCollected.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'purple' },
     { label: t('admin.slaCompliance'), value: `${sla}%`, color: 'yellow' },
@@ -112,9 +127,10 @@ const adminKPIs = computed(() => {
 })
 
 const adminChartData = computed(() => {
-  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const labels = [t('common.dayMon'), t('common.dayTue'), t('common.dayWed'), t('common.dayThu'), t('common.dayFri'), t('common.daySat'), t('common.daySun')]
   const dayMap = {}
-  for (const l of labels) dayMap[l] = 0
+  for (const k of dayKeys) dayMap[k] = 0
 
   // Calculate current week bounds (Mon–Sun)
   const now = new Date()
@@ -139,7 +155,7 @@ const adminChartData = computed(() => {
   }
   return {
     labels,
-    values: labels.map(l => dayMap[l] || 0),
+    values: dayKeys.map(k => dayMap[k] || 0),
   }
 })
 

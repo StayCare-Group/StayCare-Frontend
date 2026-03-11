@@ -18,6 +18,8 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   })
 
   if (res.status === 401) {
+    // Redirect to login on auth failure
+    window.location.href = '/LogorCreate'
     throw new Error('Unauthorized')
   }
 
@@ -27,5 +29,9 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     throw json
   }
 
-  return json.data ?? json
+  const data = json.data ?? json
+  if (json.pagination && Array.isArray(data)) {
+    ;(data as any)._pagination = json.pagination
+  }
+  return data
 }

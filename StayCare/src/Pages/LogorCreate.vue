@@ -1,8 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-const bubbles = computed(() =>
+const bubbles = ref(
   Array.from({ length: 15 }, (_, i) => ({
     id: i,
     left: Math.random() * 96 + 2,
@@ -15,11 +15,11 @@ const bubbles = computed(() =>
 const router = useRouter()
 
 const goToLogin = () => {
-  router.push('/Login')
+  router.push('/login')
 }
 
 const goToCreateAccount = () => {
-  router.push('/CreateAccount')
+  router.push('/createaccount')
 }
 </script>
 

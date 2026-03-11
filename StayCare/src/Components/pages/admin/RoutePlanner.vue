@@ -73,6 +73,41 @@
 
       <p v-if="autoError" class="text-xs text-red-500">{{ autoError }}</p>
       <p v-if="autoSuccess" class="text-xs text-green-600">{{ autoSuccess }}</p>
+
+      <!-- Background Auto-Assign Toggle -->
+      <div class="border-t border-gray-100 pt-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-semibold text-gray-700">Automatic Route Assignment</h4>
+            <p class="text-xs text-gray-500 mt-0.5">
+              When enabled, new orders are automatically assigned to routes for their pickup date every 30 seconds.
+            </p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" v-model="bgAutoAssignEnabled" class="sr-only peer" />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF56B0] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF56B0]"></div>
+          </label>
+        </div>
+
+        <div v-if="bgAutoAssignEnabled" class="flex items-center gap-2">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+          </span>
+          <span class="text-xs text-green-600 font-medium">
+            {{ bgAutoAssigning ? 'Checking for new orders...' : 'Watching for new orders' }}
+          </span>
+        </div>
+
+        <!-- Activity log -->
+        <div v-if="bgAutoAssignLog.length" class="space-y-1">
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Recent auto-assignments</p>
+          <div v-for="(entry, i) in bgAutoAssignLog" :key="i" class="text-xs text-gray-600 flex items-center gap-2">
+            <span class="text-gray-400">{{ entry.ts }}</span>
+            <span>{{ entry.count }} order(s) → {{ entry.routes }} route(s) for {{ entry.date }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -186,18 +221,44 @@
 
     <!-- Existing routes + Reassign -->
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Existing Routes</h3>
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Routes Calendar</h3>
+        <div class="flex items-center gap-3">
+          <button @click="shiftRouteDate(-1)" class="text-gray-400 hover:text-gray-700 p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <input
+            v-model="routeFilterDate"
+            type="date"
+            class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+          />
+          <button @click="shiftRouteDate(1)" class="text-gray-400 hover:text-gray-700 p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <button @click="routeFilterDate = localDateStr()" class="text-xs text-[#FF56B0] hover:underline font-medium">Today</button>
+          <button @click="loadRoutes" class="text-xs text-[#FF56B0] hover:underline">Refresh</button>
+        </div>
+      </div>
+
+      <!-- Day summary pills -->
+      <div class="flex gap-2 flex-wrap">
         <button
-          @click="loadRoutes"
-          class="text-xs text-[#FF56B0] hover:underline"
-        >Refresh</button>
+          v-for="day in routeDateOptions"
+          :key="day.date"
+          @click="routeFilterDate = day.date"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium border transition"
+          :class="routeFilterDate === day.date
+            ? 'bg-[#FF56B0] text-white border-[#FF56B0]'
+            : day.count > 0 ? 'bg-gray-50 text-gray-700 border-gray-200 hover:border-[#FF56B0]' : 'bg-white text-gray-400 border-gray-100'"
+        >
+          {{ day.label }} <span v-if="day.count" class="ml-1 opacity-75">({{ day.count }})</span>
+        </button>
       </div>
 
       <p v-if="routesLoading" class="text-sm text-gray-400">Loading routes...</p>
-      <p v-else-if="!existingRoutes.length" class="text-sm text-gray-400">No routes found.</p>
+      <p v-else-if="!filteredRoutes.length" class="text-sm text-gray-400">No routes for {{ routeFilterDate }}.</p>
 
-      <div v-for="route in existingRoutes" :key="route._id" class="border border-gray-200 rounded-lg p-4 space-y-3">
+      <div v-for="route in filteredRoutes" :key="route._id" class="border border-gray-200 rounded-lg p-4 space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
             <span class="text-sm font-semibold text-gray-800">{{ route.driverName || 'Unassigned' }}</span>
@@ -214,6 +275,12 @@
           <div class="flex items-center gap-3">
             <span class="text-xs text-gray-500">{{ route.totalStops }} stop(s) &middot; {{ route.completedStops }} done</span>
             <button
+              @click="toggleRouteMap(route._id)"
+              class="text-xs text-[#FF56B0] hover:underline font-medium"
+            >
+              {{ showRouteMap[route._id] ? 'Hide Map' : 'Show Map' }}
+            </button>
+            <button
               @click="handleDeleteRoute(route._id)"
               :disabled="deleting[route._id]"
               class="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-40"
@@ -222,6 +289,17 @@
             </button>
           </div>
         </div>
+
+        <!-- Route map -->
+        <MiniMap
+          v-if="showRouteMap[route._id] && getRouteMarkers(route).length"
+          :markers="getRouteMarkers(route)"
+          height="240px"
+          class="mt-2"
+        />
+        <p v-if="showRouteMap[route._id] && !getRouteMarkers(route).length" class="text-xs text-gray-400">
+          No stops have map coordinates yet. Add coordinates to client properties for them to appear on the map.
+        </p>
 
         <!-- Stops with reassign -->
         <div class="divide-y divide-gray-50">
@@ -264,15 +342,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { fetchOrders, mapOrderForList, reassignOrder } from '../../../api/orders'
+import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
+import { fetchOrders, fetchAllOrders, mapOrderForList, reassignOrder } from '../../../api/orders'
 import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
 import { fetchUsers } from '../../../api/users'
 import { fetchClients } from '../../../api/clients'
 import { apiFetch } from '../../../api/client'
+import MiniMap from '../../ui/MiniMap.vue'
 
 /* ── Constants ── */
 const MAX_PICKUPS_PER_HOUR = 4
+
+/** Returns a Date as YYYY-MM-DD in local timezone (no UTC shift) */
+function localDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
 
 const drivers = ref([])
 const rawOrders = ref([])
@@ -286,16 +370,32 @@ const reassigning = reactive({})
 const deleting = reactive({})
 
 /* ── Auto-assign state ── */
-const autoDate = ref(new Date().toISOString().split('T')[0])
+const autoDate = ref(localDateStr())
 const autoAssigning = ref(false)
 const autoConfirming = ref(false)
 const autoPreview = ref(null)
 const autoError = ref('')
 const autoSuccess = ref('')
 
+/* ── Route calendar filter ── */
+const routeFilterDate = ref(localDateStr())
+
+/* ── Background auto-assign ── */
+const bgAutoAssignEnabled = ref(localStorage.getItem('staycare_bg_autoassign') === 'true')
+const bgAutoAssignLog = ref([])   // { date, count, ts }
+const bgAutoAssigning = ref(false)
+let pollTimer = null
+const POLL_INTERVAL = 30_000 // 30 seconds
+
+watch(bgAutoAssignEnabled, (v) => {
+  localStorage.setItem('staycare_bg_autoassign', v ? 'true' : 'false')
+  if (v) startPolling()
+  else stopPolling()
+})
+
 /* ── Manual form state ── */
 const form = reactive({
-  date: new Date().toISOString().split('T')[0],
+  date: localDateStr(),
   driverId: '',
   area: '',
 })
@@ -307,7 +407,7 @@ const successMessage = ref('')
 onMounted(async () => {
   try {
     const [ordersData, usersData, clientsData] = await Promise.all([
-      fetchOrders().catch(() => []),
+      fetchAllOrders().catch(() => []),
       fetchUsers().catch(() => []),
       fetchClients().catch(() => []),
     ])
@@ -335,6 +435,11 @@ onMounted(async () => {
   }
 
   loadRoutes()
+
+  // Start background auto-assign polling if enabled
+  if (bgAutoAssignEnabled.value && drivers.value.length) {
+    startPolling()
+  }
 })
 
 async function loadRoutes() {
@@ -349,14 +454,44 @@ async function loadRoutes() {
   }
 }
 
+/* ── Route calendar helpers ── */
+const filteredRoutes = computed(() => {
+  return existingRoutes.value.filter(r => r.date === routeFilterDate.value)
+})
+
+const routeDateOptions = computed(() => {
+  const today = new Date()
+  const days = []
+  for (let i = -2; i <= 4; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() + i)
+    const dateStr = localDateStr(d)
+    const count = existingRoutes.value.filter(r => r.date === dateStr).length
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const label = i === 0 ? 'Today' : i === -1 ? 'Yesterday' : i === 1 ? 'Tomorrow' : `${dayNames[d.getDay()]} ${d.getDate()}`
+    days.push({ date: dateStr, label, count })
+  }
+  return days
+})
+
+function shiftRouteDate(offset) {
+  const d = new Date(routeFilterDate.value + 'T12:00:00') // local noon to avoid UTC shift
+  d.setDate(d.getDate() + offset)
+  routeFilterDate.value = localDateStr(d)
+}
+
 function resolveAddress(o) {
-  // If client is a populated object, use it directly
   let clientObj = typeof o.client === 'object' && o.client ? o.client : null
-  // If client is just a string ID, look it up from the clients we fetched
   if (!clientObj && typeof o.client === 'string') {
     clientObj = clientMap.value[o.client] ?? null
   }
-  const prop = clientObj?.properties?.[0]
+  let prop = null
+  if (clientObj?.properties?.length) {
+    if (o.property) {
+      prop = clientObj.properties.find(p => p._id?.toString() === o.property?.toString())
+    }
+    if (!prop) prop = clientObj.properties[0]
+  }
   if (prop?.address) return `${prop.address}${prop.city ? ', ' + prop.city : ''}`
   return clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
 }
@@ -422,15 +557,26 @@ function getOrderAddress(o) {
   return resolveAddress(o)
 }
 
+function normalizeDate(dateVal) {
+  if (!dateVal) return ''
+  const s = String(dateVal)
+  // If plain YYYY-MM-DD (no time component), return as-is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  // For ISO datetime strings (e.g. "2026-03-09T23:00:00.000Z"),
+  // parse and use LOCAL date parts so UTC+1 server dates resolve correctly
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
 function buildAutoPreview(targetDate) {
   const targetStr = targetDate // YYYY-MM-DD
   const assigned = assignedOrderIds.value
+  // Only include orders whose pickup_date matches the selected date exactly
   const ordersForDate = rawOrders.value.filter(o => {
     if (!['Pending', 'Assigned'].includes(o.status)) return false
     if (assigned.has(o._id ?? o.id)) return false
-    const pDate = o.pickup_date
-      ? new Date(o.pickup_date).toISOString().split('T')[0]
-      : ''
+    const pDate = normalizeDate(o.pickup_date)
     return pDate === targetStr
   })
 
@@ -497,7 +643,7 @@ function buildAutoPreview(targetDate) {
   }
 }
 
-function handleAutoAssign() {
+async function handleAutoAssign() {
   autoError.value = ''
   autoSuccess.value = ''
   autoAssigning.value = true
@@ -506,12 +652,27 @@ function handleAutoAssign() {
       autoError.value = 'No drivers available.'
       return
     }
+    // Re-fetch ALL orders so we always have the latest data
+    // Merge with existing to avoid losing any already-loaded orders
+    const freshOrders = await fetchAllOrders()
+    const merged = new Map()
+    for (const o of rawOrders.value) merged.set(o._id ?? o.id, o)
+    for (const o of (freshOrders ?? [])) merged.set(o._id ?? o.id, o)
+    rawOrders.value = [...merged.values()]
+
     const preview = buildAutoPreview(autoDate.value)
     if (!preview || !preview.assignments.length) {
-      autoError.value = `No pending orders found for ${autoDate.value}.`
+      const pendingCount = rawOrders.value.filter(o => ['Pending', 'Assigned'].includes(o.status)).length
+      const notAssigned = rawOrders.value.filter(o =>
+        ['Pending', 'Assigned'].includes(o.status) &&
+        !assignedOrderIds.value.has(o._id ?? o.id)
+      ).length
+      autoError.value = `No unassigned pending orders found up to ${autoDate.value}. (${pendingCount} pending, ${notAssigned} not yet on a route, ${rawOrders.value.length} total)`
       return
     }
     autoPreview.value = preview
+  } catch (err) {
+    autoError.value = err?.message || err?.error || 'Failed to fetch orders.'
   } finally {
     autoAssigning.value = false
   }
@@ -523,7 +684,9 @@ async function confirmAutoAssign() {
   autoError.value = ''
   autoSuccess.value = ''
   try {
-    const routeDate = new Date(autoPreview.value.date).toISOString()
+    // Create one route per driver, using the selected date as the route_date
+    // Use UTC noon to prevent any timezone from shifting the date
+    const routeDate = autoPreview.value.date + 'T12:00:00.000Z'
     let created = 0
     for (const a of autoPreview.value.assignments) {
       await apiFetch('/api/routes', {
@@ -540,7 +703,7 @@ async function confirmAutoAssign() {
     autoSuccess.value = `${created} route(s) created for ${autoPreview.value.date}.`
     autoPreview.value = null
     // Refresh data
-    const ordersData = await fetchOrders().catch(() => [])
+    const ordersData = await fetchAllOrders().catch(() => [])
     rawOrders.value = ordersData ?? []
     await loadRoutes()
   } catch (err) {
@@ -558,11 +721,12 @@ async function handleCreateRoute() {
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    const routeDate = new Date(form.date)
+    // Use UTC noon to prevent any timezone from shifting the date
+    const routeDate = form.date + 'T12:00:00.000Z'
     await apiFetch('/api/routes', {
       method: 'POST',
       body: JSON.stringify({
-        route_date: routeDate.toISOString(),
+        route_date: routeDate,
         driver: form.driverId,
         area: form.area,
         orders: selectedOrderIds.value,
@@ -570,7 +734,7 @@ async function handleCreateRoute() {
     })
     successMessage.value = 'Route created and orders assigned to driver.'
     selectedOrderIds.value = []
-    const ordersData = await fetchOrders().catch(() => [])
+    const ordersData = await fetchAllOrders().catch(() => [])
     rawOrders.value = ordersData ?? []
     await loadRoutes()
   } catch (err) {
@@ -598,6 +762,30 @@ async function handleReassign(orderId, driverId) {
   }
 }
 
+const showRouteMap = reactive({})
+
+function toggleRouteMap(routeId) {
+  showRouteMap[routeId] = !showRouteMap[routeId]
+}
+
+function getRouteMarkers(route) {
+  const markers = []
+  for (const stop of (route.stops ?? [])) {
+    const rawOrder = rawOrders.value.find(o => (o._id ?? o.id) === stop._id)
+    if (!rawOrder) continue
+    let clientObj = typeof rawOrder.client === 'object' ? rawOrder.client : clientMap.value[rawOrder.client]
+    if (!clientObj?.properties?.length) continue
+    let prop = rawOrder.property
+      ? clientObj.properties.find(p => p._id?.toString() === rawOrder.property?.toString())
+      : clientObj.properties[0]
+    if (!prop) prop = clientObj.properties[0]
+    if (prop?.lat && prop?.lng) {
+      markers.push({ lat: prop.lat, lng: prop.lng, label: `${stop.orderId} — ${stop.client}` })
+    }
+  }
+  return markers
+}
+
 async function handleDeleteRoute(routeId) {
   if (!routeId) return
   if (!confirm('Delete this route? Orders will be unassigned.')) return
@@ -606,7 +794,7 @@ async function handleDeleteRoute(routeId) {
     await deleteRoute(routeId)
     await loadRoutes()
     // Refresh orders so they reappear in pending list
-    const ordersData = await fetchOrders().catch(() => [])
+    const ordersData = await fetchAllOrders().catch(() => [])
     rawOrders.value = ordersData ?? []
   } catch (err) {
     alert(err?.message || err?.error || 'Failed to delete route')
@@ -614,5 +802,105 @@ async function handleDeleteRoute(routeId) {
     deleting[routeId] = false
   }
 }
+
+/* ─────────────────────────────────────────────
+   Background Auto-Assign
+   Polls for new unassigned orders every 30s.
+   Groups them by pickup_date, then creates one
+   route per driver per date automatically.
+   ───────────────────────────────────────────── */
+async function runBackgroundAutoAssign() {
+  if (bgAutoAssigning.value || !drivers.value.length) return
+  bgAutoAssigning.value = true
+  try {
+    // Refresh orders & routes
+    const freshOrders = await fetchAllOrders().catch(() => [])
+    const merged = new Map()
+    for (const o of rawOrders.value) merged.set(o._id ?? o.id, o)
+    for (const o of (freshOrders ?? [])) merged.set(o._id ?? o.id, o)
+    rawOrders.value = [...merged.values()]
+    await loadRoutes()
+
+    const assigned = assignedOrderIds.value
+    const today = localDateStr()
+
+    // Find all unassigned Pending/Assigned orders with a pickup_date from today onward
+    const unassigned = rawOrders.value.filter(o => {
+      if (!['Pending', 'Assigned'].includes(o.status)) return false
+      if (assigned.has(o._id ?? o.id)) return false
+      const pDate = normalizeDate(o.pickup_date)
+      return pDate && pDate >= today
+    })
+
+    if (!unassigned.length) return
+
+    // Group by pickup_date
+    const byDate = {}
+    for (const o of unassigned) {
+      const d = normalizeDate(o.pickup_date)
+      if (!byDate[d]) byDate[d] = []
+      byDate[d].push(o)
+    }
+
+    // For each date group, build assignments and create routes
+    for (const [dateStr, orders] of Object.entries(byDate)) {
+      const preview = buildAutoPreview(dateStr)
+      if (!preview || !preview.assignments.length) continue
+
+      const routeDate = dateStr + 'T12:00:00.000Z'
+      let created = 0
+      for (const a of preview.assignments) {
+        await apiFetch('/api/routes', {
+          method: 'POST',
+          body: JSON.stringify({
+            route_date: routeDate,
+            driver: a.driverId,
+            area: 'Auto-assigned',
+            orders: a.orders.map(o => o.id),
+          }),
+        })
+        created++
+      }
+
+      if (created > 0) {
+        bgAutoAssignLog.value.unshift({
+          date: dateStr,
+          count: preview.totalOrders,
+          routes: created,
+          ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        })
+        // Keep log short
+        if (bgAutoAssignLog.value.length > 10) bgAutoAssignLog.value.length = 10
+      }
+    }
+
+    // Refresh after creating routes
+    const updatedOrders = await fetchAllOrders().catch(() => [])
+    rawOrders.value = updatedOrders ?? []
+    await loadRoutes()
+  } catch (err) {
+    console.error('[BG AutoAssign] Error:', err)
+  } finally {
+    bgAutoAssigning.value = false
+  }
+}
+
+function startPolling() {
+  stopPolling()
+  pollTimer = setInterval(runBackgroundAutoAssign, POLL_INTERVAL)
+  // Also run immediately
+  runBackgroundAutoAssign()
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
+onUnmounted(() => {
+  stopPolling()
+})
 </script>
 

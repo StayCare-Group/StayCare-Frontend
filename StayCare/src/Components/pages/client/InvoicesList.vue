@@ -1,6 +1,12 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-white">Invoices</h2>
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-white">Invoices</h2>
+      <button v-if="isAdmin" @click="navStore.setPage('create-invoice')"
+        class="bg-[#FF56B0] text-white font-bold py-2 px-5 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm">
+        {{ $t('admin.createInvoice') }}
+      </button>
+    </div>
 
     <!-- Filters -->
     <div class="flex flex-wrap gap-2">
@@ -53,11 +59,17 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import { useNavStore } from '../../../stores/nav.js'
+import { useAuthStore } from '../../../stores/auth.js'
 import { fetchInvoices, mapInvoiceForList } from '../../../api/invoices'
 
+const { t } = useI18n()
 const navStore = useNavStore()
+const authStore = useAuthStore()
+
+const isAdmin = computed(() => authStore.user?.role === 'admin')
 
 const invoices = ref([])
 const loading = ref(true)

@@ -116,7 +116,7 @@ const handleRegister = async () => {
 
     <!-- Registration Form -->
     <div v-else class="flex flex-col items-center justify-center bg-white px-8 py-10 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
-      <h1 class="text-3xl font-bold text-center text-[#FF56B0]">Join StayCare</h1>
+      <h1 class="text-3xl font-bold text-center text-[#FF56B0]">Join StayFresh</h1>
 
       <div class="mt-4 bg-[#F5E7EC] rounded-lg px-4 py-3 w-full text-center">
         <p class="text-sm text-gray-600">You're joining as</p>

@@ -37,7 +37,7 @@ import Reception from '../pages/facility/Reception.vue'
 import Processing from '../pages/facility/Processing.vue'
 import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { fetchOrders, mapOrderForList, mapStatus } from '../../api/orders'
+import { fetchOrders, mapOrderForList } from '../../api/orders'
 
 const { t } = useI18n()
 const navStore = useNavStore()
