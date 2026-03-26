@@ -47,7 +47,7 @@
     "email": "Email",
     "password": "Password",
     "username": "Username",
-    "phone": "Phone Number (optional)",
+    "phone": "Phone Number",
     "createAccount": "Create Account",
     "errorBothFields": "Please enter both (email or phone number) and password.",
     "errorInvalidEmailPhone": "Please enter a valid email address or phone number.",

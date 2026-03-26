@@ -133,7 +133,7 @@ const handleRegister = async () => {
 
       <input
         type="tel"
-        placeholder="Phone (optional)"
+        placeholder="Phone"
         v-model="phone"
         class="mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-2 w-full focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
       />

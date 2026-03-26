@@ -4,16 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { registerUser } from '../api/auth'
 import { useAuthStore } from '../stores/auth.js'
-
-const bubbles = ref(
-  Array.from({ length: 15 }, (_, i) => ({
-    id: i,
-    left: Math.random() * 96 + 2,
-    size: Math.random() * 30 + 15,
-    delay: Math.random() * 5,
-    duration: Math.random() * 4 + 4,
-  }))
-)
+import AuthSplitLayout from '../Components/layout/AuthSplitLayout.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -62,66 +53,86 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="template">
-    <div
-      v-for="b in bubbles"
-      :key="b.id"
-      class="bubble"
-      :style="{
-        left: b.left + '%',
-        width: b.size + 'px',
-        height: b.size + 'px',
-        animationDelay: b.delay + 's',
-        animationDuration: b.duration + 's',
-      }"
-    />
-    <div class="flex flex-col items-center justify-center bg-white px-8 py-12 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
-      <i18n-t keypath="auth.loginHeading" tag="h1" class="text-3xl font-bold text-center text-[#FF56B0]"><template #brand><span class="text-[#00F5F3]">StayFresh</span></template></i18n-t>
-      <input type="text" :placeholder="$t('auth.username')" v-model="username" class="flex justify-center items-center mt-9 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
-      <input type="email" required :placeholder="$t('auth.email')" v-model="email" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
-      <input type="tel" :placeholder="$t('auth.phone')" v-model="phone" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
-      <input type="password" :placeholder="$t('auth.password')" v-model="password" class="flex justify-center items-center mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-1 w-half focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"/>
-      <p v-if="error" class="text-red-500 text-sm mt-2">{{ error }}</p>
-      <button @click="handleRegister" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-half shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">{{ $t('auth.createAccount') }}</button>
-     </div>
-  </div>
+  <AuthSplitLayout
+    :left-title="t('common.signUp')"
+    :left-subtitle="t('common.laundryManagement')"
+    :form-title="t('auth.createAccount')"
+    :form-subtitle="t('auth.loginHeading', { brand: 'StayFresh' })"
+    left-background="linear-gradient(145deg, #0c1659 0%, #194b8e 45%, #63a3d8 100%)"
+  >
+    <form class="auth-form" @submit.prevent="handleRegister">
+      <input
+        v-model="username"
+        type="text"
+        :placeholder="t('auth.username')"
+        class="auth-input"
+      />
+      <input
+        v-model="email"
+        type="email"
+        required
+        :placeholder="t('auth.email')"
+        class="auth-input"
+      />
+      <input
+        v-model="phone"
+        type="tel"
+        :placeholder="t('auth.phone')"
+        class="auth-input"
+      />
+      <input
+        v-model="password"
+        type="password"
+        :placeholder="t('auth.password')"
+        class="auth-input"
+      />
+      <p v-if="error" class="auth-error">{{ error }}</p>
+      <button type="submit" class="auth-submit">{{ t('auth.createAccount') }}</button>
+    </form>
+  </AuthSplitLayout>
 </template>
 
 <style scoped>
-.template {
+.auth-form {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
+  gap: 0.9rem;
 }
 
-.bubble {
-  position: absolute;
-  bottom: -20px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 237, 247, 0.5), rgba(215, 255, 255, 0.15));
-  border: 1px solid rgba(255, 207, 233, 0.3);
-  animation: float 6s infinite ease-in;
-  pointer-events: none;
+.auth-input {
+  width: 100%;
+  border: 1.5px solid #b0e9f6;
+  border-radius: 0.65rem;
+  padding: 0.75rem 0.9rem;
+  color: #03112e;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-@keyframes float {
-  0% {
-    bottom: -20px;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    bottom: 100vh;
-    opacity: 0;
-  }
+.auth-input:focus {
+  outline: none;
+  border-color: #63a3d8;
+  box-shadow: 0 0 0 4px rgba(99, 163, 216, 0.18);
+}
+
+.auth-error {
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
+.auth-submit {
+  border: none;
+  border-radius: 0.7rem;
+  padding: 0.8rem 1rem;
+  background: linear-gradient(135deg, #194b8e, #0c1659);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(12, 22, 89, 0.28);
 }
 </style>
