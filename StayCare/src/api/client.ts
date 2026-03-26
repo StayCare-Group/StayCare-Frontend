@@ -1,3 +1,5 @@
+import { isMockEnabled, mockApiFetch } from './mock'
+
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || ''
 
 /**
@@ -5,6 +7,10 @@ const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || ''
  * Automatically unwraps the { success, message, data } envelope the backend returns.
  */
 export async function apiFetch(path: string, options: RequestInit = {}) {
+  if (isMockEnabled) {
+    return mockApiFetch(path, options)
+  }
+
   const headers: Record<string, string> = { ...options.headers as any }
   // Only set Content-Type on requests that have a body (POST, PATCH, PUT)
   if (options.body) {

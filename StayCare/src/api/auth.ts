@@ -1,3 +1,5 @@
+import { isMockEnabled, mockAuthCall } from './mock'
+
 const API = import.meta.env.VITE_BACKEND_URL || ''
 
 async function unwrap(res: Response) {
@@ -7,6 +9,10 @@ async function unwrap(res: Response) {
 }
 
 export async function loginUser(payload: { email: string; password: string }) {
+  if (isMockEnabled) {
+    return mockAuthCall('login', payload)
+  }
+
   const res = await fetch(`${API}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -17,6 +23,10 @@ export async function loginUser(payload: { email: string; password: string }) {
 }
 
 export async function refreshAuth() {
+  if (isMockEnabled) {
+    return mockAuthCall('refresh')
+  }
+
   const res = await fetch(`${API}/api/auth/refresh`, {
     method: 'POST',
     credentials: 'include',
@@ -27,6 +37,10 @@ export async function refreshAuth() {
 }
 
 export async function logoutUser() {
+  if (isMockEnabled) {
+    return mockAuthCall('logout')
+  }
+
   const res = await fetch(`${API}/api/auth/logout`, {
     method: 'POST',
     credentials: 'include',
@@ -41,6 +55,10 @@ export async function registerUser(payload: {
   phone?: string
   language?: string
 }) {
+  if (isMockEnabled) {
+    return mockAuthCall('register', payload)
+  }
+
   const res = await fetch(`${API}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -51,6 +69,10 @@ export async function registerUser(payload: {
 }
 
 export async function forgotPassword(email: string) {
+  if (isMockEnabled) {
+    return mockAuthCall('forgotPassword', { email })
+  }
+
   const res = await fetch(`${API}/api/auth/forgot-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -60,6 +82,10 @@ export async function forgotPassword(email: string) {
 }
 
 export async function resetPassword(token: string, password: string) {
+  if (isMockEnabled) {
+    return mockAuthCall('resetPassword', { token, password })
+  }
+
   const res = await fetch(`${API}/api/auth/reset-password/${token}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
