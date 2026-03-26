@@ -60,7 +60,10 @@ const handleLogin = async () => {
       />
       <p v-if="error" class="auth-error">{{ error }}</p>
       <button type="submit" class="auth-submit">{{ t('common.login') }}</button>
-      <router-link to="/forgot-password" class="auth-link">{{ t('auth.forgotPassword') }}</router-link>
+      <div class="auth-links">
+        <router-link to="/forgot-password" class="auth-link">{{ t('auth.forgotPassword') }}</router-link>
+        <router-link to="/logorcreate" class="auth-link">{{ t('common.cancel') }}</router-link>
+      </div>
     </form>
   </AuthSplitLayout>
 </template>
@@ -113,6 +116,12 @@ const handleLogin = async () => {
   text-align: center;
   color: #194b8e;
   font-size: 0.92rem;
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
 }
 
 .auth-link:hover {

@@ -88,6 +88,7 @@ const handleRegister = async () => {
       />
       <p v-if="error" class="auth-error">{{ error }}</p>
       <button type="submit" class="auth-submit">{{ t('auth.createAccount') }}</button>
+      <router-link to="/logorcreate" class="auth-link">{{ t('common.cancel') }}</router-link>
     </form>
   </AuthSplitLayout>
 </template>
@@ -134,5 +135,15 @@ const handleRegister = async () => {
 .auth-submit:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 20px rgba(12, 22, 89, 0.28);
+}
+
+.auth-link {
+  text-align: center;
+  color: #194b8e;
+  font-size: 0.92rem;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
 }
 </style>
