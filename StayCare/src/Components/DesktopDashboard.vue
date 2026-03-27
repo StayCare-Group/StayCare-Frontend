@@ -12,33 +12,10 @@ defineProps({
 })
 
 const sidebarOpen = ref(false)
-
-const bubbles = ref(
-  Array.from({ length: 15 }, (_, i) => ({
-    id: i,
-    left: Math.random() * 96 + 2,
-    size: Math.random() * 30 + 15,
-    delay: Math.random() * 5,
-    duration: Math.random() * 4 + 4,
-  }))
-)
 </script>
 
 <template>
   <div class="flex h-screen overflow-hidden relative">
-    <!-- Floating bubbles -->
-    <div
-      v-for="b in bubbles"
-      :key="b.id"
-      class="bubble"
-      :style="{
-        left: b.left + '%',
-        width: b.size + 'px',
-        height: b.size + 'px',
-        animationDelay: b.delay + 's',
-        animationDuration: b.duration + 's',
-      }"
-    />
 
     <!-- Unified responsive Sidebar -->
     <Sidebar :role="role" v-model:open="sidebarOpen" class="relative z-[1]" />
