@@ -202,6 +202,7 @@ const leftStyle = computed(() => ({
   font-size: 1.9rem;
   font-weight: 700;
   color: #0d365f;
+  text-align: center;
 }
 
 .auth-form-subtitle {
@@ -210,6 +211,7 @@ const leftStyle = computed(() => ({
   color: #194b8e;
   font-family: 'Montserrat', 'Roboto', sans-serif;
   font-size: 0.95rem;
+  text-align: center;
 }
 
 @media (max-width: 960px) {
