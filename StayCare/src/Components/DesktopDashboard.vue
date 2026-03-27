@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-import DesktopSidebar from './layout/DesktopSidebar.vue'
-import DesktopTopHeader from './layout/DesktopTopHeader.vue'
+import Sidebar from './layout/Sidebar.vue'
+import TopHeader from './layout/TopHeader.vue'
 import ClientDashboard from './dashboard/ClientDashboard.vue'
 import DriverDashboard from './dashboard/DriverDashboard.vue'
 import FacilityDashboard from './dashboard/FacilityDashboard.vue'
@@ -10,6 +10,8 @@ import AdminDashboard from './dashboard/AdminDashboard.vue'
 defineProps({
   role: String,
 })
+
+const sidebarOpen = ref(false)
 
 const bubbles = ref(
   Array.from({ length: 15 }, (_, i) => ({
@@ -38,12 +40,12 @@ const bubbles = ref(
       }"
     />
 
-    <!-- Fixed Sidebar (always visible) -->
-    <DesktopSidebar :role="role" class="relative z-[1]" />
+    <!-- Unified responsive Sidebar -->
+    <Sidebar :role="role" v-model:open="sidebarOpen" class="relative z-[1]" />
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col min-w-0 h-screen relative z-[1]">
-      <DesktopTopHeader :role="role" />
+      <TopHeader :role="role" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
       <main class="flex-1 p-6 overflow-y-auto">
         <ClientDashboard v-if="role === 'Client'" />
