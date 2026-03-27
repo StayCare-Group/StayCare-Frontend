@@ -80,7 +80,7 @@ const handleRegister = async () => {
 
 <template>
   <div class="template">
-    <div class="bubble" style="left: 10%; animation-delay: 0s;"></div>
+    <!-- <div class="bubble" style="left: 10%; animation-delay: 0s;"></div>
     <div class="bubble" style="left: 20%; animation-delay: 1s;"></div>
     <div class="bubble" style="left: 30%; animation-delay: 2s;"></div>
     <div class="bubble" style="left: 40%; animation-delay: 0.5s;"></div>
@@ -88,7 +88,7 @@ const handleRegister = async () => {
     <div class="bubble" style="left: 60%; animation-delay: 0.8s;"></div>
     <div class="bubble" style="left: 70%; animation-delay: 2.2s;"></div>
     <div class="bubble" style="left: 80%; animation-delay: 1.2s;"></div>
-    <div class="bubble" style="left: 90%; animation-delay: 1.8s;"></div>
+    <div class="bubble" style="left: 90%; animation-delay: 1.8s;"></div> -->
 
     <!-- Loading -->
     <div v-if="loading" class="flex flex-col items-center justify-center bg-white px-8 py-12 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
@@ -176,7 +176,7 @@ const handleRegister = async () => {
   overflow: hidden;
 }
 
-.bubble {
+/* .bubble {
   position: absolute;
   bottom: -20px;
   width: 30px;
@@ -185,7 +185,7 @@ const handleRegister = async () => {
   background: radial-gradient(circle at 30% 30%, rgba(255, 237, 247, 0.4), rgba(215, 255, 255, 0.1));
   border: 1px solid rgba(255, 207, 233, 0.3);
   animation: float 6s infinite ease-in;
-}
+} */
 
 @keyframes float {
   0% {

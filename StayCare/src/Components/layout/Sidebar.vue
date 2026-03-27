@@ -3,7 +3,7 @@
   <div v-if="open" class="fixed inset-0 bg-brand-950/40 z-40 lg:hidden" @click="emit('update:open', false)" />
 
   <!-- Sidebar: drawer on mobile, static fixed column on lg+ -->
-  <aside class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100
+  <aside class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#F8FAFC] border-r border-gray-100
            flex flex-col transform transition-transform duration-300 ease-out lg:translate-x-0"
     :class="open ? 'translate-x-0' : '-translate-x-full'">
     <!-- Logo area -->
@@ -34,7 +34,7 @@
         @click="navigate(item.page)"
         class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left"
         :class="navStore.currentPage === item.page
-        ? 'bg-[#CCEBF6]/40 text-[#0D365F] font-semibold shadow-sm' 
+        ? 'bg-[#CCEBF6]/70 text-[#0D365F] font-semibold shadow-sm' 
         : 'text-[#194B8E] hover:bg-brand-100/40 hover:text-brand-900'">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />

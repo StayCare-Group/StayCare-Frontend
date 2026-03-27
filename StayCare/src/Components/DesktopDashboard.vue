@@ -12,19 +12,20 @@ defineProps({
 })
 
 const sidebarOpen = ref(false)
+
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden relative">
+  <div class="flex min-h-screen lg:h-screen overflow-hidden relative">
 
     <!-- Unified responsive Sidebar -->
     <Sidebar :role="role" v-model:open="sidebarOpen" class="relative z-[1]" />
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col min-w-0 h-screen relative z-[1]">
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen lg:h-screen relative z-[1]">
       <TopHeader :role="role" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
-      <main class="flex-1 p-6 overflow-y-auto">
+      <main class="flex-1 p-4 lg:p-6 overflow-y-auto overflow-x-hidden">
         <ClientDashboard v-if="role === 'Client'" />
         <DriverDashboard v-else-if="role === 'Driver'" />
         <FacilityDashboard v-else-if="role === 'Facility Staff'" />
@@ -35,16 +36,6 @@ const sidebarOpen = ref(false)
 </template>
 
 <style scoped>
-.bubble {
-  position: absolute;
-  bottom: -20px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 237, 247, 0.5), rgba(215, 255, 255, 0.15));
-  border: 1px solid rgba(255, 207, 233, 0.3);
-  animation: float 6s infinite ease-in;
-  pointer-events: none;
-  z-index: 0;
-}
 
 @keyframes float {
   0%   { bottom: -20px; opacity: 0; }

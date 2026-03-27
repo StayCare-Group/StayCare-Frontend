@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import DesktopDashboard from '../Components/DesktopDashboard.vue'
-import MobileDashboard from '../Components/MobileDashboard.vue'
 import { useAuthStore } from '../stores/auth.js'
 
 const auth = useAuthStore()
@@ -26,15 +25,7 @@ const displayRole = computed(() => {
 </script>
 
 <template>
-  <!-- Desktop: lg and above (>=1024px) -->
-  <div class="hidden lg:block">
-    <DesktopDashboard :role="displayRole" />
-  </div>
-
-  <!-- Mobile / Tablet: below lg -->
-  <div class="block lg:hidden">
-    <MobileDashboard :role="displayRole" />
-  </div>
+  <DesktopDashboard :role="displayRole" />
 </template>
 
 <style scoped>
