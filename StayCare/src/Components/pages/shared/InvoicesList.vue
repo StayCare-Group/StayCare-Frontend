@@ -1,11 +1,8 @@
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-white">{{ $t('nav.invoices') }}</h2>
-      <button v-if="isAdmin" @click="navStore.setPage('create-invoice')"
-        class="bg-[#FF56B0] text-white font-bold py-2 px-5 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm">
-        {{ $t('admin.createInvoice') }}
-      </button>
+      <h2 class="text-lg font-semibold text-brand-700">{{ $t('nav.invoices') }}</h2>
+      <AppButton v-if="isAdmin" @click="navStore.setPage('create-invoice')">{{ $t('admin.createInvoice') }}</AppButton>
     </div>
 
     <!-- Filters -->
@@ -14,7 +11,7 @@
         v-for="f in filters" :key="f"
         @click="activeFilter = f"
         class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-        :class="activeFilter === f ? 'bg-[#FF56B0] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+        :class="activeFilter === f ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
       >{{ f }}</button>
     </div>
 
@@ -44,7 +41,7 @@
       <template #cell-actions="{ item }">
         <button
           @click.stop="navStore.goToDetail('invoice-detail', item._id)"
-          class="text-[#FF56B0] hover:underline text-sm font-medium"
+          class="text-brand-700 hover:underline text-sm font-medium"
         >{{ $t('common.viewDetails') }}</button>
       </template>
     </DataTable>
@@ -56,6 +53,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
+import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchInvoices, mapInvoiceForList } from '../../../api/invoices'

@@ -182,6 +182,7 @@
     "inProgress": "En progreso",
     "readyForDelivery": "Listo para entrega",
     "outstandingBalance": "Saldo pendiente",
+    "createOrderTitle": "Crear pedido",
     "createOrder": "+ Crear pedido",
     "newOrder": "+ Nuevo pedido",
     "recentOrders": "Pedidos recientes",
@@ -201,7 +202,29 @@
     "rescheduleOrder": "Reprogramar Pedido",
     "newPickupDate": "Nueva Fecha de Recogida",
     "newTimeWindow": "Nueva Ventana de Tiempo",
-    "rescheduleSuccess": "¡Pedido reprogramado exitosamente!"
+    "rescheduleSuccess": "¡Pedido reprogramado exitosamente!",
+    "markAsPaid": "Marcar como pagado"
+  },
+  "orderDetail": {
+    "orderInformation": "Información del Pedido",
+    "serviceType": "Tipo de Servicio",
+    "pickupAddress": "Dirección de Recogida",
+    "pickupDate": "Fecha de Recogida",
+    "estimatedBags": "Bolsas Estimadas",
+    "actualBags": "Bolsas Reales",
+    "pickupDriver": "Conductor de Recogida",
+    "deliveryDriver": "Conductor de Entrega",
+    "itemCode": "Código",
+    "itemName": "Artículo",
+    "quantity": "Cant.",
+    "unitPrice": "Precio Unitario",
+    "lineTotal": "Total",
+    "orderTotal": "Total del Pedido",
+    "statusTimeline": "Cronología de Estado",
+    "loadingOrder": "Cargando pedido...",
+    "orderNotFound": "Pedido no encontrado.",
+    "selectDateAndWindow": "Seleccione una fecha y una ventana horaria.",
+    "rescheduleFailed": "No se pudo reprogramar el pedido."
   },
   "driver": {
     "todaysPickups": "Recogidas de hoy",
@@ -252,6 +275,8 @@
     "drying": "Secado",
     "ironing": "Planchado",
     "qc": "Control de calidad",
-    "ready": "Listo"
+    "ready": "Listo",
+    "lookUp": "Buscar",
+    "confirmCheckIn": "Confirmar Recepción"
   }
 }

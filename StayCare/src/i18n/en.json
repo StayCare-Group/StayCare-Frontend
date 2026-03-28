@@ -201,6 +201,7 @@
     "inProgress": "In Progress",
     "readyForDelivery": "Ready for Delivery",
     "outstandingBalance": "Outstanding Balance",
+    "createOrderTitle": "Create Order",
     "createOrder": "+ Create Order",
     "newOrder": "+ New Order",
     "recentOrders": "Recent Orders",
@@ -220,7 +221,29 @@
     "rescheduleOrder": "Reschedule Order",
     "newPickupDate": "New Pickup Date",
     "newTimeWindow": "New Time Window",
-    "rescheduleSuccess": "Order rescheduled successfully!"
+    "rescheduleSuccess": "Order rescheduled successfully!",
+    "markAsPaid": "Mark as Paid"
+  },
+  "orderDetail": {
+    "orderInformation": "Order Information",
+    "serviceType": "Service Type",
+    "pickupAddress": "Pickup Address",
+    "pickupDate": "Pickup Date",
+    "estimatedBags": "Estimated Bags",
+    "actualBags": "Actual Bags",
+    "pickupDriver": "Pickup Driver",
+    "deliveryDriver": "Delivery Driver",
+    "itemCode": "Code",
+    "itemName": "Item",
+    "quantity": "Qty",
+    "unitPrice": "Unit Price",
+    "lineTotal": "Total",
+    "orderTotal": "Order Total",
+    "statusTimeline": "Status Timeline",
+    "loadingOrder": "Loading order...",
+    "orderNotFound": "Order not found.",
+    "selectDateAndWindow": "Please select a date and time window.",
+    "rescheduleFailed": "Failed to reschedule order."
   },
   "driver": {
     "todaysPickups": "Today's Pickups",
@@ -271,6 +294,8 @@
     "drying": "Drying",
     "ironing": "Ironing",
     "qc": "QC",
-    "ready": "Ready"
+    "ready": "Ready",
+    "lookUp": "Look Up",
+    "confirmCheckIn": "Confirm Check-In"
   }
 }

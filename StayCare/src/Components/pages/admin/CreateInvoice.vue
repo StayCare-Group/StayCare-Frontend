@@ -2,10 +2,10 @@
   <div class="space-y-6 max-w-3xl">
     <!-- Header -->
     <div class="flex items-center gap-3">
-      <button @click="navStore.goBack('invoices')" class="text-white hover:text-gray-400">
+      <button @click="navStore.goBack('invoices')" class="text-brand-700 hover:text-gray-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h2 class="text-lg font-semibold text-white">{{ $t('admin.newInvoice') }}</h2>
+      <h2 class="text-lg font-semibold text-brand-700">{{ $t('admin.newInvoice') }}</h2>
     </div>
 
     <form @submit.prevent="submitInvoice" class="space-y-6">
@@ -16,7 +16,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.client') }}</label>
           <select v-model="form.clientId" required @change="onClientChange"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none">
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none">
             <option value="">{{ $t('admin.selectClient') }}</option>
             <option v-for="c in clients" :key="c._id" :value="c._id">
               {{ c.company_name }}
@@ -27,15 +27,15 @@
 
         <div v-if="form.clientId">
           <div v-if="clientOrders.length" class="space-y-3">
-            <div class="flex items-center gap-2 bg-pink-50 border border-pink-200 rounded-lg px-3 py-2">
-              <svg class="w-4 h-4 text-[#FF56B0] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <span class="text-sm text-[#FF56B0] font-medium">{{ clientOrders.length }} uninvoiced {{ clientOrders.length === 1 ? 'order' : 'orders' }} found</span>
+            <div class="flex items-center gap-2 bg-brand-150 border border-brand-300 rounded-lg px-3 py-2">
+              <svg class="w-4 h-4 text-brand-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span class="text-sm text-brand-700 font-medium">{{ clientOrders.length }} uninvoiced {{ clientOrders.length === 1 ? 'order' : 'orders' }} found</span>
             </div>
             <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
               <label v-for="o in clientOrders" :key="o._id"
                 class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded px-2 py-1.5 transition-colors">
                 <input type="checkbox" :value="o._id" v-model="form.orderIds"
-                  class="rounded border-gray-300 text-[#FF56B0] focus:ring-[#FF56B0]" />
+                  class="rounded border-gray-300 text-brand-700 focus:ring-brand-400" />
                 <div class="flex-1 min-w-0">
                   <span class="text-sm font-medium text-gray-800">{{ o.order_number }}</span>
                   <span class="text-xs text-gray-400 ml-2">{{ o.status }} &middot; &euro;{{ (o.pricing_snapshot?.total ?? 0).toFixed(2) }}</span>
@@ -49,7 +49,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.dueDate') }}</label>
           <input v-model="form.dueDate" type="date" required :min="today"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
         </div>
       </div>
 
@@ -72,15 +72,15 @@
               <tr v-for="(item, idx) in form.lineItems" :key="idx">
                 <td class="px-3 py-2">
                   <input v-model="item.description" required placeholder="Service description"
-                    class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+                    class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 </td>
                 <td class="px-3 py-2">
                   <input v-model.number="item.quantity" type="number" min="1" required
-                    class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+                    class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 </td>
                 <td class="px-3 py-2">
                   <input v-model.number="item.unit_price" type="number" min="0" step="0.01" required
-                    class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+                    class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 </td>
                 <td class="px-3 py-2 text-right font-medium text-gray-800">
                   &euro;{{ ((item.quantity || 0) * (item.unit_price || 0)).toFixed(2) }}
@@ -94,8 +94,7 @@
           </table>
         </div>
 
-        <button type="button" @click="addLineItem"
-          class="text-sm text-[#FF56B0] hover:underline font-medium">{{ $t('admin.addLineItem') }}</button>
+        <AppButton variant="ghost" size="sm" type="button" @click="addLineItem">{{ $t('admin.addLineItem') }}</AppButton>
       </div>
 
       <!-- Totals -->
@@ -118,14 +117,12 @@
 
       <!-- Submit -->
       <div class="flex gap-3">
-        <button type="submit" :disabled="submitting"
-          class="bg-[#FF56B0] text-white font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm disabled:opacity-50">
-          {{ submitting ? $t('common.saving') : $t('admin.placeInvoice') }}
-        </button>
-        <button type="button" @click="navStore.goBack('invoices')"
-          class="bg-gray-100 text-gray-600 font-medium py-2.5 px-6 rounded-lg hover:bg-gray-200 transition text-sm">
+        <AppButton type="submit" size="lg" :loading="submitting">
+          {{ $t('admin.placeInvoice') }}
+        </AppButton>
+        <AppButton type="button" variant="secondary" size="lg" @click="navStore.goBack('invoices')">
           {{ $t('common.cancel') }}
-        </button>
+        </AppButton>
       </div>
       <p v-if="errorMessage" class="text-sm text-red-500 mt-2">{{ errorMessage }}</p>
     </form>
@@ -139,6 +136,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
+import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchClients } from '../../../api/clients'
 import { fetchOrders } from '../../../api/orders'

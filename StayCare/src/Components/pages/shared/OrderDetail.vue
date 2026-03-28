@@ -2,17 +2,17 @@
   <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-3">
-      <button @click="navStore.goBack('orders')" class="text-white hover:text-gray-400">
+      <button @click="navStore.goBack('orders')" class="text-brand-700 hover:text-gray-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h2 class="text-lg font-semibold text-white">{{ order?.id }}</h2>
+      <h2 class="text-lg font-semibold text-brand-700">{{ order?.id }}</h2>
       <StatusBadge v-if="order" :status="order.status" />
       <!-- Reschedule button for Pending Pickup orders -->
-      <button
+      <AppButton
         v-if="order && canReschedule"
         @click="showRescheduleModal = true"
-        class="ml-auto bg-[#FF56B0] text-white font-bold py-1.5 px-4 rounded-lg shadow-[0_3px_0_#E63E8A] hover:opacity-90 transition text-sm"
-      >{{ $t('common.reschedule') }}</button>
+        class="ml-auto"
+      >{{ $t('common.reschedule') }}</AppButton>
     </div>
 
     <div v-if="order" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -20,71 +20,64 @@
       <div class="lg:col-span-2 space-y-6">
         <!-- Order Info -->
         <div class="bg-white rounded-xl shadow-sm p-5 space-y-3">
-          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Order Information</h3>
+          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('orderDetail.orderInformation') }}</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div><span class="text-gray-400">Client</span><p class="font-medium text-gray-800">{{ order.client }}</p></div>
-            <div><span class="text-gray-400">Service Type</span><p class="font-medium text-gray-800">{{ order.serviceType }}</p></div>
-            <div><span class="text-gray-400">Pickup Address</span><p class="font-medium text-gray-800">{{ order.pickupAddress }}</p></div>
-            <div><span class="text-gray-400">Pickup Date</span><p class="font-medium text-gray-800">{{ order.pickupDate }} &middot; {{ order.pickupTimeWindow }}</p></div>
-            <div><span class="text-gray-400">Estimated Bags</span><p class="font-medium text-gray-800">{{ order.estimatedBags }}</p></div>
-            <div><span class="text-gray-400">Actual Bags</span><p class="font-medium text-gray-800">{{ order.actualBags ?? '—' }}</p></div>
-            <div v-if="order.driverPickup"><span class="text-gray-400">Pickup Driver</span><p class="font-medium text-gray-800">{{ order.driverPickup }}</p></div>
-            <div v-if="order.driverDelivery"><span class="text-gray-400">Delivery Driver</span><p class="font-medium text-gray-800">{{ order.driverDelivery }}</p></div>
+            <div><span class="text-gray-400">{{ $t('common.client') }}</span><p class="font-medium text-gray-800">{{ order.client }}</p></div>
+            <div><span class="text-gray-400">{{ $t('orderDetail.serviceType') }}</span><p class="font-medium text-gray-800">{{ order.serviceType }}</p></div>
+            <div><span class="text-gray-400">{{ $t('orderDetail.pickupAddress') }}</span><p class="font-medium text-gray-800">{{ order.pickupAddress }}</p></div>
+            <div><span class="text-gray-400">{{ $t('orderDetail.pickupDate') }}</span><p class="font-medium text-gray-800">{{ order.pickupDate }} &middot; {{ order.pickupTimeWindow }}</p></div>
+            <div><span class="text-gray-400">{{ $t('orderDetail.estimatedBags') }}</span><p class="font-medium text-gray-800">{{ order.estimatedBags }}</p></div>
+            <div><span class="text-gray-400">{{ $t('orderDetail.actualBags') }}</span><p class="font-medium text-gray-800">{{ order.actualBags ?? '—' }}</p></div>
+            <div v-if="order.driverPickup"><span class="text-gray-400">{{ $t('orderDetail.pickupDriver') }}</span><p class="font-medium text-gray-800">{{ order.driverPickup }}</p></div>
+            <div v-if="order.driverDelivery"><span class="text-gray-400">{{ $t('orderDetail.deliveryDriver') }}</span><p class="font-medium text-gray-800">{{ order.driverDelivery }}</p></div>
           </div>
           <div v-if="order.specialNotes" class="pt-2 border-t border-gray-100">
-            <span class="text-xs text-gray-400">Special Notes</span>
+            <span class="text-xs text-gray-400">{{ $t('client.specialNotes') }}</span>
             <p class="text-sm text-gray-700 mt-0.5">{{ order.specialNotes }}</p>
           </div>
         </div>
 
         <!-- Items -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div class="px-5 py-4 border-b border-gray-100">
-            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Items</h3>
+        <div class="space-y-2">
+          <DataTable :title="$t('client.items')" :headers="itemHeaders" :items="orderItemRows" row-key="code" min-width="700px">
+            <template #cell-code="{ value }">
+              <span class="text-gray-500 font-mono text-xs">{{ value }}</span>
+            </template>
+            <template #cell-name="{ value }">
+              <span class="text-gray-800">{{ value }}</span>
+            </template>
+            <template #cell-qty="{ value }">
+              <span class="text-gray-700">{{ value }}</span>
+            </template>
+            <template #cell-unitPrice="{ value }">
+              <span class="text-gray-500">&euro;{{ value.toFixed(2) }}</span>
+            </template>
+            <template #cell-lineTotal="{ value }">
+              <span class="font-medium text-gray-800">&euro;{{ value.toFixed(2) }}</span>
+            </template>
+          </DataTable>
+
+          <div class="bg-gray-50 rounded-lg px-5 py-3 font-semibold text-sm flex justify-end gap-4">
+            <span class="text-gray-600">{{ $t('orderDetail.orderTotal') }}</span>
+            <span class="text-gray-800">&euro;{{ order.total.toFixed(2) }}</span>
           </div>
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
-              <tr>
-                <th class="px-5 py-2 text-left font-medium">Code</th>
-                <th class="px-5 py-2 text-left font-medium">Item</th>
-                <th class="px-5 py-2 text-right font-medium">Qty</th>
-                <th class="px-5 py-2 text-right font-medium">Unit Price</th>
-                <th class="px-5 py-2 text-right font-medium">Total</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              <tr v-for="item in order.items" :key="item.code">
-                <td class="px-5 py-2 text-gray-500 font-mono text-xs">{{ item.code }}</td>
-                <td class="px-5 py-2 text-gray-800">{{ item.name }}</td>
-                <td class="px-5 py-2 text-right text-gray-700">{{ item.qty }}</td>
-                <td class="px-5 py-2 text-right text-gray-500">&euro;{{ item.unitPrice.toFixed(2) }}</td>
-                <td class="px-5 py-2 text-right font-medium text-gray-800">&euro;{{ (item.qty * item.unitPrice).toFixed(2) }}</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr class="bg-gray-50 font-semibold text-sm">
-                <td colspan="4" class="px-5 py-3 text-right text-gray-600">Order Total</td>
-                <td class="px-5 py-3 text-right text-gray-800">&euro;{{ order.total.toFixed(2) }}</td>
-              </tr>
-            </tfoot>
-          </table>
         </div>
       </div>
 
       <!-- Right column: timeline -->
       <div class="space-y-6">
         <div class="bg-white rounded-xl shadow-sm p-5">
-          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Status Timeline</h3>
+          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">{{ $t('orderDetail.statusTimeline') }}</h3>
           <OrderTimeline :steps="order.timeline" :currentStatus="order.status" />
         </div>
       </div>
     </div>
 
     <div v-else-if="loading" class="bg-white rounded-xl shadow-sm p-10 text-center">
-      <p class="text-gray-400">Loading order...</p>
+      <p class="text-gray-400">{{ $t('orderDetail.loadingOrder') }}</p>
     </div>
     <div v-else class="bg-white rounded-xl shadow-sm p-10 text-center">
-      <p class="text-gray-400">Order not found.</p>
+      <p class="text-gray-400">{{ $t('orderDetail.orderNotFound') }}</p>
     </div>
 
     <!-- Reschedule Modal -->
@@ -96,13 +89,13 @@
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('client.newPickupDate') }}</label>
             <input v-model="rescheduleForm.pickupDate" type="date" :min="todayStr" required
-              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40" />
+              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('client.newTimeWindow') }}</label>
             <select v-model="rescheduleForm.pickupTimeWindow" required
-              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40">
+              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40">
               <option value="">{{ $t('admin.selectTimeWindow') }}</option>
               <option v-for="tw in rescheduleTimeWindows" :key="tw" :value="tw">{{ tw }}</option>
             </select>
@@ -117,10 +110,9 @@
             class="flex-1 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
             {{ $t('common.cancel') }}
           </button>
-          <button @click="handleReschedule" :disabled="rescheduling"
-            class="flex-1 py-2 bg-[#FF56B0] text-white rounded-lg text-sm font-semibold shadow-[0_3px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300 disabled:opacity-50">
-            {{ rescheduling ? $t('common.saving') : $t('common.reschedule') }}
-          </button>
+          <AppButton @click="handleReschedule" class="flex-1" :loading="rescheduling">
+            {{ $t('common.reschedule') }}
+          </AppButton>
         </div>
       </div>
     </div>
@@ -134,13 +126,17 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import OrderTimeline from '../../ui/OrderTimeline.vue'
+import AppButton from '../../ui/AppButton.vue'
+import DataTable from '../../ui/DataTable.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchOrderById, mapOrderForDetail, rescheduleOrder } from '../../../api/orders'
 import { fetchClientById } from '../../../api/clients'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 const authStore = useAuthStore()
 
@@ -165,6 +161,21 @@ const rescheduleForm = reactive({ pickupDate: '', pickupTimeWindow: '' })
 const rescheduleError = ref('')
 const rescheduling = ref(false)
 const rescheduleSuccess = ref(false)
+
+const itemHeaders = computed(() => [
+  { key: 'code', label: t('orderDetail.itemCode') },
+  { key: 'name', label: t('orderDetail.itemName') },
+  { key: 'qty', label: t('orderDetail.quantity'), tdClass: 'text-right', thClass: 'text-right' },
+  { key: 'unitPrice', label: t('orderDetail.unitPrice'), tdClass: 'text-right', thClass: 'text-right' },
+  { key: 'lineTotal', label: t('orderDetail.lineTotal'), tdClass: 'text-right', thClass: 'text-right' },
+])
+
+const orderItemRows = computed(() =>
+  (order.value?.items ?? []).map(item => ({
+    ...item,
+    lineTotal: (item.qty || 0) * (item.unitPrice || 0),
+  }))
+)
 
 const rescheduleTimeWindows = computed(() => {
   if (rescheduleForm.pickupDate && rescheduleForm.pickupDate !== todayStr) return ALL_TIME_WINDOWS
@@ -193,7 +204,7 @@ function parseTimeWindow(tw, date) {
 
 async function handleReschedule() {
   if (!rescheduleForm.pickupDate || !rescheduleForm.pickupTimeWindow) {
-    rescheduleError.value = 'Please select a date and time window.'
+    rescheduleError.value = t('orderDetail.selectDateAndWindow')
     return
   }
   rescheduling.value = true
@@ -208,7 +219,7 @@ async function handleReschedule() {
     setTimeout(() => { rescheduleSuccess.value = false }, 2000)
     await loadOrder() // Refresh order data
   } catch (err) {
-    rescheduleError.value = err?.message || 'Failed to reschedule order.'
+    rescheduleError.value = err?.message || t('orderDetail.rescheduleFailed')
   } finally {
     rescheduling.value = false
   }

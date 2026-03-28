@@ -5,7 +5,7 @@
       <input
         v-model="dateFilter"
         type="date"
-        class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+        class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
       />
     </div>
 

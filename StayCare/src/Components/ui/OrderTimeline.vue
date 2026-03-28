@@ -5,10 +5,10 @@
       <div class="flex flex-col items-center">
         <div
           class="w-3 h-3 rounded-full shrink-0 mt-1"
-          :class="i <= currentIndex ? 'bg-[#FF56B0]' : 'bg-gray-300'"
+          :class="i <= currentIndex ? 'bg-brand-700' : 'bg-gray-300'"
         ></div>
         <div v-if="i < steps.length - 1" class="w-0.5 flex-1 min-h-[32px]"
-          :class="i < currentIndex ? 'bg-[#FF56B0]' : 'bg-gray-200'"
+          :class="i < currentIndex ? 'bg-brand-700' : 'bg-gray-200'"
         ></div>
       </div>
       <!-- Content -->

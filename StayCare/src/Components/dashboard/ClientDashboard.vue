@@ -2,7 +2,7 @@
   <div>
     <!-- Sub-pages -->
     <OrdersList v-if="navStore.currentPage === 'orders'" />
-    <CreateOrder v-else-if="navStore.currentPage === 'create-order'" />
+    <OrderCreateForm v-else-if="navStore.currentPage === 'create-order'" mode="client" />
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
     <InvoicesList v-else-if="navStore.currentPage === 'invoices'" />
     <InvoiceDetail v-else-if="navStore.currentPage === 'invoice-detail'" />
@@ -17,9 +17,9 @@
 
       <!-- Create Order Button -->
       <div>
-        <button @click="navStore.goToDetail('create-order', null)" class="bg-[#FF56B0] text-white font-bold py-2.5 px-6 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition">
+        <AppButton @click="navStore.goToDetail('create-order', null)">
           {{ $t('client.createOrder') }}
-        </button>
+        </AppButton>
       </div>
 
       <!-- Tables -->
@@ -36,13 +36,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import DataTable from '../ui/DataTable.vue'
-import OrdersList from '../pages/client/OrdersList.vue'
-import CreateOrder from '../pages/client/CreateOrder.vue'
-import OrderDetail from '../pages/client/OrderDetail.vue'
-import InvoicesList from '../pages/client/InvoicesList.vue'
-import InvoiceDetail from '../pages/client/InvoiceDetail.vue'
+import OrdersList from '../pages/shared/OrdersList.vue'
+import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
+import OrderDetail from '../pages/shared/OrderDetail.vue'
+import InvoicesList from '../pages/shared/InvoicesList.vue'
+import InvoiceDetail from '../pages/shared/InvoiceDetail.vue'
 import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
+import AppButton from '../ui/AppButton.vue'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
 

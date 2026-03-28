@@ -103,7 +103,7 @@ export async function rescheduleOrder(id: string, payload: { pickup_date: string
 
 const STATUS_MAP: Record<string, string> = {
   Pending: 'Pending Pickup',
-  Assigned: 'Pending Pickup',
+  Assigned: 'Assigned',
   Transit: 'In Transit',
   Arrived: 'Received at Facility',
   QualityCheck: 'Quality Control',

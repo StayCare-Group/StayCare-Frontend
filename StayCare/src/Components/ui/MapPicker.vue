@@ -143,7 +143,7 @@ function onSearchBlur() {
         type="text"
         placeholder="Search for a place to jump to..."
         autocomplete="off"
-        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
       />
       <div
         v-if="searchOpen"
@@ -166,7 +166,7 @@ function onSearchBlur() {
 
     <!-- Resolved address -->
     <p v-if="resolvedLabel" class="text-xs text-gray-500 flex items-center gap-1">
-      <span class="text-[#FF56B0]">&#x1f4cd;</span> {{ resolvedLabel }}
+      <span class="text-brand-700">&#x1f4cd;</span> {{ resolvedLabel }}
     </p>
     <p v-else class="text-xs text-gray-400">Click on the map to place a pin, or search above to jump to a location.</p>
   </div>

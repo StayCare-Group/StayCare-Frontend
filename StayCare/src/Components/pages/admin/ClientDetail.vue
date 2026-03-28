@@ -31,7 +31,7 @@
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Properties ({{ client.properties?.length ?? 0 }})</h3>
           <button @click="showAddProperty = !showAddProperty"
-            class="text-xs font-semibold text-[#FF56B0] hover:underline">
+            class="text-xs font-semibold text-brand-700 hover:underline">
             {{ showAddProperty ? 'Cancel' : '+ Add Property' }}
           </button>
         </div>
@@ -39,7 +39,7 @@
         <!-- Add property form -->
         <form v-if="showAddProperty" @submit.prevent="addProperty" class="border border-gray-200 rounded-lg p-4 space-y-3">
           <input v-model="newProp.property_name" placeholder="Property name" required
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
 
           <!-- Map picker -->
           <MapPicker :lat="newProp.lat" :lng="newProp.lng" height="280px" @update="onMapPick" />
@@ -47,20 +47,19 @@
           <!-- Auto-filled address fields (editable) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input v-model="newProp.address" placeholder="Address"
-              class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+              class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
             <input v-model="newProp.city" placeholder="City"
-              class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+              class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
             <input v-model="newProp.area" placeholder="Area / Zone"
-              class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+              class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
             <input v-model="newProp.access_notes" placeholder="Access notes (optional)"
-              class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+              class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
           </div>
 
           <div class="flex gap-2">
-            <button type="submit" :disabled="addingProp"
-              class="bg-[#FF56B0] text-white font-bold py-2 px-5 rounded-lg text-xs hover:opacity-90 transition disabled:opacity-60">
+            <AppButton type="submit" size="sm" :loading="addingProp">
               {{ addingProp ? 'Adding...' : 'Add' }}
-            </button>
+            </AppButton>
           </div>
           <p v-if="propError" class="text-xs text-red-500">{{ propError }}</p>
         </form>
@@ -79,7 +78,7 @@
               </div>
               <div class="flex items-center gap-2 shrink-0">
                 <button v-if="p.lat && p.lng" @click="toggleMap(p._id)"
-                  class="text-xs text-[#FF56B0] hover:underline">
+                  class="text-xs text-brand-700 hover:underline">
                   {{ expandedMap === p._id ? 'Hide Map' : 'Show Map' }}
                 </button>
                 <button @click="deleteProperty(p._id)" class="text-xs text-red-500 hover:text-red-700">Delete</button>
@@ -130,6 +129,7 @@ import { fetchClientById } from '../../../api/clients'
 import { fetchOrders, mapOrderForList } from '../../../api/orders'
 import { apiFetch } from '../../../api/client'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import AppButton from '../../ui/AppButton.vue'
 import MapPicker from '../../ui/MapPicker.vue'
 import MiniMap from '../../ui/MiniMap.vue'
 

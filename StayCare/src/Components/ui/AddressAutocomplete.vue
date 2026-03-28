@@ -69,7 +69,7 @@ function onBlur() {
       @focus="open = suggestions.length > 0"
       @blur="onBlur"
       :placeholder="placeholder"
-      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
       autocomplete="off"
     />
     <div

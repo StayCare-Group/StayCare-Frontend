@@ -3,7 +3,7 @@
     <!-- Sub-pages -->
     <OrdersList v-if="navStore.currentPage === 'orders'" />
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
-    <AdminCreateOrder v-else-if="navStore.currentPage === 'create-order'" />
+    <OrderCreateForm v-else-if="navStore.currentPage === 'create-order'" mode="admin" />
     <ItemManagement v-else-if="navStore.currentPage === 'items'" />
     <InvoicesList v-else-if="navStore.currentPage === 'invoices'" />
     <InvoiceDetail v-else-if="navStore.currentPage === 'invoice-detail'" />
@@ -35,7 +35,7 @@
               <span class="text-xs font-semibold text-gray-600 shrink-0">{{ val }}</span>
               <div class="flex-1 w-full flex items-end justify-center">
                 <div
-                  class="w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-[#FF56B0] to-[#FF89C8] transition-all duration-500"
+                  class="w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-brand-700 to-brand-400 transition-all duration-500"
                   :style="{ height: (val / maxVal) * 100 + '%', minHeight: val > 0 ? '4px' : '0' }"
                 ></div>
               </div>
@@ -68,9 +68,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
-import OrdersList from '../pages/client/OrdersList.vue'
-import OrderDetail from '../pages/client/OrderDetail.vue'
-import AdminCreateOrder from '../pages/admin/AdminCreateOrder.vue'
+import OrdersList from '../pages/shared/OrdersList.vue'
+import OrderDetail from '../pages/shared/OrderDetail.vue'
+import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
 import ItemManagement from '../pages/admin/ItemManagement.vue'
 import UserManagement from '../pages/admin/UserManagement.vue'
 import ClientDetail from '../pages/admin/ClientDetail.vue'
@@ -78,8 +78,8 @@ import Processing from '../pages/facility/Processing.vue'
 import RoutePlanner from '../pages/admin/RoutePlanner.vue'
 import Reports from '../pages/admin/Reports.vue'
 import Settings from '../pages/shared/Settings.vue'
-import InvoicesList from '../pages/client/InvoicesList.vue'
-import InvoiceDetail from '../pages/client/InvoiceDetail.vue'
+import InvoicesList from '../pages/shared/InvoicesList.vue'
+import InvoiceDetail from '../pages/shared/InvoiceDetail.vue'
 import CreateInvoice from '../pages/admin/CreateInvoice.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList } from '../../api/orders'

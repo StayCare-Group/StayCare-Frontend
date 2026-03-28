@@ -5,7 +5,7 @@
       <button @click="navStore.goBack('invoices')" class="text-white hover:text-gray-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h2 class="text-lg font-semibold text-white">{{ invoice?.id }}</h2>
+      <h2 class="text-lg font-semibold text-brand-700">{{ invoice?.id }}</h2>
       <StatusBadge v-if="invoice" :status="invoice.status" />
     </div>
 
@@ -63,10 +63,9 @@
 
       <!-- Pay button (if not already paid) -->
       <div v-if="invoice.status !== 'Paid'" class="flex gap-3">
-        <button @click="markPaid"
-          class="bg-[#FF56B0] text-white font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm">
-          Mark as Paid
-        </button>
+        <AppButton @click="markPaid" size="lg">
+          {{ $t('client.markAsPaid') }}
+        </AppButton>
       </div>
 
       <!-- Success toast -->
@@ -84,6 +83,7 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchInvoiceById, mapInvoiceForDetail, recordPayment } from '../../../api/invoices'
 

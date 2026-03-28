@@ -38,20 +38,20 @@
               </div>
             </div>
             <div class="mt-3 flex flex-wrap gap-2">
-              <button
+              <AppButton
                 v-if="stop.type === 'Pickup' && stop.status !== 'Completed'"
+                size="sm"
                 @click="navStore.goToDetail('pickup-confirm', stop.id)"
-                class="bg-[#FF56B0] text-white font-medium py-1.5 px-3 rounded-lg text-xs hover:opacity-90 transition"
               >
                 {{ $t('driver.confirmPickup') }}
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 v-if="stop.type === 'Delivery' && stop.status !== 'Completed'"
+                size="sm" variant="secondary"
                 @click="navStore.goToDetail('delivery-confirm', stop.id)"
-                class="bg-[#00F5F3] text-gray-800 font-medium py-1.5 px-3 rounded-lg text-xs hover:opacity-90 transition"
               >
                 {{ $t('driver.confirmDelivery') }}
-              </button>
+              </AppButton>
               <span
                 v-if="stop.status === 'Completed'"
                 class="text-xs text-green-600 font-medium flex items-center gap-1"
@@ -80,6 +80,7 @@ import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import DriverHistory from '../pages/driver/DriverHistory.vue'
 import Settings from '../pages/shared/Settings.vue'
 import { useNavStore } from '../../stores/nav.js'
+import AppButton from '../ui/AppButton.vue'
 import { fetchRoutes, mapRouteForDriver } from '../../api/routes'
 
 const { t } = useI18n()
