@@ -1,13 +1,10 @@
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-white">{{ $t('admin.userManagement') }}</h2>
-      <button
-        @click="showInviteModal = true"
-        class="px-4 py-2 bg-[#FF56B0] text-white text-sm font-semibold rounded-lg shadow-[0_3px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300"
-      >
+      <h2 class="text-lg font-semibold text-brand-700">{{ $t('admin.userManagement') }}</h2>
+      <AppButton @click="showInviteModal = true">
         {{ $t('admin.inviteUser') }}
-      </button>
+      </AppButton>
     </div>
 
     <!-- Invite Modal -->
@@ -20,7 +17,7 @@
           type="email"
           v-model="inviteEmail"
           placeholder="user@example.com"
-          class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
+          class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40"
         />
 
         <label class="block text-sm font-medium text-gray-600 mt-4 mb-1">{{ $t('common.role') }}</label>
@@ -30,7 +27,7 @@
             @click="inviteRole = r.value"
             class="flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-colors"
             :class="inviteRole === r.value
-              ? 'border-[#FF56B0] bg-[#FF56B0]/10 text-[#FF56B0]'
+              ? 'border-brand-700 bg-brand-150 text-brand-700'
               : 'border-gray-200 text-gray-500 hover:border-gray-300'"
           >{{ r.label }}</button>
         </div>
@@ -46,11 +43,9 @@
             @click="closeInviteModal"
             class="flex-1 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
           >{{ $t('common.cancel') }}</button>
-          <button
-            @click="handleInvite"
-            :disabled="inviteSending"
-            class="flex-1 py-2 bg-[#FF56B0] text-white rounded-lg text-sm font-semibold shadow-[0_3px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >{{ inviteSending ? $t('common.sending') : $t('admin.sendInvitation') }}</button>
+          <AppButton class="flex-1" @click="handleInvite" :loading="inviteSending">
+            {{ $t('admin.sendInvitation') }}
+          </AppButton>
         </div>
       </div>
     </div>
@@ -150,6 +145,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
+import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
 
 const { t } = useI18n()

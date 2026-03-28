@@ -2,11 +2,8 @@
   <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-white">{{ $t('admin.itemManagement') }}</h2>
-      <button
-        @click="openModal(null)"
-        class="px-4 py-2 bg-[#FF56B0] text-white text-sm font-semibold rounded-lg shadow-[0_3px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300"
-      >{{ $t('admin.addItem') }}</button>
+      <h2 class="text-lg font-semibold text-brand-700">{{ $t('admin.itemManagement') }}</h2>
+      <AppButton @click="openModal(null)">{{ $t('admin.addItem') }}</AppButton>
     </div>
 
     <!-- Items table -->
@@ -27,7 +24,7 @@
         >{{ value ? $t('admin.active') : $t('admin.inactive') }}</span>
       </template>
       <template #cell-actions="{ item }">
-        <button @click="openModal(item)" class="text-[#FF56B0] hover:underline text-sm font-medium mr-3">{{ $t('admin.edit') }}</button>
+        <AppButton variant="ghost" size="sm" @click="openModal(item)" class="mr-2">{{ $t('admin.edit') }}</AppButton>
         <button @click="handleDelete(item)" class="text-red-400 hover:text-red-600 hover:underline text-sm font-medium">{{ $t('admin.delete') }}</button>
       </template>
     </DataTable>
@@ -43,27 +40,27 @@
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.itemCode') }}</label>
             <input v-model="modalForm.code" type="text" required
-              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
+              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40"
               placeholder="e.g. SHEET-KING" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.itemName') }}</label>
             <input v-model="modalForm.name" type="text" required
-              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
+              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40"
               placeholder="e.g. King Size Sheet" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.unitPrice') }} (&euro;)</label>
             <input v-model.number="modalForm.unitPrice" type="number" step="0.01" min="0" required
-              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
+              class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40"
               placeholder="0.00" />
           </div>
 
           <div class="flex items-center gap-2">
             <input v-model="modalForm.active" type="checkbox" id="item-active"
-              class="w-4 h-4 text-[#FF56B0] border-gray-300 rounded focus:ring-[#FF56B0]" />
+              class="w-4 h-4 text-brand-700 border-gray-300 rounded focus:ring-brand-400" />
             <label for="item-active" class="text-sm font-medium text-gray-600">{{ $t('admin.active') }}</label>
           </div>
         </div>
@@ -75,10 +72,9 @@
             class="flex-1 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
             {{ $t('common.cancel') }}
           </button>
-          <button @click="handleSave" :disabled="saving"
-            class="flex-1 py-2 bg-[#FF56B0] text-white rounded-lg text-sm font-semibold shadow-[0_3px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300 disabled:opacity-50">
-            {{ saving ? $t('common.saving') : $t('common.save') }}
-          </button>
+          <AppButton @click="handleSave" class="flex-1" :loading="saving">
+            {{ $t('common.save') }}
+          </AppButton>
         </div>
       </div>
     </div>
@@ -112,6 +108,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DataTable from '../../ui/DataTable.vue'
+import AppButton from '../../ui/AppButton.vue'
 import { fetchItems, createItem, updateItem, deleteItem, mapItemForManagement } from '../../../api/items'
 
 const { t } = useI18n()

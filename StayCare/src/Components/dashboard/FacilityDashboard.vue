@@ -1,7 +1,10 @@
 <template>
   <div>
     <!-- Sub-pages -->
-    <Reception v-if="navStore.currentPage === 'reception'" />
+    <OrdersList v-if="navStore.currentPage === 'orders'" />
+    <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
+    <OrderCreateForm v-else-if="navStore.currentPage === 'create-order'" mode="admin" />
+    <Reception v-else-if="navStore.currentPage === 'reception'" />
     <Processing v-else-if="navStore.currentPage === 'processing'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
 
@@ -33,6 +36,9 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import KanbanColumn from '../ui/KanbanColumn.vue'
+import OrdersList from '../pages/shared/OrdersList.vue'
+import OrderDetail from '../pages/shared/OrderDetail.vue'
+import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
 import Reception from '../pages/facility/Reception.vue'
 import Processing from '../pages/facility/Processing.vue'
 import Settings from '../pages/shared/Settings.vue'

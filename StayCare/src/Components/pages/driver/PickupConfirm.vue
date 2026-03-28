@@ -2,10 +2,10 @@
   <div class="space-y-6 max-w-2xl">
     <!-- Header -->
     <div class="flex items-center gap-3">
-      <button @click="navStore.goBack('route')" class="text-white hover:text-gray-400">
+      <button @click="navStore.goBack('route')" class="text-brand-700 hover:text-gray-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h2 class="text-lg font-semibold text-white">{{ $t('driver.confirmPickup') }}</h2>
+      <h2 class="text-lg font-semibold text-brand-700">{{ $t('driver.confirmPickup') }}</h2>
     </div>
 
     <div v-if="stop" class="space-y-6">
@@ -28,14 +28,14 @@
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.actualBagCount') }}</label>
             <input v-model.number="form.actualBags" type="number" min="1" required
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
               :placeholder="$t('driver.bagsPickedUpPlaceholder')" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.pickupNotes') }}</label>
             <textarea v-model="form.notes" rows="2"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none resize-none"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
               :placeholder="$t('driver.notesPlaceholder')"></textarea>
           </div>
 
@@ -90,10 +90,9 @@
         </div>
 
         <div class="flex gap-3">
-          <button type="submit"
-            class="bg-[#FF56B0] text-white font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm">
+          <AppButton type="submit" size="lg">
             {{ $t('driver.confirmPickup') }}
-          </button>
+          </AppButton>
           <button type="button" @click="navStore.goBack('route')"
             class="bg-gray-100 text-gray-600 font-medium py-2.5 px-6 rounded-lg hover:bg-gray-200 transition text-sm">
             {{ $t('common.cancel') }}
@@ -127,6 +126,7 @@
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useNavStore } from '../../../stores/nav.js'
+import AppButton from '../../ui/AppButton.vue'
 
 const { t } = useI18n()
 import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'

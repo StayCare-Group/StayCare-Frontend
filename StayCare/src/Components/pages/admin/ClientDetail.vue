@@ -2,10 +2,10 @@
   <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-3">
-      <button @click="navStore.goBack('users')" class="text-white hover:text-gray-400">
+      <button @click="navStore.goBack('users')" class="text-brand-700 hover:text-gray-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <h2 class="text-lg font-semibold text-white">{{ client?.company_name ?? 'Client Details' }}</h2>
+      <h2 class="text-lg font-semibold text-brand-700">{{ client?.company_name ?? 'Client Details' }}</h2>
     </div>
 
     <p v-if="loading" class="text-sm text-gray-400">Loading...</p>

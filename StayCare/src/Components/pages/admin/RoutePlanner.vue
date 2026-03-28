@@ -1,8 +1,9 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-white">Route Planner</h2>
+    <h2 class="text-lg font-semibold text-brand-700">{{ $t('routePlanner.title') }}</h2>
 
-    <!-- Auto-Assign Section -->
+    <!-- Auto-Assign Section (disabled — to be re-enabled in a future release) -->
+    <template v-if="false">
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -15,15 +16,15 @@
           <input
             v-model="autoDate"
             type="date"
-            class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+            class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
           />
-          <button
+          <AppButton
             @click="handleAutoAssign"
             :disabled="autoAssigning || !drivers.length"
-            class="bg-gradient-to-r from-[#FF56B0] to-[#FF89C8] text-white font-bold py-2.5 px-6 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm disabled:opacity-60"
+            :loading="autoAssigning"
           >
             {{ autoAssigning ? 'Assigning...' : 'Auto-Assign' }}
-          </button>
+          </AppButton>
         </div>
       </div>
 
@@ -57,13 +58,13 @@
           </div>
         </div>
         <div class="flex gap-3">
-          <button
+          <AppButton
             @click="confirmAutoAssign"
             :disabled="autoConfirming"
-            class="bg-[#FF56B0] text-white font-bold py-2 px-5 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm disabled:opacity-60"
+            :loading="autoConfirming"
           >
             {{ autoConfirming ? 'Creating routes...' : 'Confirm & Create Routes' }}
-          </button>
+          </AppButton>
           <button
             @click="autoPreview = null"
             class="text-sm text-gray-500 hover:text-gray-700"
@@ -85,7 +86,7 @@
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" v-model="bgAutoAssignEnabled" class="sr-only peer" />
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF56B0] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF56B0]"></div>
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-400 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-700"></div>
           </label>
         </div>
 
@@ -109,30 +110,31 @@
         </div>
       </div>
     </div>
+    </template>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
       <!-- Manual route form -->
       <form class="bg-white rounded-xl shadow-sm p-5 space-y-4" @submit.prevent="handleCreateRoute">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Manual Route</h3>
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('routePlanner.manualRouteTitle') }}</h3>
 
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Date</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('routePlanner.date') }}</label>
           <input
             v-model="form.date"
             type="date"
             required
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
           />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Driver</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.driver') }}</label>
           <select
             v-model="form.driverId"
             required
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
           >
-            <option value="">Select driver</option>
+            <option value="">{{ $t('routePlanner.selectDriver') }}</option>
             <option v-for="d in drivers" :key="d.id" :value="d.id">
               {{ d.name }} — {{ d.email }}
             </option>
@@ -140,20 +142,20 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Area / Zone</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('routePlanner.areaZone') }}</label>
           <input
             v-model="form.area"
             type="text"
             required
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
-            placeholder="e.g. Valletta / Sliema"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
+            :placeholder="$t('routePlanner.areaPlaceholder')"
           />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Selected Orders</label>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('routePlanner.selectedOrders') }}</label>
           <p class="text-xs text-gray-500 mb-1">
-            {{ selectedOrderIds.length }} order(s) selected.
+            {{ $t('routePlanner.ordersSelected', { count: selectedOrderIds.length }) }}
           </p>
           <div class="flex flex-wrap gap-1">
             <span
@@ -167,13 +169,13 @@
         </div>
 
         <div class="flex gap-3">
-          <button
+          <AppButton
             type="submit"
             :disabled="submitting || !selectedOrderIds.length"
-            class="bg-[#FF56B0] text-white font-bold py-2.5 px-6 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm disabled:opacity-60"
+            :loading="submitting"
           >
-            {{ submitting ? 'Creating...' : 'Create Route' }}
-          </button>
+            {{ submitting ? $t('routePlanner.creatingRoute') : $t('routePlanner.createRoute') }}
+          </AppButton>
         </div>
         <p v-if="errorMessage" class="text-xs text-red-500 mt-1">{{ errorMessage }}</p>
         <p v-if="successMessage" class="text-xs text-green-600 mt-1">{{ successMessage }}</p>
@@ -182,8 +184,8 @@
       <!-- Pending orders -->
       <div class="bg-white rounded-xl shadow-sm p-5 xl:col-span-2 space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Pending Orders</h3>
-          <span class="text-xs text-gray-500">Select orders to include in the route</span>
+          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('routePlanner.pendingOrders') }}</h3>
+          <span class="text-xs text-gray-500">{{ $t('routePlanner.pendingOrdersHint') }}</span>
         </div>
         <div class="max-h-[480px] overflow-y-auto divide-y divide-gray-100">
           <label
@@ -205,15 +207,15 @@
                 <span class="text-xs text-gray-500">{{ o.pickupDate }}</span>
               </div>
               <p class="text-xs text-gray-500">
-                {{ o.pickupAddress || 'No address' }}
+                {{ o.pickupAddress || $t('routePlanner.noAddress') }}
               </p>
               <p class="text-xs text-gray-400 mt-0.5">
-                {{ o.serviceType }} &middot; {{ o.estimatedBags ?? 0 }} bags
+                {{ o.serviceType }} &middot; {{ o.estimatedBags ?? 0 }} {{ $t('routePlanner.bags') }}
               </p>
             </div>
           </label>
           <p v-if="!pendingOrders.length" class="text-xs text-gray-400 py-4 px-2">
-            No pending or assigned orders available.
+            {{ $t('routePlanner.noPendingOrders') }}
           </p>
         </div>
       </div>
@@ -222,7 +224,7 @@
     <!-- Existing routes + Reassign -->
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
       <div class="flex items-center justify-between flex-wrap gap-3">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Routes Calendar</h3>
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('routePlanner.routesCalendar') }}</h3>
         <div class="flex items-center gap-3">
           <button @click="shiftRouteDate(-1)" class="text-gray-400 hover:text-gray-700 p-1">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -230,13 +232,13 @@
           <input
             v-model="routeFilterDate"
             type="date"
-            class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+            class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
           />
           <button @click="shiftRouteDate(1)" class="text-gray-400 hover:text-gray-700 p-1">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </button>
-          <button @click="routeFilterDate = localDateStr()" class="text-xs text-[#FF56B0] hover:underline font-medium">Today</button>
-          <button @click="loadRoutes" class="text-xs text-[#FF56B0] hover:underline">Refresh</button>
+          <button @click="routeFilterDate = localDateStr()" class="text-xs text-brand-700 hover:underline font-medium">{{ $t('common.today') }}</button>
+          <button @click="loadRoutes" class="text-xs text-brand-700 hover:underline">{{ $t('routePlanner.refresh') }}</button>
         </div>
       </div>
 
@@ -248,15 +250,15 @@
           @click="routeFilterDate = day.date"
           class="px-3 py-1.5 rounded-lg text-xs font-medium border transition"
           :class="routeFilterDate === day.date
-            ? 'bg-[#FF56B0] text-white border-[#FF56B0]'
-            : day.count > 0 ? 'bg-gray-50 text-gray-700 border-gray-200 hover:border-[#FF56B0]' : 'bg-white text-gray-400 border-gray-100'"
+            ? 'bg-brand-700 text-white border-brand-700'
+            : day.count > 0 ? 'bg-gray-50 text-gray-700 border-gray-200 hover:border-brand-700' : 'bg-white text-gray-400 border-gray-100'"
         >
           {{ day.label }} <span v-if="day.count" class="ml-1 opacity-75">({{ day.count }})</span>
         </button>
       </div>
 
-      <p v-if="routesLoading" class="text-sm text-gray-400">Loading routes...</p>
-      <p v-else-if="!filteredRoutes.length" class="text-sm text-gray-400">No routes for {{ routeFilterDate }}.</p>
+      <p v-if="routesLoading" class="text-sm text-gray-400">{{ $t('routePlanner.loadingRoutes') }}</p>
+      <p v-else-if="!filteredRoutes.length" class="text-sm text-gray-400">{{ $t('routePlanner.noRoutesFor', { date: routeFilterDate }) }}</p>
 
       <div v-for="route in filteredRoutes" :key="route._id" class="border border-gray-200 rounded-lg p-4 space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
@@ -270,22 +272,22 @@
                 'bg-blue-100 text-blue-700': route.status === 'in_progress',
                 'bg-gray-100 text-gray-600': route.status === 'planned',
               }"
-            >{{ route.status }}</span>
+            >{{ getStatusLabel(route.status) }}</span>
           </div>
           <div class="flex items-center gap-3">
-            <span class="text-xs text-gray-500">{{ route.totalStops }} stop(s) &middot; {{ route.completedStops }} done</span>
+            <span class="text-xs text-gray-500">{{ route.totalStops }} {{ $t('routePlanner.stops') }} &middot; {{ route.completedStops }} {{ $t('routePlanner.done') }}</span>
             <button
               @click="toggleRouteMap(route._id)"
-              class="text-xs text-[#FF56B0] hover:underline font-medium"
+              class="text-xs text-brand-700 hover:underline font-medium"
             >
-              {{ showRouteMap[route._id] ? 'Hide Map' : 'Show Map' }}
+              {{ showRouteMap[route._id] ? $t('routePlanner.hideMap') : $t('routePlanner.showMap') }}
             </button>
             <button
               @click="handleDeleteRoute(route._id)"
               :disabled="deleting[route._id]"
               class="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-40"
             >
-              {{ deleting[route._id] ? 'Deleting...' : 'Delete' }}
+              {{ deleting[route._id] ? $t('routePlanner.deleting') : $t('admin.delete') }}
             </button>
           </div>
         </div>
@@ -298,7 +300,7 @@
           class="mt-2"
         />
         <p v-if="showRouteMap[route._id] && !getRouteMarkers(route).length" class="text-xs text-gray-400">
-          No stops have map coordinates yet. Add coordinates to client properties for them to appear on the map.
+          {{ $t('routePlanner.noMapCoords') }}
         </p>
 
         <!-- Stops with reassign -->
@@ -312,27 +314,28 @@
               <p class="text-sm text-gray-700 font-medium">
                 {{ stop.orderId }} — {{ stop.client }}
               </p>
-              <p class="text-xs text-gray-500">{{ stop.type }} &middot; {{ stop.status }} &middot; {{ stop.address || 'No address' }}</p>
+              <p class="text-xs text-gray-500">{{ stop.type }} &middot; {{ stop.status }} &middot; {{ stop.address || $t('routePlanner.noAddress') }}</p>
             </div>
 
             <!-- Reassign dropdown -->
             <div class="flex items-center gap-2 shrink-0">
               <select
                 v-model="reassignTargets[stop._id]"
-                class="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+                class="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
               >
-                <option value="">Reassign to...</option>
+                <option value="">{{ $t('routePlanner.reassignTo') }}</option>
                 <option v-for="d in drivers" :key="d.id" :value="d.id">
                   {{ d.name }}
                 </option>
               </select>
-              <button
+              <AppButton
+                size="sm"
                 @click="handleReassign(stop._id, reassignTargets[stop._id])"
                 :disabled="!reassignTargets[stop._id] || reassigning[stop._id]"
-                class="bg-[#FF56B0] text-white text-xs font-bold px-3 py-1 rounded-lg hover:opacity-90 transition disabled:opacity-40"
+                :loading="reassigning[stop._id]"
               >
-                {{ reassigning[stop._id] ? '...' : 'Reassign' }}
-              </button>
+                {{ reassigning[stop._id] ? $t('routePlanner.reassigning') : $t('routePlanner.reassign') }}
+              </AppButton>
             </div>
           </div>
         </div>
@@ -343,12 +346,25 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchOrders, fetchAllOrders, mapOrderForList, reassignOrder } from '../../../api/orders'
 import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
 import { fetchUsers } from '../../../api/users'
 import { fetchClients } from '../../../api/clients'
 import { apiFetch } from '../../../api/client'
 import MiniMap from '../../ui/MiniMap.vue'
+import AppButton from '../../ui/AppButton.vue'
+
+const { t } = useI18n()
+
+function getStatusLabel(status) {
+  const map = {
+    completed: t('routePlanner.statusCompleted'),
+    in_progress: t('routePlanner.statusInProgress'),
+    planned: t('routePlanner.statusPlanned'),
+  }
+  return map[status] ?? status
+}
 
 /* ── Constants ── */
 const MAX_PICKUPS_PER_HOUR = 4
@@ -467,8 +483,8 @@ const routeDateOptions = computed(() => {
     d.setDate(today.getDate() + i)
     const dateStr = localDateStr(d)
     const count = existingRoutes.value.filter(r => r.date === dateStr).length
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    const label = i === 0 ? 'Today' : i === -1 ? 'Yesterday' : i === 1 ? 'Tomorrow' : `${dayNames[d.getDay()]} ${d.getDate()}`
+    const dayKeys = ['daySun', 'dayMon', 'dayTue', 'dayWed', 'dayThu', 'dayFri', 'daySat']
+    const label = i === 0 ? t('common.today') : i === -1 ? t('routePlanner.yesterday') : i === 1 ? t('routePlanner.tomorrow') : `${t('common.' + dayKeys[d.getDay()])} ${d.getDate()}`
     days.push({ date: dateStr, label, count })
   }
   return days
@@ -509,8 +525,7 @@ const assignedOrderIds = computed(() => {
 
 const pendingOrders = computed(() => {
   const candidates = rawOrders.value.filter(o =>
-    ['Pending', 'Assigned', 'Transit'].includes(o.status) &&
-    !assignedOrderIds.value.has(o._id ?? o.id)
+    ['Pending', 'Assigned', 'Transit'].includes(o.status)
   )
   return candidates.map(o => {
     const mapped = mapOrderForList(o)
@@ -700,7 +715,7 @@ async function confirmAutoAssign() {
       })
       created++
     }
-    autoSuccess.value = `${created} route(s) created for ${autoPreview.value.date}.`
+    autoSuccess.value = t('routePlanner.routesCreated', { count: created, date: autoPreview.value.date })
     autoPreview.value = null
     // Refresh data
     const ordersData = await fetchAllOrders().catch(() => [])
@@ -732,7 +747,7 @@ async function handleCreateRoute() {
         orders: selectedOrderIds.value,
       }),
     })
-    successMessage.value = 'Route created and orders assigned to driver.'
+    successMessage.value = t('routePlanner.routeCreatedSuccess')
     selectedOrderIds.value = []
     const ordersData = await fetchAllOrders().catch(() => [])
     rawOrders.value = ordersData ?? []
@@ -788,7 +803,7 @@ function getRouteMarkers(route) {
 
 async function handleDeleteRoute(routeId) {
   if (!routeId) return
-  if (!confirm('Delete this route? Orders will be unassigned.')) return
+  if (!confirm(t('routePlanner.confirmDeleteRoute'))) return
   deleting[routeId] = true
   try {
     await deleteRoute(routeId)
