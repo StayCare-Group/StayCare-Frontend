@@ -66,92 +66,82 @@
     </div>
 
     <!-- Clients -->
-    <div v-if="activeTab === 'clients'" class="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left min-w-[800px]">
-          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-            <tr>
-              <th class="px-5 py-3 font-medium">{{ $t('common.id') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.name') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.type') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.contact') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.status') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.orders') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.balance') }}</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="c in clientsList" :key="c.id" class="hover:bg-gray-50 cursor-pointer" @click="navStore.goToDetail('client-detail', c.id)">
-              <td class="px-5 py-3 font-mono text-xs text-gray-500">{{ c.id }}</td>
-              <td class="px-5 py-3 font-medium text-gray-800">{{ c.name }}</td>
-              <td class="px-5 py-3 text-gray-500">{{ c.type }}</td>
-              <td class="px-5 py-3"><p class="text-gray-700 text-xs">{{ c.contact }}</p><p class="text-gray-400 text-xs">{{ c.phone }}</p></td>
-              <td class="px-5 py-3"><StatusBadge :status="c.status" /></td>
-              <td class="px-5 py-3 text-gray-700">{{ c.totalOrders }}</td>
-              <td class="px-5 py-3 font-semibold" :class="c.outstandingBalance > 0 ? 'text-red-600' : 'text-gray-800'">&euro;{{ c.outstandingBalance.toFixed(2) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataTable
+      v-if="activeTab === 'clients'"
+      :headers="clientHeaders"
+      :items="clientsList"
+      min-width="800px"
+      clickable
+      :click-title="$t('common.viewDetailsTitle')"
+      @row-click="row => navStore.goToDetail('client-detail', row.id)"
+    >
+      <template #cell-id="{ value }">
+        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
+      </template>
+      <template #cell-name="{ value }">
+        <span class="font-medium text-gray-800">{{ value }}</span>
+      </template>
+      <template #cell-contact="{ item }">
+        <p class="text-gray-700 text-xs">{{ item.contact }}</p>
+        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
+      </template>
+      <template #cell-status="{ value }">
+        <StatusBadge :status="value" />
+      </template>
+      <template #cell-outstandingBalance="{ value }">
+        <span class="font-semibold" :class="value > 0 ? 'text-red-600' : 'text-gray-800'">&euro;{{ value.toFixed(2) }}</span>
+      </template>
+    </DataTable>
 
     <!-- Drivers -->
-    <div v-if="activeTab === 'drivers'" class="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left min-w-[700px]">
-          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-            <tr>
-              <th class="px-5 py-3 font-medium">{{ $t('common.id') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.name') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.contact') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('admin.vehicle') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('admin.zone') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.status') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.today') }}</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="d in driversList" :key="d.id" class="hover:bg-gray-50">
-              <td class="px-5 py-3 font-mono text-xs text-gray-500">{{ d.id }}</td>
-              <td class="px-5 py-3 font-medium text-gray-800">{{ d.name }}</td>
-              <td class="px-5 py-3"><p class="text-gray-700 text-xs">{{ d.email }}</p><p class="text-gray-400 text-xs">{{ d.phone }}</p></td>
-              <td class="px-5 py-3 text-gray-500">{{ d.plate }}</td>
-              <td class="px-5 py-3 text-gray-500 text-xs">{{ d.zone }}</td>
-              <td class="px-5 py-3"><StatusBadge :status="d.status" /></td>
-              <td class="px-5 py-3 text-gray-700">{{ d.completedStops }}/{{ d.todayStops }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataTable
+      v-if="activeTab === 'drivers'"
+      :headers="driverHeaders"
+      :items="driversList"
+      min-width="700px"
+    >
+      <template #cell-id="{ value }">
+        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
+      </template>
+      <template #cell-name="{ value }">
+        <span class="font-medium text-gray-800">{{ value }}</span>
+      </template>
+      <template #cell-contact="{ item }">
+        <p class="text-gray-700 text-xs">{{ item.email }}</p>
+        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
+      </template>
+      <template #cell-status="{ value }">
+        <StatusBadge :status="value" />
+      </template>
+      <template #cell-todayStops="{ item }">
+        {{ item.completedStops }}/{{ item.todayStops }}
+      </template>
+    </DataTable>
 
     <!-- Staff -->
-    <div v-if="activeTab === 'staff'" class="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left min-w-[600px]">
-          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-            <tr>
-              <th class="px-5 py-3 font-medium">{{ $t('common.id') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.name') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.contact') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.role') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('admin.shift') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('common.status') }}</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="s in staffList" :key="s.id" class="hover:bg-gray-50">
-              <td class="px-5 py-3 font-mono text-xs text-gray-500">{{ s.id }}</td>
-              <td class="px-5 py-3 font-medium text-gray-800">{{ s.name }}</td>
-              <td class="px-5 py-3"><p class="text-gray-700 text-xs">{{ s.email }}</p><p class="text-gray-400 text-xs">{{ s.phone }}</p></td>
-              <td class="px-5 py-3 text-gray-500">{{ s.role }}</td>
-              <td class="px-5 py-3 text-gray-500 text-xs">{{ s.shift }}</td>
-              <td class="px-5 py-3"><StatusBadge :status="s.status" /></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataTable
+      v-if="activeTab === 'staff'"
+      :headers="staffHeaders"
+      :items="staffList"
+      min-width="600px"
+    >
+      <template #cell-id="{ value }">
+        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
+      </template>
+      <template #cell-name="{ value }">
+        <span class="font-medium text-gray-800">{{ value }}</span>
+      </template>
+      <template #cell-contact="{ item }">
+        <p class="text-gray-700 text-xs">{{ item.email }}</p>
+        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
+      </template>
+      <template #cell-status="{ value }">
+        <StatusBadge :status="value" />
+      </template>
+      <template #cell-shift="{ value }">
+        <span class="text-xs">{{ value || '—' }}</span>
+      </template>
+    </DataTable>
   </div>
 </template>
 
@@ -159,6 +149,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import DataTable from '../../ui/DataTable.vue'
 import { useNavStore } from '../../../stores/nav.js'
 
 const { t } = useI18n()
@@ -340,5 +331,34 @@ const tabs = computed(() => [
   { key: 'clients', label: t('admin.clients'), count: clientsList.value.length },
   { key: 'drivers', label: t('admin.drivers'), count: driversList.value.length },
   { key: 'staff', label: t('admin.staff'), count: staffList.value.length },
+])
+
+const clientHeaders = computed(() => [
+  { key: 'id',                 label: t('common.id') },
+  { key: 'name',               label: t('common.name') },
+  { key: 'type',               label: t('common.type'),    tdClass: 'text-gray-500' },
+  { key: 'contact',            label: t('common.contact') },
+  { key: 'status',             label: t('common.status') },
+  { key: 'totalOrders',        label: t('common.orders'),  tdClass: 'text-gray-700' },
+  { key: 'outstandingBalance', label: t('common.balance') },
+])
+
+const driverHeaders = computed(() => [
+  { key: 'id',         label: t('common.id') },
+  { key: 'name',       label: t('common.name') },
+  { key: 'contact',    label: t('common.contact') },
+  { key: 'plate',      label: t('admin.vehicle'),  tdClass: 'text-gray-500' },
+  { key: 'zone',       label: t('admin.zone'),     tdClass: 'text-gray-500' },
+  { key: 'status',     label: t('common.status') },
+  { key: 'todayStops', label: t('common.today'),   tdClass: 'text-gray-700' },
+])
+
+const staffHeaders = computed(() => [
+  { key: 'id',      label: t('common.id') },
+  { key: 'name',    label: t('common.name') },
+  { key: 'contact', label: t('common.contact') },
+  { key: 'role',    label: t('common.role'),    tdClass: 'text-gray-500' },
+  { key: 'shift',   label: t('admin.shift') },
+  { key: 'status',  label: t('common.status') },
 ])
 </script>

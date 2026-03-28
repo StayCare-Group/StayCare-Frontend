@@ -2,11 +2,11 @@
   <div class="space-y-6">
     <!-- Header with back button -->
     <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-white">All Orders</h2>
+      <h2 class="text-lg font-semibold text-white">{{ $t('client.allOrders') }}</h2>
       <button
         @click="navStore.goToDetail('create-order', null)"
         class="bg-[#FF56B0] text-white font-bold py-2 px-5 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm"
-      >+ New Order</button>
+      >{{ $t('client.newOrder') }}</button>
     </div>
 
     <!-- Filters -->
@@ -20,51 +20,48 @@
     </div>
 
     <!-- Orders table -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left min-w-[700px]">
-          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-            <tr>
-              <th class="px-5 py-3 font-medium">Order ID</th>
-              <th class="px-5 py-3 font-medium">Client</th>
-              <th class="px-5 py-3 font-medium">Date</th>
-              <th class="px-5 py-3 font-medium">Service</th>
-              <th class="px-5 py-3 font-medium">Bags</th>
-              <th class="px-5 py-3 font-medium">Status</th>
-              <th class="px-5 py-3 font-medium">Total</th>
-              <th class="px-5 py-3 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-gray-50 transition-colors">
-              <td class="px-5 py-3 font-medium text-gray-800">{{ order.id }}</td>
-              <td class="px-5 py-3 text-gray-700">{{ order.client }}</td>
-              <td class="px-5 py-3 text-gray-500">{{ order.pickupDate }}</td>
-              <td class="px-5 py-3 text-gray-500">{{ order.serviceType }}</td>
-              <td class="px-5 py-3 text-gray-700">{{ order.actualBags ?? order.estimatedBags }}</td>
-              <td class="px-5 py-3"><StatusBadge :status="order.status" /></td>
-              <td class="px-5 py-3 font-semibold text-gray-800">&euro;{{ order.total.toFixed(2) }}</td>
-              <td class="px-5 py-3">
-                <button
-                  @click="navStore.goToDetail('order-detail', order._id)"
-                  class="text-[#FF56B0] hover:underline text-sm font-medium"
-                >View</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataTable :headers="orderHeaders" :items="filteredOrders" min-width="700px">
+      <template #cell-id="{ value }">
+        <span class="font-medium text-gray-800">{{ value }}</span>
+      </template>
+      <template #cell-client="{ value }">
+        <span class="text-gray-700">{{ value }}</span>
+      </template>
+      <template #cell-pickupDate="{ value }">
+        <span class="text-gray-500">{{ value }}</span>
+      </template>
+      <template #cell-serviceType="{ value }">
+        <span class="text-gray-500">{{ value }}</span>
+      </template>
+      <template #cell-bags="{ item }">
+        <span class="text-gray-700">{{ item.actualBags ?? item.estimatedBags }}</span>
+      </template>
+      <template #cell-status="{ value }">
+        <StatusBadge :status="value" />
+      </template>
+      <template #cell-total="{ value }">
+        <span class="font-semibold text-gray-800">&euro;{{ value.toFixed(2) }}</span>
+      </template>
+      <template #cell-actions="{ item }">
+        <button
+          @click.stop="navStore.goToDetail('order-detail', item._id)"
+          class="text-[#FF56B0] hover:underline text-sm font-medium"
+        >{{ $t('common.viewDetails') }}</button>
+      </template>
+    </DataTable>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import DataTable from '../../ui/DataTable.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchOrders, mapOrderForList } from '../../../api/orders'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 const auth = useAuthStore()
 
@@ -94,4 +91,15 @@ const filteredOrders = computed(() => {
   }
   return orders.value.filter(o => o.status === activeFilter.value)
 })
+
+const orderHeaders = computed(() => [
+  { key: 'id', label: t('client.orderId') },
+  { key: 'client', label: t('common.client') },
+  { key: 'pickupDate', label: t('client.date') },
+  { key: 'serviceType', label: t('client.service') },
+  { key: 'bags', label: t('client.bagsLabel') },
+  { key: 'status', label: t('common.status') },
+  { key: 'total', label: t('client.total') },
+  { key: 'actions', label: t('admin.actions') },
+])
 </script>

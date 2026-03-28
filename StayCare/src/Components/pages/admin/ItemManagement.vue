@@ -10,41 +10,27 @@
     </div>
 
     <!-- Items table -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left min-w-[600px]">
-          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-            <tr>
-              <th class="px-5 py-3 font-medium">{{ $t('admin.itemCode') }}</th>
-              <th class="px-5 py-3 font-medium">{{ $t('admin.itemName') }}</th>
-              <th class="px-5 py-3 font-medium text-right">{{ $t('admin.unitPrice') }}</th>
-              <th class="px-5 py-3 font-medium text-center">{{ $t('common.status') }}</th>
-              <th class="px-5 py-3 font-medium text-right">{{ $t('admin.actions') }}</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="item in items" :key="item._id" class="hover:bg-gray-50 transition-colors">
-              <td class="px-5 py-3 font-mono text-xs text-gray-500">{{ item.code }}</td>
-              <td class="px-5 py-3 font-medium text-gray-800">{{ item.name }}</td>
-              <td class="px-5 py-3 text-right text-gray-700">&euro;{{ item.unitPrice.toFixed(2) }}</td>
-              <td class="px-5 py-3 text-center">
-                <span
-                  class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
-                  :class="item.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
-                >{{ item.active ? $t('admin.active') : $t('admin.inactive') }}</span>
-              </td>
-              <td class="px-5 py-3 text-right">
-                <button @click="openModal(item)" class="text-[#FF56B0] hover:underline text-sm font-medium mr-3">{{ $t('admin.edit') }}</button>
-                <button @click="handleDelete(item)" class="text-red-400 hover:text-red-600 hover:underline text-sm font-medium">{{ $t('admin.delete') }}</button>
-              </td>
-            </tr>
-            <tr v-if="!items.length && !loading">
-              <td colspan="5" class="px-5 py-8 text-center text-gray-400">{{ $t('common.noData') }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataTable :headers="itemHeaders" :items="items" row-key="_id" min-width="600px">
+      <template #cell-code="{ value }">
+        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
+      </template>
+      <template #cell-name="{ value }">
+        <span class="font-medium text-gray-800">{{ value }}</span>
+      </template>
+      <template #cell-unitPrice="{ value }">
+        <span class="text-gray-700">&euro;{{ value.toFixed(2) }}</span>
+      </template>
+      <template #cell-active="{ value }">
+        <span
+          class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+          :class="value ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+        >{{ value ? $t('admin.active') : $t('admin.inactive') }}</span>
+      </template>
+      <template #cell-actions="{ item }">
+        <button @click="openModal(item)" class="text-[#FF56B0] hover:underline text-sm font-medium mr-3">{{ $t('admin.edit') }}</button>
+        <button @click="handleDelete(item)" class="text-red-400 hover:text-red-600 hover:underline text-sm font-medium">{{ $t('admin.delete') }}</button>
+      </template>
+    </DataTable>
 
     <!-- Add/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="showModal = false">
@@ -123,14 +109,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import DataTable from '../../ui/DataTable.vue'
 import { fetchItems, createItem, updateItem, deleteItem, mapItemForManagement } from '../../../api/items'
 
 const { t } = useI18n()
 
 const items = ref([])
 const loading = ref(true)
+
+const itemHeaders = computed(() => [
+  { key: 'code', label: t('admin.itemCode') },
+  { key: 'name', label: t('admin.itemName') },
+  { key: 'unitPrice', label: t('admin.unitPrice'), thClass: 'text-right', tdClass: 'text-right' },
+  { key: 'active', label: t('common.status'), thClass: 'text-center', tdClass: 'text-center' },
+  { key: 'actions', label: t('admin.actions'), thClass: 'text-right', tdClass: 'text-right' },
+])
 
 async function loadItems() {
   loading.value = true

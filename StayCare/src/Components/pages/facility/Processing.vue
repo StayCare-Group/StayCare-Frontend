@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-white">Processing Board</h2>
+    <h2 class="text-lg font-semibold text-white">{{ $t('facility.processingBoard') }}</h2>
 
     <!-- Kanban Board -->
     <div class="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">
@@ -70,7 +70,7 @@
     <!-- Machine Status -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
-        <h3 class="text-sm font-semibold text-gray-700">Machine Status</h3>
+        <h3 class="text-sm font-semibold text-gray-700">{{ $t('facility.machineStatus') }}</h3>
         <div class="flex items-center gap-3">
           <span class="text-xs text-gray-400">{{ machines.filter(m => m.status === 'running').length }}/{{ machines.length }} in use</span>
           <button v-if="isAdmin" @click="showAddMachine = !showAddMachine"
@@ -119,45 +119,41 @@
           <p v-if="addMachineError" class="text-xs text-red-500 w-full">{{ addMachineError }}</p>
         </form>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left min-w-[600px]">
-          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-            <tr>
-              <th class="px-5 py-2 font-medium">Machine</th>
-              <th class="px-5 py-2 font-medium">Type</th>
-              <th class="px-5 py-2 font-medium">Capacity</th>
-              <th class="px-5 py-2 font-medium">Status</th>
-              <th class="px-5 py-2 font-medium">Current Order</th>
-              <th class="px-5 py-2 font-medium">Running Since</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="m in machines" :key="m._id" class="hover:bg-gray-50">
-              <td class="px-5 py-2 font-medium text-gray-800">{{ m.name }}</td>
-              <td class="px-5 py-2 text-gray-500 capitalize">{{ m.type }}</td>
-              <td class="px-5 py-2 text-gray-500">{{ m.capacity }}</td>
-              <td class="px-5 py-2"><StatusBadge :status="machineStatusLabel(m.status)" /></td>
-              <td class="px-5 py-2 text-gray-700">{{ m.current_order?.order_number ?? '—' }}</td>
-              <td class="px-5 py-2 text-gray-500">{{ m.started_at ? formatTime(m.started_at) : '—' }}</td>
-            </tr>
-            <tr v-if="!machines.length">
-              <td colspan="6" class="px-5 py-4 text-center text-xs text-gray-400">No machines found. Ask an admin to seed machines.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DataTable :headers="machineHeaders" :items="machines" row-key="_id" min-width="600px">
+        <template #cell-name="{ value }">
+          <span class="font-medium text-gray-800">{{ value }}</span>
+        </template>
+        <template #cell-type="{ value }">
+          <span class="text-gray-500 capitalize">{{ value }}</span>
+        </template>
+        <template #cell-capacity="{ value }">
+          <span class="text-gray-500">{{ value }}</span>
+        </template>
+        <template #cell-status="{ value }">
+          <StatusBadge :status="machineStatusLabel(value)" />
+        </template>
+        <template #cell-currentOrder="{ item }">
+          <span class="text-gray-700">{{ item.current_order?.order_number ?? '—' }}</span>
+        </template>
+        <template #cell-runningSince="{ item }">
+          <span class="text-gray-500">{{ item.started_at ? formatTime(item.started_at) : '—' }}</span>
+        </template>
+      </DataTable>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import DataTable from '../../ui/DataTable.vue'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchOrders, updateOrderStatus } from '../../../api/orders'
 import { fetchMachineStatus, assignMachine, releaseMachine, seedMachines } from '../../../api/facility'
 import { apiFetch } from '../../../api/client'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
@@ -238,6 +234,15 @@ const columns = computed(() =>
     orders: allOrders.value.filter(o => o.status === col.status),
   }))
 )
+
+const machineHeaders = computed(() => [
+  { key: 'name', label: t('facility.machine') },
+  { key: 'type', label: t('common.type') },
+  { key: 'capacity', label: t('facility.capacity') },
+  { key: 'status', label: t('common.status') },
+  { key: 'currentOrder', label: t('facility.currentOrder') },
+  { key: 'runningSince', label: t('facility.runningSince') },
+])
 
 function getAssignedMachine(orderId) {
   return machines.value.find(m => {
