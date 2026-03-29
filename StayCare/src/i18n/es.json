@@ -119,7 +119,26 @@
     "roleAdmin": "Administrador",
     "roleClient": "Cliente",
     "roleDriver": "Conductor",
-    "roleFacility": "Personal de Planta"
+    "roleFacility": "Personal de Planta",
+    "noClientLinked": "Tu cuenta aún no está vinculada a un perfil de cliente. Contacta a tu administrador para configurar tus propiedades."
+  },
+  "properties": {
+    "title": "Propiedades ({count})",
+    "addCta": "+ Agregar propiedad",
+    "propertyName": "Nombre de la propiedad",
+    "address": "Dirección",
+    "city": "Ciudad",
+    "area": "Área / Zona",
+    "accessNotes": "Notas de acceso (opcional)",
+    "adding": "Agregando...",
+    "add": "Agregar",
+    "empty": "Aún no hay propiedades agregadas.",
+    "hasCoordinates": "Tiene coordenadas en mapa",
+    "showMap": "Mostrar mapa",
+    "hideMap": "Ocultar mapa",
+    "deleteConfirm": "¿Eliminar esta propiedad?",
+    "addFailed": "No se pudo agregar la propiedad.",
+    "deleteFailed": "No se pudo eliminar la propiedad."
   },
   "admin": {
     "ordersToday": "Pedidos hoy",

@@ -119,7 +119,26 @@
     "roleAdmin": "Admin",
     "roleClient": "Client",
     "roleDriver": "Driver",
-    "roleFacility": "Facility Staff"
+    "roleFacility": "Facility Staff",
+    "noClientLinked": "Your account is not yet linked to a client profile. Please contact your administrator to set up your properties."
+  },
+  "properties": {
+    "title": "Properties ({count})",
+    "addCta": "+ Add Property",
+    "propertyName": "Property name",
+    "address": "Address",
+    "city": "City",
+    "area": "Area / Zone",
+    "accessNotes": "Access notes (optional)",
+    "adding": "Adding...",
+    "add": "Add",
+    "empty": "No properties added yet.",
+    "hasCoordinates": "Has map coordinates",
+    "showMap": "Show Map",
+    "hideMap": "Hide Map",
+    "deleteConfirm": "Delete this property?",
+    "addFailed": "Failed to add property.",
+    "deleteFailed": "Failed to delete property."
   },
   "admin": {
     "ordersToday": "Orders Today",

@@ -94,6 +94,20 @@
       </div>
     </div>
 
+    <!-- Properties section: visible to client-role users who have a linked client record -->
+    <ClientPropertiesManager
+      v-if="(isClientRole || ownClientId) && ownClientId"
+      :client-id="ownClientId"
+    />
+
+    <!-- Debug hint (only during dev): shown when role is client but no clientId is linked -->
+    <div
+      v-if="isClientRole && !ownClientId"
+      class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700"
+    >
+      {{ $t('profile.noClientLinked') }}
+    </div>
+
     <div v-if="showSuccess" class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
       {{ showSuccess }}
     </div>
@@ -109,6 +123,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../../../stores/auth.js'
 import { changePassword, fetchMe, updateMe } from '../../../api/users'
 import AppButton from '../../ui/AppButton.vue'
+import ClientPropertiesManager from './ClientPropertiesManager.vue'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -131,6 +146,13 @@ const savingProfile = ref(false)
 const savingPassword = ref(false)
 const showSuccess = ref('')
 const showError = ref('')
+const ownClientId = ref('')
+
+// 'user' is the legacy backend role for clients
+const isClientRole = computed(() => {
+  const r = String(profile.role || authStore.user?.role || '').toLowerCase()
+  return r === 'client' || r === 'user'
+})
 
 const roleLabel = computed(() => {
   const role = String(profile.role || authStore.user?.role || '').toLowerCase()
@@ -162,11 +184,16 @@ async function loadProfile() {
     profile.email = user.email ?? authStore.user?.email ?? ''
     profile.phone = user.phone ?? ''
     profile.role = user.role ?? authStore.user?.role ?? ''
+    ownClientId.value =
+      (typeof user.client === 'object' ? user.client?._id : user.client) ||
+      authStore.user?.clientId ||
+      ''
   } catch {
     profile.name = authStore.user?.name ?? ''
     profile.email = authStore.user?.email ?? ''
     profile.phone = authStore.user?.phone ?? ''
     profile.role = authStore.user?.role ?? ''
+    ownClientId.value = authStore.user?.clientId ?? ''
   }
 }
 
