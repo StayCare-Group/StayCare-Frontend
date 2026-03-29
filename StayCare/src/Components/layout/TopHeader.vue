@@ -11,16 +11,29 @@
       </div>
     </div>
     <div class="flex items-center gap-2 sm:gap-4">
+      <!-- Profile button — desktop -->
       <button
         v-if="authUser?.email"
         @click="goToProfile"
-        class="text-xs sm:text-sm text-gray-500 hidden sm:block hover:text-brand-700 transition-colors"
-      >{{ authUser.email }}</button>
+        class="hidden sm:flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-brand-150/60 hover:text-brand-700 transition-colors group"
+        :title="$t('profile.title')"
+      >
+        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-brand-150 text-brand-700 shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9.963 9.963 0 0112 15c2.53 0 4.84.94 6.879 2.804M15 9a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </span>
+        <span class="leading-tight">
+          <span class="block font-medium">{{ authUser.name || authUser.email }}</span>
+          <span v-if="authUser.name" class="block text-[11px] text-gray-400 group-hover:text-brand-500">{{ authUser.email }}</span>
+        </span>
+      </button>
+      <!-- Profile button — mobile -->
       <button
         @click="goToProfile"
-        class="sm:hidden inline-flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:text-brand-700 hover:bg-brand-150/60 transition-colors"
-        :title="$t('settings.profile')"
-        :aria-label="$t('settings.profile')"
+        class="sm:hidden inline-flex items-center justify-center w-8 h-8 rounded-full bg-brand-150 text-brand-700 hover:bg-brand-200 transition-colors"
+        :title="$t('profile.title')"
+        :aria-label="$t('profile.title')"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9.963 9.963 0 0112 15c2.53 0 4.84.94 6.879 2.804M15 9a3 3 0 11-6 0 3 3 0 016 0z" />

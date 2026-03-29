@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-white">{{ $t('facility.processingBoard') }}</h2>
+    <h2 class="text-lg font-semibold text-brand-700">{{ $t('facility.processingBoard') }}</h2>
 
     <!-- Kanban Board -->
     <div class="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">

@@ -113,7 +113,7 @@
       </template>
     </DataTable>
 
-    <!-- Staff -->
+    <!-- Facility Staff -->
     <DataTable
       v-if="activeTab === 'staff'"
       :headers="staffHeaders"
@@ -135,6 +135,28 @@
       </template>
       <template #cell-shift="{ value }">
         <span class="text-xs">{{ value || '—' }}</span>
+      </template>
+    </DataTable>
+
+    <!-- Admins -->
+    <DataTable
+      v-if="activeTab === 'admins'"
+      :headers="adminsHeaders"
+      :items="adminsList"
+      min-width="600px"
+    >
+      <template #cell-id="{ value }">
+        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
+      </template>
+      <template #cell-name="{ value }">
+        <span class="font-medium text-gray-800">{{ value }}</span>
+      </template>
+      <template #cell-contact="{ item }">
+        <p class="text-gray-700 text-xs">{{ item.email }}</p>
+        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
+      </template>
+      <template #cell-status="{ value }">
+        <StatusBadge :status="value" />
       </template>
     </DataTable>
   </div>
@@ -162,6 +184,7 @@ const loading = ref(true)
 const clientsList = ref([])
 const driversList = ref([])
 const staffList = ref([])
+const adminsList = ref([])
 
 const showInviteModal = ref(false)
 const inviteEmail = ref('')
@@ -309,13 +332,20 @@ onMounted(async () => {
       completedStops: 0,
     }))
 
-    staffList.value = users.filter(u => u.role === 'staff' || u.role === 'admin').map(u => ({
+    staffList.value = users.filter(u => u.role === 'staff').map(u => ({
       id: u._id ?? u.id,
       name: u.name,
       phone: u.phone ?? '',
       email: u.email,
-      role: u.role === 'admin' ? t('admin.admin') : t('admin.facilityStaff'),
       shift: '',
+      status: u.is_active !== false ? 'Active' : 'Inactive',
+    }))
+
+    adminsList.value = users.filter(u => u.role === 'admin').map(u => ({
+      id: u._id ?? u.id,
+      name: u.name,
+      phone: u.phone ?? '',
+      email: u.email,
       status: u.is_active !== false ? 'Active' : 'Inactive',
     }))
   } catch { /* stays empty */ } finally {
@@ -326,7 +356,8 @@ onMounted(async () => {
 const tabs = computed(() => [
   { key: 'clients', label: t('admin.clients'), count: clientsList.value.length },
   { key: 'drivers', label: t('admin.drivers'), count: driversList.value.length },
-  { key: 'staff', label: t('admin.staff'), count: staffList.value.length },
+  { key: 'staff', label: t('admin.facilityStaff'), count: staffList.value.length },
+  { key: 'admins', label: t('admin.admins'), count: adminsList.value.length },
 ])
 
 const clientHeaders = computed(() => [
@@ -353,8 +384,14 @@ const staffHeaders = computed(() => [
   { key: 'id',      label: t('common.id') },
   { key: 'name',    label: t('common.name') },
   { key: 'contact', label: t('common.contact') },
-  { key: 'role',    label: t('common.role'),    tdClass: 'text-gray-500' },
   { key: 'shift',   label: t('admin.shift') },
+  { key: 'status',  label: t('common.status') },
+])
+
+const adminsHeaders = computed(() => [
+  { key: 'id',      label: t('common.id') },
+  { key: 'name',    label: t('common.name') },
+  { key: 'contact', label: t('common.contact') },
   { key: 'status',  label: t('common.status') },
 ])
 </script>

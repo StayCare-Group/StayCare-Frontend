@@ -66,6 +66,8 @@ export function mapRouteForDriver(route: any) {
   const completedCount = orders.filter(
     (o: any) => ['Delivered', 'Completed', 'Invoiced'].includes(o.status)
   ).length
+  const pickupCount = orders.filter((o: any) => resolveStopType(o.status) === 'Pickup').length
+  const deliveryCount = orders.length - pickupCount
 
   return {
     _id: route._id,
@@ -74,6 +76,8 @@ export function mapRouteForDriver(route: any) {
     vehiclePlate: '',
     totalStops: orders.length,
     completedStops: completedCount,
+    pickupStops: pickupCount,
+    deliveryStops: deliveryCount,
     status: route.status,
     stops: orders.map((o: any, idx: number) => {
       const clientObj = typeof o.client === 'object' ? o.client : null

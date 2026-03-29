@@ -184,8 +184,20 @@
       <!-- Pending orders -->
       <div class="bg-white rounded-xl shadow-sm p-5 xl:col-span-2 space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('routePlanner.pendingOrders') }}</h3>
+          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('routePlanner.ordersToAssign') }}</h3>
           <span class="text-xs text-gray-500">{{ $t('routePlanner.pendingOrdersHint') }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            class="px-3 py-1.5 rounded-lg text-xs font-medium border transition"
+            :class="assignQueue === 'pickup' ? 'bg-brand-700 text-white border-brand-700' : 'bg-white text-gray-600 border-gray-200 hover:border-brand-700'"
+            @click="assignQueue = 'pickup'"
+          >{{ $t('routePlanner.pickupOrders') }} ({{ pickupQueueCount }})</button>
+          <button
+            class="px-3 py-1.5 rounded-lg text-xs font-medium border transition"
+            :class="assignQueue === 'delivery' ? 'bg-brand-700 text-white border-brand-700' : 'bg-white text-gray-600 border-gray-200 hover:border-brand-700'"
+            @click="assignQueue = 'delivery'"
+          >{{ $t('routePlanner.deliveryOrders') }} ({{ deliveryQueueCount }})</button>
         </div>
         <div class="max-h-[480px] overflow-y-auto divide-y divide-gray-100">
           <label
@@ -204,7 +216,12 @@
                 <p class="text-sm font-medium text-gray-800">
                   {{ o.id }} — {{ o.client }}
                 </p>
-                <span class="text-xs text-gray-500">{{ o.pickupDate }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                    :class="o.routeType === 'Delivery' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'"
+                  >{{ o.routeType }}</span>
+                  <span class="text-xs text-gray-500">{{ o.pickupDate }}</span>
+                </div>
               </div>
               <p class="text-xs text-gray-500">
                 {{ o.pickupAddress || $t('routePlanner.noAddress') }}
@@ -215,7 +232,7 @@
             </div>
           </label>
           <p v-if="!pendingOrders.length" class="text-xs text-gray-400 py-4 px-2">
-            {{ $t('routePlanner.noPendingOrders') }}
+            {{ assignQueue === 'pickup' ? $t('routePlanner.noPickupOrders') : $t('routePlanner.noDeliveryOrders') }}
           </p>
         </div>
       </div>
@@ -273,6 +290,9 @@
                 'bg-gray-100 text-gray-600': route.status === 'planned',
               }"
             >{{ getStatusLabel(route.status) }}</span>
+            <span class="ml-2 text-xs text-gray-500">
+              {{ route.pickupStops }} {{ $t('routePlanner.pickups') }} · {{ route.deliveryStops }} {{ $t('routePlanner.deliveries') }}
+            </span>
           </div>
           <div class="flex items-center gap-3">
             <span class="text-xs text-gray-500">{{ route.totalStops }} {{ $t('routePlanner.stops') }} &middot; {{ route.completedStops }} {{ $t('routePlanner.done') }}</span>
@@ -380,6 +400,7 @@ const selectedOrderIds = ref([])
 const existingRoutes = ref([])
 const routesLoading = ref(false)
 const clientMap = ref({})  // clientId -> client object
+const assignQueue = ref('pickup')
 
 const reassignTargets = reactive({})
 const reassigning = reactive({})
@@ -523,10 +544,25 @@ const assignedOrderIds = computed(() => {
   return ids
 })
 
-const pendingOrders = computed(() => {
-  const candidates = rawOrders.value.filter(o =>
-    ['Pending', 'Assigned', 'Transit'].includes(o.status)
-  )
+function resolveRouteType(status) {
+  return ['ReadyToDeliver', 'Collected'].includes(status) ? 'Delivery' : 'Pickup'
+}
+
+const assignableOrders = computed(() => {
+  const pickupStatuses = ['Pending', 'Assigned', 'Transit']
+  const deliveryStatuses = ['ReadyToDeliver', 'Collected']
+
+  const candidates = rawOrders.value.filter(o => {
+    const isPickup = pickupStatuses.includes(o.status)
+    const isDelivery = deliveryStatuses.includes(o.status)
+    if (!isPickup && !isDelivery) return false
+
+    // Prevent duplicates for pickup pipeline, but keep delivery orders assignable
+    // so admin can create delivery routes after facility processing.
+    if (isPickup && assignedOrderIds.value.has(o._id ?? o.id)) return false
+    return true
+  })
+
   return candidates.map(o => {
     const mapped = mapOrderForList(o)
     // If client name is empty (client was just an ID), resolve from client map
@@ -540,8 +576,17 @@ const pendingOrders = computed(() => {
       client: clientName,
       _id: o._id ?? mapped._id,
       pickupAddress: resolveAddress(o),
+      routeType: resolveRouteType(o.status),
     }
   })
+})
+
+const pickupQueueCount = computed(() => assignableOrders.value.filter(o => o.routeType === 'Pickup').length)
+const deliveryQueueCount = computed(() => assignableOrders.value.filter(o => o.routeType === 'Delivery').length)
+
+const pendingOrders = computed(() => {
+  const targetType = assignQueue.value === 'delivery' ? 'Delivery' : 'Pickup'
+  return assignableOrders.value.filter(o => o.routeType === targetType)
 })
 
 /* ─────────────────────────────────────────────

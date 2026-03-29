@@ -1,23 +1,31 @@
 <template>
   <div class="space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 class="text-lg font-semibold text-white">Reports</h2>
+      <h2 class="text-lg font-semibold text-brand-700">Reports</h2>
 
       <div class="flex flex-wrap items-center gap-3">
-        <select
-          v-model="reportPeriodType"
-          class="rounded-lg border border-pink-300 bg-white/10 text-white text-sm px-3 py-2
-                 focus:outline-none focus:ring-2 focus:ring-brand-400"
-        >
-          <option value="month" class="text-gray-800">{{ $t('admin.reportByMonth') }}</option>
-          <option value="year" class="text-gray-800">{{ $t('admin.reportByYear') }}</option>
-        </select>
+        <div class="inline-flex items-center gap-2 rounded-lg bg-gray-100 p-1">
+          <AppButton
+            size="sm"
+            :variant="reportPeriodType === 'month' ? 'primary' : 'ghost'"
+            @click="reportPeriodType = 'month'"
+          >
+            {{ $t('admin.reportByMonth') }}
+          </AppButton>
+          <AppButton
+            size="sm"
+            :variant="reportPeriodType === 'year' ? 'primary' : 'ghost'"
+            @click="reportPeriodType = 'year'"
+          >
+            {{ $t('admin.reportByYear') }}
+          </AppButton>
+        </div>
 
         <select
           v-if="reportPeriodType === 'month'"
           v-model="selectedMonth"
-          class="rounded-lg border border-pink-300 bg-white/10 text-white text-sm px-3 py-2
-                 focus:outline-none focus:ring-2 focus:ring-brand-400"
+          class="rounded-lg border border-gray-200 bg-white text-gray-700 text-sm px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent"
         >
           <option v-for="m in monthOptions" :key="m.value" :value="m.value" class="text-gray-800">
             {{ m.label }}
@@ -26,8 +34,8 @@
         <select
           v-else
           v-model="selectedYear"
-          class="rounded-lg border border-pink-300 bg-white/10 text-white text-sm px-3 py-2
-                 focus:outline-none focus:ring-2 focus:ring-brand-400"
+          class="rounded-lg border border-gray-200 bg-white text-gray-700 text-sm px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent"
         >
           <option v-for="y in yearOptions" :key="y" :value="y" class="text-gray-800">{{ y }}</option>
         </select>
@@ -146,6 +154,7 @@ import { fetchAllOrders, mapOrderForList } from '../../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../../api/invoices'
 import { fetchClients } from '../../../api/clients'
 import { fetchUsers } from '../../../api/users'
+import AppButton from '../../ui/AppButton.vue'
 
 const orders = ref([])
 const rawOrders = ref([])
