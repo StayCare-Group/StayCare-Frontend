@@ -279,7 +279,15 @@
     "loadingOrder": "Loading order...",
     "orderNotFound": "Order not found.",
     "selectDateAndWindow": "Please select a date and time window.",
-    "rescheduleFailed": "Failed to reschedule order."
+    "rescheduleFailed": "Failed to reschedule order.",
+    "noItems": "No items recorded.",
+    "title": "Order Summary"
+  },
+  "orderPdf": {
+    "download": "Download PDF",
+    "generating": "Generating...",
+    "generatedOn": "Generated on",
+    "confidential": "Confidential — For internal use only"
   },
   "driver": {
     "todaysPickups": "Today's Pickups",

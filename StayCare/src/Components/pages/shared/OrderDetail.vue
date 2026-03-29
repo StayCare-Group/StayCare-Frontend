@@ -13,6 +13,20 @@
         @click="showRescheduleModal = true"
         class="ml-auto"
       >{{ $t('common.reschedule') }}</AppButton>
+      <!-- PDF download -->
+      <AppButton
+        v-if="order"
+        variant="secondary"
+        size="sm"
+        :loading="generatingPdf"
+        @click="downloadPdf"
+        :class="canReschedule ? '' : 'ml-auto'"
+      >
+        <svg class="w-3.5 h-3.5 mr-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        {{ generatingPdf ? $t('orderPdf.generating') : $t('orderPdf.download') }}
+      </AppButton>
     </div>
 
     <div v-if="order" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -135,6 +149,7 @@ import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchOrderById, mapOrderForDetail, rescheduleOrder } from '../../../api/orders'
 import { fetchClientById } from '../../../api/clients'
+import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -142,6 +157,17 @@ const authStore = useAuthStore()
 
 const order = ref(null)
 const loading = ref(true)
+const generatingPdf = ref(false)
+
+async function downloadPdf() {
+  if (!order.value || generatingPdf.value) return
+  generatingPdf.value = true
+  try {
+    generateOrderPdf(order.value, t)
+  } finally {
+    generatingPdf.value = false
+  }
+}
 
 const ALL_TIME_WINDOWS = ['08:00 - 10:00', '09:00 - 11:00', '10:00 - 12:00', '13:00 - 15:00', '14:00 - 16:00', '15:00 - 17:00']
 const _now = new Date()

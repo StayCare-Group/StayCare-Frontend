@@ -260,7 +260,15 @@
     "loadingOrder": "Cargando pedido...",
     "orderNotFound": "Pedido no encontrado.",
     "selectDateAndWindow": "Seleccione una fecha y una ventana horaria.",
-    "rescheduleFailed": "No se pudo reprogramar el pedido."
+    "rescheduleFailed": "No se pudo reprogramar el pedido.",
+    "noItems": "Sin artículos registrados.",
+    "title": "Resumen del Pedido"
+  },
+  "orderPdf": {
+    "download": "Descargar PDF",
+    "generating": "Generando...",
+    "generatedOn": "Generado el",
+    "confidential": "Confidencial — Solo para uso interno"
   },
   "driver": {
     "todaysPickups": "Recogidas de hoy",
