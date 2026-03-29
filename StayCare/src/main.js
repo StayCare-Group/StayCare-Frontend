@@ -12,10 +12,12 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(i18n)
-app.use(router)
 
-// Try to restore session from refresh token cookie before mounting
+// Restore session BEFORE registering the router so that navigation guards
+// run with the correct auth state and don't redirect an authenticated user
+// to the login screen on a page refresh.
 const auth = useAuthStore()
 auth.tryRefresh().then(() => {
+  app.use(router)
   app.mount('#app')
 })
