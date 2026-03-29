@@ -92,6 +92,7 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useUiStore } from '../../../stores/ui.js'
 import { fetchClientById } from '../../../api/clients'
 import { apiFetch } from '../../../api/client'
 import MapPicker from '../../ui/MapPicker.vue'
@@ -99,6 +100,7 @@ import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
 
 const { t } = useI18n()
+const ui = useUiStore()
 
 const props = defineProps({
   clientId: {
@@ -187,7 +189,7 @@ async function deleteProperty(propertyId) {
     })
     await loadClientProperties()
   } catch (err) {
-    alert(err?.message || t('properties.deleteFailed'))
+    ui.showError(err?.message || t('properties.deleteFailed'))
   }
 }
 

@@ -372,10 +372,17 @@ import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes
 import { fetchUsers } from '../../../api/users'
 import { fetchClients } from '../../../api/clients'
 import { apiFetch } from '../../../api/client'
+import { useUiStore } from '../../../stores/ui.js'
+import {
+  getRouteTypeFromOrderStatus,
+  isDeliveryAssignableStatus,
+  isPickupAssignableStatus,
+} from '../../../utils/orderFlow'
 import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
 
 const { t } = useI18n()
+const ui = useUiStore()
 
 function getStatusLabel(status) {
   const map = {
@@ -544,17 +551,10 @@ const assignedOrderIds = computed(() => {
   return ids
 })
 
-function resolveRouteType(status) {
-  return ['ReadyToDeliver', 'Collected'].includes(status) ? 'Delivery' : 'Pickup'
-}
-
 const assignableOrders = computed(() => {
-  const pickupStatuses = ['Pending', 'Assigned', 'Transit']
-  const deliveryStatuses = ['ReadyToDeliver', 'Collected']
-
   const candidates = rawOrders.value.filter(o => {
-    const isPickup = pickupStatuses.includes(o.status)
-    const isDelivery = deliveryStatuses.includes(o.status)
+    const isPickup = isPickupAssignableStatus(o.status)
+    const isDelivery = isDeliveryAssignableStatus(o.status)
     if (!isPickup && !isDelivery) return false
 
     // Prevent duplicates for pickup pipeline, but keep delivery orders assignable
@@ -576,7 +576,7 @@ const assignableOrders = computed(() => {
       client: clientName,
       _id: o._id ?? mapped._id,
       pickupAddress: resolveAddress(o),
-      routeType: resolveRouteType(o.status),
+      routeType: getRouteTypeFromOrderStatus(o.status),
     }
   })
 })
@@ -816,7 +816,7 @@ async function handleReassign(orderId, driverId) {
     await loadRoutes()
     reassignTargets[orderId] = ''
   } catch (err) {
-    alert(err?.message || err?.error || 'Reassign failed')
+    ui.showError(err?.message || err?.error || 'Reassign failed')
   } finally {
     reassigning[orderId] = false
   }
@@ -857,7 +857,7 @@ async function handleDeleteRoute(routeId) {
     const ordersData = await fetchAllOrders().catch(() => [])
     rawOrders.value = ordersData ?? []
   } catch (err) {
-    alert(err?.message || err?.error || 'Failed to delete route')
+    ui.showError(err?.message || err?.error || 'Failed to delete route')
   } finally {
     deleting[routeId] = false
   }

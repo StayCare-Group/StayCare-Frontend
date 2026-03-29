@@ -29,7 +29,7 @@
           <div v-if="clientOrders.length" class="space-y-3">
             <div class="flex items-center gap-2 bg-brand-150 border border-brand-300 rounded-lg px-3 py-2">
               <svg class="w-4 h-4 text-brand-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <span class="text-sm text-brand-700 font-medium">{{ clientOrders.length }} uninvoiced {{ clientOrders.length === 1 ? 'order' : 'orders' }} found</span>
+              <span class="text-sm text-brand-700 font-medium">{{ $t('createInvoice.uninvoicedFound', { count: clientOrders.length }) }}</span>
             </div>
             <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
               <label v-for="o in clientOrders" :key="o._id"
@@ -71,7 +71,7 @@
             <tbody class="divide-y divide-gray-100">
               <tr v-for="(item, idx) in form.lineItems" :key="idx">
                 <td class="px-3 py-2">
-                  <input v-model="item.description" required placeholder="Service description"
+                  <input v-model="item.description" required :placeholder="$t('createInvoice.serviceDescription')"
                     class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 </td>
                 <td class="px-3 py-2">
@@ -136,12 +136,14 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchClients } from '../../../api/clients'
 import { fetchOrders } from '../../../api/orders'
 import { createInvoice, fetchInvoices } from '../../../api/invoices'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 
 const VAT_RATE = 0.18
@@ -219,7 +221,7 @@ function populateLineItems() {
       }
     } else if (order.pricing_snapshot?.total) {
       items.push({
-        description: `Order ${order.order_number}`,
+        description: t('createInvoice.orderLineDescription', { order: order.order_number }),
         quantity: 1,
         unit_price: order.pricing_snapshot.subtotal ?? order.pricing_snapshot.total ?? 0,
       })
@@ -273,7 +275,7 @@ async function submitInvoice() {
       navStore.goBack('invoices')
     }, 1500)
   } catch (err) {
-    const message = err?.message || err?.error || 'Failed to create invoice. Please try again.'
+    const message = err?.message || err?.error || t('createInvoice.createFailed')
     errorMessage.value = message
   } finally {
     submitting.value = false

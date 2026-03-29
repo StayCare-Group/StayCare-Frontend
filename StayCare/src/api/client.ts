@@ -1,4 +1,6 @@
 import { isMockEnabled, mockApiFetch } from './mock'
+import router from '../router'
+import { useAuthStore } from '../stores/auth.js'
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || ''
 
@@ -24,8 +26,17 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   })
 
   if (res.status === 401) {
-    // Redirect to login on auth failure
-    window.location.href = '/LogorCreate'
+    // Session expired: clear local auth state and navigate without full page reload.
+    try {
+      const auth = useAuthStore()
+      auth.user = null
+      if (router.currentRoute.value.name !== 'LogorCreate') {
+        router.push({ name: 'LogorCreate' })
+      }
+    } catch {
+      // If store/router is not ready yet, fallback to a hard navigation.
+      window.location.href = '/LogorCreate'
+    }
     throw new Error('Unauthorized')
   }
 

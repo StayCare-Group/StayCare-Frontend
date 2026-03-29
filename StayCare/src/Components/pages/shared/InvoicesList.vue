@@ -8,11 +8,11 @@
     <!-- Filters -->
     <div class="flex flex-wrap gap-2">
       <button
-        v-for="f in filters" :key="f"
-        @click="activeFilter = f"
+        v-for="f in filters" :key="f.key"
+        @click="activeFilter = f.key"
         class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-        :class="activeFilter === f ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-      >{{ f }}</button>
+        :class="activeFilter === f.key ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >{{ f.label }}</button>
     </div>
 
     <!-- Invoices table -->
@@ -76,7 +76,12 @@ onMounted(async () => {
   }
 })
 
-const filters = ['All', 'Pending', 'Overdue', 'Paid']
+const filters = computed(() => [
+  { key: 'All', label: t('invoices.filterAll') },
+  { key: 'Pending', label: t('invoices.filterPending') },
+  { key: 'Overdue', label: t('invoices.filterOverdue') },
+  { key: 'Paid', label: t('invoices.filterPaid') },
+])
 const activeFilter = ref('All')
 
 const filteredInvoices = computed(() => {

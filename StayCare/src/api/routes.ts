@@ -1,5 +1,9 @@
 import { apiFetch } from './client'
-import { mapStatus } from './orders'
+import {
+  COMPLETED_ORDER_STATUSES,
+  getRouteStopProgressStatus,
+  getRouteTypeFromOrderStatus,
+} from '../utils/orderFlow'
 
 function resolveProperty(clientObj: any, propertyId: any): any {
   if (!clientObj?.properties?.length) return null
@@ -49,24 +53,13 @@ function formatTime(dateStr: string): string {
   return new Date(dateStr).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
-function resolveStopType(orderStatus: string): string {
-  const pickupStatuses = ['Pending', 'Assigned', 'Transit']
-  return pickupStatuses.includes(orderStatus) ? 'Pickup' : 'Delivery'
-}
-
-function resolveStopStatus(orderStatus: string): string {
-  if (['Delivered', 'Completed', 'Invoiced'].includes(orderStatus)) return 'Completed'
-  if (['Transit', 'Collected'].includes(orderStatus)) return 'In Transit'
-  return 'Pending'
-}
-
 export function mapRouteForDriver(route: any) {
   const driverObj = typeof route.driver === 'object' ? route.driver : null
   const orders = route.orders ?? []
   const completedCount = orders.filter(
-    (o: any) => ['Delivered', 'Completed', 'Invoiced'].includes(o.status)
+    (o: any) => COMPLETED_ORDER_STATUSES.includes(o.status)
   ).length
-  const pickupCount = orders.filter((o: any) => resolveStopType(o.status) === 'Pickup').length
+  const pickupCount = orders.filter((o: any) => getRouteTypeFromOrderStatus(o.status) === 'Pickup' || getRouteTypeFromOrderStatus(o.status) === 'Assigned').length
   const deliveryCount = orders.length - pickupCount
 
   return {
@@ -91,13 +84,13 @@ export function mapRouteForDriver(route: any) {
         _id: o._id,
         client: clientObj?.company_name ?? clientObj?.name ?? '',
         address: addr,
-        type: resolveStopType(o.status),
+        type: getRouteTypeFromOrderStatus(o.status),
         timeWindow: o.pickup_window
           ? `${formatTime(o.pickup_window?.start_time)} - ${formatTime(o.pickup_window?.end_time)}`
           : '',
         estimatedBags: o.estimated_bags ?? 0,
         actualBags: o.actual_bags ?? null,
-        status: resolveStopStatus(o.status),
+        status: getRouteStopProgressStatus(o.status),
         notes: o.special_notes ?? '',
         photos: [],
         signature: false,

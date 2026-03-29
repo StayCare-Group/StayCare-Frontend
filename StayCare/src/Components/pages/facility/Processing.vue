@@ -34,12 +34,12 @@
               <div v-if="getAssignedMachine(order._id)" class="flex items-center justify-between bg-green-50 rounded px-2 py-1">
                 <span class="text-xs text-green-700 font-medium">{{ getAssignedMachine(order._id).name }}</span>
                 <button @click="handleRelease(getAssignedMachine(order._id)._id)"
-                  class="text-xs text-red-500 hover:text-red-700">Release</button>
+                  class="text-xs text-red-500 hover:text-red-700">{{ $t('facilityProcessing.release') }}</button>
               </div>
               <div v-else class="flex gap-1">
                 <select v-model="machineSelections[order._id]"
                   class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-400 outline-none">
-                  <option value="">Assign machine...</option>
+                  <option value="">{{ $t('facilityProcessing.assignMachine') }}</option>
                   <option v-for="m in availableMachines(col.machineType)" :key="m._id" :value="m._id">
                     {{ m.name }} ({{ m.capacity }})
                   </option>
@@ -49,7 +49,7 @@
                   size="sm"
                   @click="handleAssign(machineSelections[order._id], order._id)"
                   :disabled="assigning === order._id"
-                >{{ assigning === order._id ? '...' : 'Go' }}</AppButton>
+                >{{ assigning === order._id ? $t('facilityProcessing.assigning') : $t('facilityProcessing.go') }}</AppButton>
               </div>
             </div>
 
@@ -60,10 +60,10 @@
               class="mt-2 w-full"
               @click="advanceOrder(order._id, col.nextStatus)"
             >
-              {{ advancing === order._id ? 'Moving…' : `Move to ${nextLabel(col.nextStatus)}` }}
+              {{ advancing === order._id ? $t('facilityProcessing.moving') : $t('facilityProcessing.moveTo', { status: nextLabel(col.nextStatus) }) }}
             </AppButton>
           </div>
-          <div v-if="col.orders.length === 0" class="text-xs text-gray-300 text-center py-4">No orders</div>
+          <div v-if="col.orders.length === 0" class="text-xs text-gray-300 text-center py-4">{{ $t('facilityProcessing.noOrders') }}</div>
         </div>
       </div>
     </div>
@@ -73,19 +73,19 @@
       <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
         <h3 class="text-sm font-semibold text-gray-700">{{ $t('facility.machineStatus') }}</h3>
         <div class="flex items-center gap-3">
-          <span class="text-xs text-gray-400">{{ machines.filter(m => m.status === 'running').length }}/{{ machines.length }} in use</span>
+          <span class="text-xs text-gray-400">{{ $t('facilityProcessing.inUse', { used: machines.filter(m => m.status === 'running').length, total: machines.length }) }}</span>
           <button v-if="isAdmin" @click="showAddMachine = !showAddMachine"
             class="text-xs font-semibold text-brand-700 hover:underline">
-            {{ showAddMachine ? 'Cancel' : '+ Add Machine' }}
+            {{ showAddMachine ? $t('common.cancel') : $t('facilityProcessing.addMachine') }}
           </button>
         </div>
       </div>
 
       <!-- Seed button when no machines -->
       <div v-if="!machines.length && !loading" class="p-5 text-center space-y-3">
-        <p class="text-sm text-gray-500">No machines configured yet.</p>
+        <p class="text-sm text-gray-500">{{ $t('facilityProcessing.noMachinesConfigured') }}</p>
         <AppButton @click="handleSeed" :loading="seeding">
-          {{ seeding ? 'Seeding...' : 'Seed Default Machines' }}
+          {{ seeding ? $t('facilityProcessing.seeding') : $t('facilityProcessing.seedDefaultMachines') }}
         </AppButton>
         <p v-if="seedError" class="text-xs text-red-500">{{ seedError }}</p>
       </div>
@@ -94,26 +94,26 @@
       <div v-if="showAddMachine" class="px-5 py-4 border-b border-gray-100">
         <form @submit.prevent="handleAddMachine" class="flex items-end gap-3 flex-wrap">
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Name</label>
-            <input v-model="newMachine.name" required placeholder="e.g. Washer #4"
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('common.name') }}</label>
+            <input v-model="newMachine.name" required :placeholder="$t('facilityProcessing.machineNamePlaceholder')"
               class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Type</label>
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('common.type') }}</label>
             <select v-model="newMachine.type" required
               class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none">
-              <option value="washer">Washer</option>
-              <option value="dryer">Dryer</option>
-              <option value="iron">Iron</option>
+              <option value="washer">{{ $t('facilityProcessing.machineWasher') }}</option>
+              <option value="dryer">{{ $t('facilityProcessing.machineDryer') }}</option>
+              <option value="iron">{{ $t('facilityProcessing.machineIron') }}</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Capacity</label>
-            <input v-model="newMachine.capacity" required placeholder="e.g. 25 kg"
+            <label class="block text-xs font-medium text-gray-500 mb-1">{{ $t('facility.capacity') }}</label>
+            <input v-model="newMachine.capacity" required :placeholder="$t('facilityProcessing.capacityPlaceholder')"
               class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
           </div>
           <AppButton type="submit" size="sm" :loading="addingMachine">
-            {{ addingMachine ? 'Adding...' : 'Add' }}
+            {{ addingMachine ? $t('facilityProcessing.adding') : $t('properties.add') }}
           </AppButton>
           <p v-if="addMachineError" class="text-xs text-red-500 w-full">{{ addMachineError }}</p>
         </form>
@@ -149,12 +149,14 @@ import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
 import { useAuthStore } from '../../../stores/auth.js'
+import { useUiStore } from '../../../stores/ui.js'
 import { fetchOrders, updateOrderStatus } from '../../../api/orders'
 import { fetchMachineStatus, assignMachine, releaseMachine, seedMachines } from '../../../api/facility'
 import { apiFetch } from '../../../api/client'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
+const ui = useUiStore()
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
 const allOrders = ref([])
@@ -171,19 +173,19 @@ const addingMachine = ref(false)
 const addMachineError = ref('')
 const newMachine = reactive({ name: '', type: 'washer', capacity: '' })
 
-const PIPELINE = [
-  { status: 'Arrived',        label: 'Received',           nextStatus: 'Washing',        assignable: false, machineType: null },
-  { status: 'Washing',        label: 'Washing',            nextStatus: 'Drying',          assignable: true,  machineType: 'washer' },
-  { status: 'Drying',         label: 'Drying',             nextStatus: 'Ironing',         assignable: true,  machineType: 'dryer' },
-  { status: 'Ironing',        label: 'Ironing',            nextStatus: 'QualityCheck',    assignable: true,  machineType: 'iron' },
-  { status: 'QualityCheck',   label: 'Quality Check',      nextStatus: 'ReadyToDeliver',  assignable: false, machineType: null },
-  { status: 'ReadyToDeliver', label: 'Ready for Delivery', nextStatus: null,              assignable: false, machineType: null },
-]
+const PIPELINE = computed(() => [
+  { status: 'Arrived',        label: t('facilityProcessing.received'),         nextStatus: 'Washing',        assignable: false, machineType: null },
+  { status: 'Washing',        label: t('facility.washing'),                    nextStatus: 'Drying',          assignable: true,  machineType: 'washer' },
+  { status: 'Drying',         label: t('facility.drying'),                     nextStatus: 'Ironing',         assignable: true,  machineType: 'dryer' },
+  { status: 'Ironing',        label: t('facility.ironing'),                    nextStatus: 'QualityCheck',    assignable: true,  machineType: 'iron' },
+  { status: 'QualityCheck',   label: t('facilityProcessing.qualityCheck'),     nextStatus: 'ReadyToDeliver',  assignable: false, machineType: null },
+  { status: 'ReadyToDeliver', label: t('client.readyForDelivery'),             nextStatus: null,              assignable: false, machineType: null },
+])
 
-const LABEL_MAP = Object.fromEntries(PIPELINE.map(p => [p.status, p.label]))
+const LABEL_MAP = computed(() => Object.fromEntries(PIPELINE.value.map(p => [p.status, p.label])))
 
 function nextLabel(backendStatus) {
-  return LABEL_MAP[backendStatus] ?? backendStatus
+  return LABEL_MAP.value[backendStatus] ?? backendStatus
 }
 
 function machineStatusLabel(status) {
@@ -229,7 +231,7 @@ async function loadData() {
 onMounted(loadData)
 
 const columns = computed(() =>
-  PIPELINE.map(col => ({
+  PIPELINE.value.map(col => ({
     ...col,
     orders: allOrders.value.filter(o => o.status === col.status),
   }))
@@ -263,7 +265,7 @@ async function handleAssign(machineId, orderId) {
     machineSelections[orderId] = ''
     await loadData()
   } catch (err) {
-    alert('Assign failed: ' + (err?.message ?? 'Unknown error'))
+    ui.showError(t('facilityProcessing.assignFailed') + ': ' + (err?.message ?? t('facilityProcessing.unknownError')))
   } finally {
     assigning.value = null
   }
@@ -274,7 +276,7 @@ async function handleRelease(machineId) {
     await releaseMachine(machineId)
     await loadData()
   } catch (err) {
-    alert('Release failed: ' + (err?.message ?? 'Unknown error'))
+    ui.showError(t('facilityProcessing.releaseFailed') + ': ' + (err?.message ?? t('facilityProcessing.unknownError')))
   }
 }
 
@@ -288,7 +290,7 @@ async function advanceOrder(orderId, nextStatus) {
     await updateOrderStatus(orderId, nextStatus)
     await loadData()
   } catch (err) {
-    alert('Failed to update status: ' + (err?.message ?? 'Unknown error'))
+    ui.showError(t('facilityProcessing.updateStatusFailed') + ': ' + (err?.message ?? t('facilityProcessing.unknownError')))
   } finally {
     advancing.value = null
   }
@@ -301,7 +303,7 @@ async function handleSeed() {
     await seedMachines()
     await loadData()
   } catch (err) {
-    seedError.value = err?.message || 'Failed to seed machines. You may need admin permissions.'
+    seedError.value = err?.message || t('facilityProcessing.seedFailed')
   } finally {
     seeding.value = false
   }
@@ -326,7 +328,7 @@ async function handleAddMachine() {
     showAddMachine.value = false
     await loadData()
   } catch (err) {
-    addMachineError.value = err?.message || 'Failed to add machine.'
+    addMachineError.value = err?.message || t('facilityProcessing.addMachineFailed')
   } finally {
     addingMachine.value = false
   }
