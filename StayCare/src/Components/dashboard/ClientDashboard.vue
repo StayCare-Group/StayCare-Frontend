@@ -7,6 +7,7 @@
     <InvoicesList v-else-if="navStore.currentPage === 'invoices'" />
     <InvoiceDetail v-else-if="navStore.currentPage === 'invoice-detail'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
+    <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
     <!-- Default dashboard overview -->
     <div v-else class="space-y-6">
@@ -42,6 +43,7 @@ import OrderDetail from '../pages/shared/OrderDetail.vue'
 import InvoicesList from '../pages/shared/InvoicesList.vue'
 import InvoiceDetail from '../pages/shared/InvoiceDetail.vue'
 import Settings from '../pages/shared/Settings.vue'
+import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import { useNavStore } from '../../stores/nav.js'
 import AppButton from '../ui/AppButton.vue'
 import { fetchOrders, mapOrderForList } from '../../api/orders'

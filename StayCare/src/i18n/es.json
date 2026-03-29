@@ -104,6 +104,23 @@
     "saveFailed": "Error al guardar la configuración. Inténtalo de nuevo.",
     "saved": "¡Configuración guardada!"
   },
+  "profile": {
+    "title": "Perfil",
+    "subtitle": "Consulta la información de tu cuenta y la seguridad.",
+    "infoTitle": "Información del Perfil",
+    "updateProfile": "Actualizar Perfil",
+    "profileUpdated": "¡Perfil actualizado correctamente!",
+    "securityTitle": "Cambiar Contraseña",
+    "changePassword": "Cambiar Contraseña",
+    "passwordRequired": "Completa todos los campos de contraseña.",
+    "passwordUpdated": "¡Contraseña actualizada correctamente!",
+    "saveFailed": "No se pudo actualizar el perfil. Inténtalo de nuevo.",
+    "passwordFailed": "No se pudo actualizar la contraseña. Inténtalo de nuevo.",
+    "roleAdmin": "Administrador",
+    "roleClient": "Cliente",
+    "roleDriver": "Conductor",
+    "roleFacility": "Personal de Planta"
+  },
   "admin": {
     "ordersToday": "Pedidos hoy",
     "revenueThisMonth": "Ingresos del mes",

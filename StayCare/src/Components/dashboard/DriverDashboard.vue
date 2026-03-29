@@ -6,6 +6,7 @@
     <DeliveryConfirm v-else-if="navStore.currentPage === 'delivery-confirm'" />
     <DriverHistory v-else-if="navStore.currentPage === 'history'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
+    <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
     <!-- Default dashboard overview -->
     <div v-else class="space-y-6">
@@ -79,6 +80,7 @@ import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import DriverHistory from '../pages/driver/DriverHistory.vue'
 import Settings from '../pages/shared/Settings.vue'
+import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import { useNavStore } from '../../stores/nav.js'
 import AppButton from '../ui/AppButton.vue'
 import { fetchRoutes, mapRouteForDriver } from '../../api/routes'

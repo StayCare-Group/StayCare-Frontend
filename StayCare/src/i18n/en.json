@@ -104,6 +104,23 @@
     "saveFailed": "Failed to save settings. Please try again.",
     "saved": "Settings saved!"
   },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "View your account info and security settings.",
+    "infoTitle": "Profile Information",
+    "updateProfile": "Update Profile",
+    "profileUpdated": "Profile updated successfully!",
+    "securityTitle": "Change Password",
+    "changePassword": "Change Password",
+    "passwordRequired": "Please fill all password fields.",
+    "passwordUpdated": "Password updated successfully!",
+    "saveFailed": "Failed to update profile. Please try again.",
+    "passwordFailed": "Failed to update password. Please try again.",
+    "roleAdmin": "Admin",
+    "roleClient": "Client",
+    "roleDriver": "Driver",
+    "roleFacility": "Facility Staff"
+  },
   "admin": {
     "ordersToday": "Orders Today",
     "revenueThisMonth": "Revenue This Month",

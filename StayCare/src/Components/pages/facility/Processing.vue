@@ -38,29 +38,30 @@
               </div>
               <div v-else class="flex gap-1">
                 <select v-model="machineSelections[order._id]"
-                  class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#FF56B0] outline-none">
+                  class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-400 outline-none">
                   <option value="">Assign machine...</option>
                   <option v-for="m in availableMachines(col.machineType)" :key="m._id" :value="m._id">
                     {{ m.name }} ({{ m.capacity }})
                   </option>
                 </select>
-                <button
+                <AppButton
                   v-if="machineSelections[order._id]"
+                  size="sm"
                   @click="handleAssign(machineSelections[order._id], order._id)"
                   :disabled="assigning === order._id"
-                  class="text-xs font-medium text-white bg-[#FF56B0] rounded px-2 py-1 hover:opacity-90 disabled:opacity-50"
-                >{{ assigning === order._id ? '...' : 'Go' }}</button>
+                >{{ assigning === order._id ? '...' : 'Go' }}</AppButton>
               </div>
             </div>
 
-            <button
+            <AppButton
               v-if="col.nextStatus"
+              size="sm"
               :disabled="advancing === order._id"
-              class="mt-2 w-full text-xs font-medium text-white bg-[#FF56B0] hover:bg-[#e04d9e] disabled:opacity-50 rounded px-2 py-1.5 transition-colors"
+              class="mt-2 w-full"
               @click="advanceOrder(order._id, col.nextStatus)"
             >
               {{ advancing === order._id ? 'Moving…' : `Move to ${nextLabel(col.nextStatus)}` }}
-            </button>
+            </AppButton>
           </div>
           <div v-if="col.orders.length === 0" class="text-xs text-gray-300 text-center py-4">No orders</div>
         </div>
@@ -74,7 +75,7 @@
         <div class="flex items-center gap-3">
           <span class="text-xs text-gray-400">{{ machines.filter(m => m.status === 'running').length }}/{{ machines.length }} in use</span>
           <button v-if="isAdmin" @click="showAddMachine = !showAddMachine"
-            class="text-xs font-semibold text-[#FF56B0] hover:underline">
+            class="text-xs font-semibold text-brand-700 hover:underline">
             {{ showAddMachine ? 'Cancel' : '+ Add Machine' }}
           </button>
         </div>
@@ -83,10 +84,9 @@
       <!-- Seed button when no machines -->
       <div v-if="!machines.length && !loading" class="p-5 text-center space-y-3">
         <p class="text-sm text-gray-500">No machines configured yet.</p>
-        <button @click="handleSeed" :disabled="seeding"
-          class="bg-[#FF56B0] text-white font-bold py-2 px-6 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm disabled:opacity-60">
+        <AppButton @click="handleSeed" :loading="seeding">
           {{ seeding ? 'Seeding...' : 'Seed Default Machines' }}
-        </button>
+        </AppButton>
         <p v-if="seedError" class="text-xs text-red-500">{{ seedError }}</p>
       </div>
 
@@ -96,12 +96,12 @@
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Name</label>
             <input v-model="newMachine.name" required placeholder="e.g. Washer #4"
-              class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+              class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Type</label>
             <select v-model="newMachine.type" required
-              class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none">
+              class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none">
               <option value="washer">Washer</option>
               <option value="dryer">Dryer</option>
               <option value="iron">Iron</option>
@@ -110,12 +110,11 @@
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Capacity</label>
             <input v-model="newMachine.capacity" required placeholder="e.g. 25 kg"
-              class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+              class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
           </div>
-          <button type="submit" :disabled="addingMachine"
-            class="bg-[#FF56B0] text-white font-bold py-1.5 px-4 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-60">
+          <AppButton type="submit" size="sm" :loading="addingMachine">
             {{ addingMachine ? 'Adding...' : 'Add' }}
-          </button>
+          </AppButton>
           <p v-if="addMachineError" class="text-xs text-red-500 w-full">{{ addMachineError }}</p>
         </form>
       </div>
@@ -148,6 +147,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
+import AppButton from '../../ui/AppButton.vue'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchOrders, updateOrderStatus } from '../../../api/orders'
 import { fetchMachineStatus, assignMachine, releaseMachine, seedMachines } from '../../../api/facility'

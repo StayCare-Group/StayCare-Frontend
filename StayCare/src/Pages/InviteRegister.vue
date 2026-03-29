@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
+import AppButton from '../Components/ui/AppButton.vue'
 import { validateInvitation, registerViaInvitation } from '../api/invitations'
 
 const route = useRoute()
@@ -92,7 +93,7 @@ const handleRegister = async () => {
 
     <!-- Loading -->
     <div v-if="loading" class="flex flex-col items-center justify-center bg-white px-8 py-12 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
-      <div class="w-8 h-8 border-4 border-[#FF56B0] border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-8 h-8 border-4 border-brand-700 border-t-transparent rounded-full animate-spin"></div>
       <p class="mt-4 text-gray-500">Validating invitation...</p>
     </div>
 
@@ -100,27 +101,27 @@ const handleRegister = async () => {
     <div v-else-if="invalid" class="flex flex-col items-center justify-center bg-white px-8 py-12 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
       <h1 class="text-2xl font-bold text-red-500">Invalid Invitation</h1>
       <p class="mt-4 text-gray-600 text-center">This invitation link is invalid or has already been used.</p>
-      <button @click="router.push('/logorcreate')" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-6 rounded-lg shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">
+      <AppButton @click="router.push('/logorcreate')" class="mt-6 w-full">
         Go to Login
-      </button>
+      </AppButton>
     </div>
 
     <!-- Expired -->
     <div v-else-if="expired" class="flex flex-col items-center justify-center bg-white px-8 py-12 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
       <h1 class="text-2xl font-bold text-amber-500">Invitation Expired</h1>
       <p class="mt-4 text-gray-600 text-center">This invitation link has expired. Please ask your administrator to send a new one.</p>
-      <button @click="router.push('/logorcreate')" class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-6 rounded-lg shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300">
+      <AppButton @click="router.push('/logorcreate')" class="mt-6 w-full">
         Go to Login
-      </button>
+      </AppButton>
     </div>
 
     <!-- Registration Form -->
     <div v-else class="flex flex-col items-center justify-center bg-white px-8 py-10 rounded-lg shadow-lg max-w-md w-full" style="position: relative; z-index: 1;">
-      <h1 class="text-3xl font-bold text-center text-[#FF56B0]">Join StayFresh</h1>
+      <h1 class="text-3xl font-bold text-center text-brand-700">Join StayFresh</h1>
 
-      <div class="mt-4 bg-[#F5E7EC] rounded-lg px-4 py-3 w-full text-center">
+      <div class="mt-4 bg-brand-150 rounded-lg px-4 py-3 w-full text-center">
         <p class="text-sm text-gray-600">You're joining as</p>
-        <p class="text-lg font-bold text-[#FF56B0]">{{ roleLabel(inviteRole) }}</p>
+        <p class="text-lg font-bold text-brand-700">{{ roleLabel(inviteRole) }}</p>
         <p class="text-xs text-gray-500 mt-1">{{ inviteEmail }}</p>
       </div>
 
@@ -128,39 +129,39 @@ const handleRegister = async () => {
         type="text"
         placeholder="Full name"
         v-model="name"
-        class="mt-6 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-2 w-full focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
+        class="mt-6 border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/40"
       />
 
       <input
         type="tel"
         placeholder="Phone"
         v-model="phone"
-        class="mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-2 w-full focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
+        class="mt-3 border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/40"
       />
 
       <input
         type="password"
         placeholder="Password"
         v-model="password"
-        class="mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-2 w-full focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
+        class="mt-3 border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/40"
       />
 
       <input
         type="password"
         placeholder="Confirm password"
         v-model="confirmPassword"
-        class="mt-3 border-2 border-[#B8B8B8] bg-[#F5E7EC] rounded-lg px-4 py-2 w-full focus:outline-none focus:border-[#FF56B0] focus:ring-2 focus:ring-[#FF56B0]/40"
+        class="mt-3 border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-700/40"
       />
 
       <p v-if="error" class="text-red-500 text-sm mt-3 text-center">{{ error }}</p>
 
-      <button
+      <AppButton
         @click="handleRegister"
-        :disabled="submitting"
-        class="mt-6 bg-[#FF56B0] text-white font-bold py-2 px-4 rounded-lg w-full shadow-[0_4px_0_#E63E8A] hover:bg-[#00F5F3] hover:shadow-[inset_0_2px_6px_rgba(0,140,140,0.7)] transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        :loading="submitting"
+        class="mt-6 w-full"
       >
         {{ submitting ? 'Creating account...' : 'Create Account' }}
-      </button>
+      </AppButton>
     </div>
   </div>
 </template>

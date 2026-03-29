@@ -19,7 +19,7 @@
           <button
             type="button"
             @click="toggleScanner"
-            class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 hover:border-[#FF56B0] hover:text-[#FF56B0] transition"
+            class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 hover:border-brand-700 hover:text-brand-700 transition"
           >
             {{ isScanning ? 'Stop Scan' : 'Start Scan' }}
           </button>
@@ -39,12 +39,11 @@
         <label class="block text-sm font-medium text-gray-600 mb-1">Or enter Order ID manually</label>
         <div class="flex gap-2">
           <input v-model="manualOrderId" type="text"
-            class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none"
+            class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
             placeholder="e.g. ORD-1024" />
-          <button @click="lookupOrder"
-            class="bg-[#FF56B0] text-white font-medium py-2 px-4 rounded-lg hover:opacity-90 transition text-sm">
-            Look Up
-          </button>
+          <AppButton @click="lookupOrder">
+            {{ $t('facility.lookUp') }}
+          </AppButton>
         </div>
       </div>
     </div>
@@ -78,7 +77,7 @@
               <div class="flex items-center gap-2">
                 <input
                   v-model.number="checkinQtys[item.code]" type="number" min="0"
-                  class="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none" />
+                  class="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 <span v-if="checkinQtys[item.code] !== item.qty" class="text-xs text-orange-500 font-medium">!</span>
               </div>
             </div>
@@ -87,16 +86,15 @@
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">Damage Notes</label>
             <textarea v-model="damageNotes" rows="2"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF56B0] focus:border-transparent outline-none resize-none"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
               placeholder="Note any damaged items..."></textarea>
           </div>
         </div>
 
         <div class="flex gap-3">
-          <button type="submit"
-            class="bg-[#FF56B0] text-white font-bold py-2.5 px-8 rounded-lg shadow-[0_4px_0_#E63E8A] hover:opacity-90 transition text-sm">
-            Confirm Check-In
-          </button>
+          <AppButton type="submit" size="lg">
+            {{ $t('facility.confirmCheckIn') }}
+          </AppButton>
           <button type="button" @click="foundOrder = null"
             class="bg-gray-100 text-gray-600 font-medium py-2.5 px-6 rounded-lg hover:bg-gray-200 transition text-sm">
             Cancel
@@ -131,6 +129,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import AppButton from '../../ui/AppButton.vue'
 import { fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
 import { receiveAtFacility } from '../../../api/orders'
 import { BrowserMultiFormatReader } from '@zxing/browser'

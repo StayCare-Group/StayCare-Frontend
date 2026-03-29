@@ -9,14 +9,14 @@
       <div class="flex items-center gap-3">
         <span class="text-sm text-gray-500">{{ driverRoute.completedStops }}/{{ driverRoute.totalStops }} stops completed</span>
         <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div class="h-full bg-[#FF56B0] rounded-full transition-all" :style="{ width: progress + '%' }"></div>
+          <div class="h-full bg-brand-700 rounded-full transition-all" :style="{ width: progress + '%' }"></div>
         </div>
       </div>
     </div>
 
     <!-- Route Map -->
     <div v-if="routeMarkers.length">
-      <button @click="showMap = !showMap" class="text-xs text-[#FF56B0] hover:underline mb-2">
+      <button @click="showMap = !showMap" class="text-xs text-brand-700 hover:underline mb-2">
         {{ showMap ? 'Hide Map' : 'Show Route on Map' }}
       </button>
       <MiniMap v-if="showMap" :markers="routeMarkers" height="260px" class="mb-2" />
@@ -49,16 +49,16 @@
           </div>
 
           <div class="flex gap-2 sm:flex-col sm:items-end">
-            <button
+            <AppButton
               v-if="stop.type === 'Pickup' && stop.status !== 'Completed'"
+              size="sm"
               @click="navStore.goToDetail('pickup-confirm', stop.id)"
-              class="bg-[#FF56B0] text-white font-medium py-1.5 px-4 rounded-lg text-xs hover:opacity-90 transition"
-            >Confirm Pickup</button>
-            <button
+            >{{ $t('driver.confirmPickup') }}</AppButton>
+            <AppButton
               v-if="stop.type === 'Delivery' && stop.status !== 'Completed'"
+              size="sm" variant="secondary"
               @click="navStore.goToDetail('delivery-confirm', stop.id)"
-              class="bg-[#00F5F3] text-gray-800 font-medium py-1.5 px-4 rounded-lg text-xs hover:opacity-90 transition"
-            >Confirm Delivery</button>
+            >{{ $t('driver.confirmDelivery') }}</AppButton>
             <span v-if="stop.status === 'Completed'" class="text-xs text-green-600 font-medium flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               Done
@@ -75,6 +75,7 @@ import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import MiniMap from '../../ui/MiniMap.vue'
 import { useNavStore } from '../../../stores/nav.js'
+import AppButton from '../../ui/AppButton.vue'
 import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
 
 const navStore = useNavStore()

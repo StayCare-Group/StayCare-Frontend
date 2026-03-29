@@ -14,6 +14,7 @@
     <RoutePlanner v-else-if="navStore.currentPage === 'routes'" />
     <Reports v-else-if="navStore.currentPage === 'reports'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
+    <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
     <!-- Default dashboard overview -->
     <div v-else class="space-y-6">
@@ -78,6 +79,7 @@ import Processing from '../pages/facility/Processing.vue'
 import RoutePlanner from '../pages/admin/RoutePlanner.vue'
 import Reports from '../pages/admin/Reports.vue'
 import Settings from '../pages/shared/Settings.vue'
+import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import InvoicesList from '../pages/shared/InvoicesList.vue'
 import InvoiceDetail from '../pages/shared/InvoiceDetail.vue'
 import CreateInvoice from '../pages/admin/CreateInvoice.vue'

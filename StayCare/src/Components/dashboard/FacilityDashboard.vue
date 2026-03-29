@@ -7,6 +7,7 @@
     <Reception v-else-if="navStore.currentPage === 'reception'" />
     <Processing v-else-if="navStore.currentPage === 'processing'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
+    <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
     <!-- Default dashboard overview -->
     <div v-else class="space-y-6">
@@ -42,6 +43,7 @@ import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
 import Reception from '../pages/facility/Reception.vue'
 import Processing from '../pages/facility/Processing.vue'
 import Settings from '../pages/shared/Settings.vue'
+import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 
