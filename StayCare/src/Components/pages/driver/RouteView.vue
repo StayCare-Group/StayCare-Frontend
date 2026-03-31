@@ -150,7 +150,7 @@ const routeMarkers = computed(() => {
       markers.push({
         lat: prop.lat,
         lng: prop.lng,
-        label: `${o.order_number ?? o._id} — ${clientObj.company_name ?? ''}`,
+        label: `${o.order_number ?? o._id} — ${clientObj.name ?? ''}`,
       })
     }
   }

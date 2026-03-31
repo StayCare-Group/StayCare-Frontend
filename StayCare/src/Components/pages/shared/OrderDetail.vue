@@ -263,7 +263,7 @@ async function loadOrder() {
     if (!mapped.client && mapped.clientId) {
       try {
         const clientData = await fetchClientById(mapped.clientId)
-        mapped.client = clientData.company_name ?? clientData.name ?? ''
+        mapped.client = clientData.name ?? clientData.user_name ?? ''
         if (!mapped.pickupAddress) {
           const prop = clientData.properties?.[0]
           mapped.pickupAddress = prop?.address

@@ -1,6 +1,6 @@
 import { apiFetch } from './client'
 
-export async function fetchItems(activeOnly = true) {
+export async function getItems(activeOnly = false) {
   const query = activeOnly ? '?active=true' : ''
   return apiFetch(`/api/items${query}`)
 }
@@ -29,7 +29,7 @@ export function mapItemForCatalog(item: any) {
   return {
     code: item.item_code,
     name: item.name,
-    unitPrice: item.base_price ?? 0,
+    unitPrice: Number(item.base_price ?? 0),
   }
 }
 
@@ -38,7 +38,7 @@ export function mapItemForManagement(item: any) {
     _id: item._id ?? item.id,
     code: item.item_code ?? '',
     name: item.name ?? '',
-    unitPrice: item.base_price ?? 0,
-    active: item.active !== false,
+    unitPrice: Number(item.base_price ?? 0),
+    active: item.is_active !== false && item.is_active !== 0,
   }
 }

@@ -577,7 +577,7 @@ const assignableOrders = computed(() => {
     let clientName = mapped.client
     if (!clientName && typeof o.client === 'string' && clientMap.value[o.client]) {
       const c = clientMap.value[o.client]
-      clientName = c.company_name ?? c.name ?? ''
+      clientName = c.name ?? ''
     }
     return {
       ...mapped,

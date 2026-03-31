@@ -209,7 +209,7 @@ async function loadData() {
     allOrders.value = (ordersData ?? []).map(raw => ({
       id: raw.order_number ?? raw._id ?? raw.id,
       _id: raw._id ?? raw.id,
-      client: raw.client?.company_name ?? raw.client ?? '',
+      client: raw.client?.name ?? raw.client ?? '',
       status: raw.status,
       serviceType: raw.service_type === 'express' ? 'Express' : 'Standard',
       items: (raw.items ?? []).map(i => ({

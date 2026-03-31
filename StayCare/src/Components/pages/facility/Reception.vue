@@ -168,7 +168,7 @@ import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
 import { receiveAtFacility } from '../../../api/orders'
-import { fetchItems, mapItemForCatalog } from '../../../api/items'
+import { getItems, mapItemForCatalog } from '../../../api/items'
 import { useUiStore } from '../../../stores/ui.js'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 
@@ -195,7 +195,7 @@ onMounted(async () => {
   try {
     const [data, catalogData] = await Promise.all([
       fetchOrders(),
-      fetchItems().catch(() => []),
+      getItems().catch(() => []),
     ])
     allOrders.value = data ?? []
     itemCatalog.value = (catalogData ?? []).map(mapItemForCatalog)
@@ -213,7 +213,7 @@ const recentCheckins = computed(() =>
     .filter(o => ['Arrived', 'Washing', 'Drying', 'Ironing', 'QualityCheck'].includes(o.status))
     .map(o => ({
       id: o.order_number ?? o._id,
-      client: o.client?.company_name ?? '',
+      client: o.client?.name ?? o.client ?? '',
       status: mapStatus(o.status),
     }))
 )

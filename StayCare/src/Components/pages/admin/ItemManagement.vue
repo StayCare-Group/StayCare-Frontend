@@ -112,7 +112,7 @@ import { useI18n } from 'vue-i18n'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
-import { fetchItems, createItem, updateItem, deleteItem, mapItemForManagement } from '../../../api/items'
+import { getItems, createItem, updateItem, deleteItem, mapItemForManagement } from '../../../api/items'
 
 const { t } = useI18n()
 
@@ -130,7 +130,7 @@ const itemHeaders = computed(() => [
 async function loadItems() {
   loading.value = true
   try {
-    const data = await fetchItems(false) // include inactive
+    const data = await getItems() 
     items.value = (data ?? []).map(mapItemForManagement)
   } catch { items.value = [] } finally {
     loading.value = false
@@ -169,7 +169,7 @@ async function handleSave() {
       item_code: modalForm.value.code,
       name: modalForm.value.name,
       base_price: modalForm.value.unitPrice,
-      active: modalForm.value.active,
+      is_active: modalForm.value.active,
     }
     if (editingItem.value) {
       await updateItem(editingItem.value._id, payload)
