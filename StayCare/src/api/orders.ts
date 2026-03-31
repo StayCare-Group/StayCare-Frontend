@@ -1,4 +1,5 @@
 import { apiFetch } from './client'
+import { getClientAddress, getClientDisplayName, getClientId } from '../utils/client'
 
 export async function fetchOrders(params?: Record<string, string>) {
   const query = params ? '?' + new URLSearchParams(params).toString() : ''
@@ -113,7 +114,10 @@ const STATUS_MAP: Record<string, string> = {
 }
 
 export function mapStatus(backendStatus: string): string {
-  return STATUS_MAP[backendStatus] ?? backendStatus
+  if (!backendStatus) return ''
+  const normalized = String(backendStatus)
+  const key = normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase()
+  return STATUS_MAP[normalized] ?? STATUS_MAP[key] ?? normalized
 }
 
 function formatDate(dateStr: string): string {
@@ -141,17 +145,18 @@ function formatDateTime(dateStr: string): string {
 }
 
 export function mapOrderForList(o: any) {
+  const clientObj = typeof o.client === 'object' && o.client ? o.client : null
   return {
     id: o.order_number ?? o._id ?? o.id,
     _id: o._id ?? o.id,
-    client: o.client?.company_name ?? o.client ?? '',
-    clientId: o.client?._id ?? '',
+    client: clientObj ? getClientDisplayName(clientObj) : (o.client_name ?? o.client ?? ''),
+    clientId: clientObj ? getClientId(clientObj) : String(o.client_id ?? ''),
     pickupDate: formatDate(o.pickup_date),
     serviceType: o.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)',
     estimatedBags: o.estimated_bags ?? 0,
     actualBags: o.actual_bags ?? null,
     status: mapStatus(o.status),
-    total: o.pricing_snapshot?.total ?? 0,
+    total: Number(o.total ?? o.pricing_snapshot?.total ?? 0),
     specialNotes: o.special_notes ?? '',
   }
 }
@@ -169,46 +174,49 @@ function resolveProperty(clientObj: any, propertyId: any): any {
 
 export function mapOrderForDetail(o: any) {
   const clientObj = typeof o.client === 'object' && o.client ? o.client : null
-  const clientId = clientObj?._id ?? clientObj?.id ?? (typeof o.client === 'string' ? o.client : '')
+  const clientId = clientObj?._id ?? clientObj?.id ?? o.client_id ?? (typeof o.client === 'string' ? o.client : '')
   const driverObj = typeof o.driver === 'object' ? o.driver : (typeof o.assigned_driver === 'object' ? o.assigned_driver : null)
 
-  const property = resolveProperty(clientObj, o.property)
+  const property = resolveProperty(clientObj, o.property_id ?? o.property)
 
-  const clientName = clientObj?.company_name ?? clientObj?.name ?? o.client_name ?? ''
+  const clientName = clientObj ? getClientDisplayName(clientObj) : (o.client_name ?? '')
   const address = property?.address
     ? `${property.address}, ${property.city ?? ''}`
-    : clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
+    : o.property_name || (clientObj ? getClientAddress(clientObj) : '') || o.pickup_address || ''
+
+  const pickupWindowStart = o.pickup_window?.start_time ?? o.pickup_window_start
+  const pickupWindowEnd = o.pickup_window?.end_time ?? o.pickup_window_end
 
   return {
     id: o.order_number ?? o._id ?? o.id,
     _id: o._id ?? o.id,
     client: clientName,
-    clientId,
+    clientId: String(clientId ?? ''),
     pickupAddress: address,
     deliveryAddress: address,
     serviceType: o.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)',
     status: mapStatus(o.status),
     createdAt: o.created_at ?? '',
     pickupDate: formatDate(o.pickup_date),
-    pickupTimeWindow: o.pickup_window
-      ? `${formatTime(o.pickup_window.start_time)} - ${formatTime(o.pickup_window.end_time)}`
+    pickupTimeWindow: pickupWindowStart && pickupWindowEnd
+      ? `${formatTime(pickupWindowStart)} - ${formatTime(pickupWindowEnd)}`
       : '',
     estimatedBags: o.estimated_bags ?? 0,
     actualBags: o.actual_bags ?? null,
     specialNotes: o.special_notes ?? '',
-    driverPickup: driverObj?.name ?? null,
-    driverDelivery: driverObj?.name ?? null,
+    driverPickup: driverObj?.name ?? o.driver_name ?? null,
+    driverDelivery: driverObj?.name ?? o.driver_name ?? null,
     items: (o.items ?? []).map((i: any) => ({
-      code: i.item_code,
-      name: i.name,
+      code: i.item_code ?? i.item_code_snapshot ?? '',
+      name: i.name ?? i.name_snapshot ?? '',
       qty: i.quantity ?? 0,
-      unitPrice: i.unit_price ?? 0,
+      unitPrice: Number(i.unit_price ?? 0),
     })),
     timeline: (o.status_history ?? []).map((h: any) => ({
       status: mapStatus(h.status),
-      date: formatDateTime(h.timestamp),
-      note: '',
+      date: formatDateTime(h.timestamp ?? h.changed_at),
+      note: h.note ?? '',
     })),
-    total: o.pricing_snapshot?.total ?? 0,
+    total: Number(o.total ?? o.pricing_snapshot?.total ?? 0),
   }
 }

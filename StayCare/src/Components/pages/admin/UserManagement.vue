@@ -175,7 +175,7 @@ import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { useNavStore } from '../../../stores/nav.js'
 
 const { t } = useI18n()
-import { fetchUsers } from '../../../api/users'
+import { getUsers } from '../../../api/users'
 import { createInvitation } from '../../../api/invitations'
 import { getInviteRoleOptions } from '../../../constants/roles'
 
@@ -238,7 +238,7 @@ async function handleInvite() {
 
 onMounted(async () => {
   try {
-    const users = await fetchUsers().catch(() => [])
+    const users = await getUsers().catch(() => [])
 
     clientsList.value = (users ?? []).filter(u => u.role === 'client').map(u => ({
       id: u._id ?? u.id ?? u.user_id,

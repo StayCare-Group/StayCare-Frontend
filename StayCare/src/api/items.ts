@@ -27,6 +27,7 @@ export async function deleteItem(id: string) {
 
 export function mapItemForCatalog(item: any) {
   return {
+    id: item.id ?? item._id,
     code: item.item_code,
     name: item.name,
     unitPrice: Number(item.base_price ?? 0),

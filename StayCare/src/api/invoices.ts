@@ -1,4 +1,5 @@
 import { apiFetch } from './client'
+import { getClientDisplayName, getClientId } from '../utils/client'
 
 export async function fetchInvoices(params?: Record<string, string>) {
   const query = params ? '?' + new URLSearchParams(params).toString() : ''
@@ -41,12 +42,13 @@ function capitalize(s: string): string {
 
 export function mapInvoiceForList(inv: any) {
   const firstOrder = Array.isArray(inv.orders) ? inv.orders[0] : null
+  const clientObj = typeof inv.client === 'object' && inv.client ? inv.client : null
   return {
     id: inv.invoice_number ?? inv._id,
     _id: inv._id,
     orderId: firstOrder?.order_number ?? firstOrder ?? '',
-    client: inv.client?.company_name ?? inv.client ?? '',
-    clientId: inv.client?._id ?? '',
+    client: clientObj ? getClientDisplayName(clientObj) : (inv.client ?? ''),
+    clientId: clientObj ? getClientId(clientObj) : '',
     issueDate: formatDate(inv.issue_date),
     dueDate: formatDate(inv.due_date),
     status: capitalize(inv.status),
@@ -56,12 +58,13 @@ export function mapInvoiceForList(inv: any) {
 
 export function mapInvoiceForDetail(inv: any) {
   const firstOrder = Array.isArray(inv.orders) ? inv.orders[0] : null
+  const clientObj = typeof inv.client === 'object' && inv.client ? inv.client : null
   return {
     id: inv.invoice_number ?? inv._id,
     _id: inv._id,
     orderId: firstOrder?.order_number ?? firstOrder ?? '',
-    client: inv.client?.company_name ?? inv.client ?? '',
-    clientId: inv.client?._id ?? '',
+    client: clientObj ? getClientDisplayName(clientObj) : (inv.client ?? ''),
+    clientId: clientObj ? getClientId(clientObj) : '',
     issueDate: formatDate(inv.issue_date),
     dueDate: formatDate(inv.due_date),
     status: capitalize(inv.status),

@@ -2,7 +2,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { fetchAllOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
 import { fetchClients } from '../../api/clients'
-import { fetchUsers } from '../../api/users'
+import { getUsers } from '../../api/users'
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -69,7 +69,7 @@ export function useReportsData(t) {
         fetchAllOrders(dateParams).catch(() => []),
         fetchInvoices({ ...dateParams, limit: '200' }).catch(() => []),
         fetchClients().catch(() => []),
-        fetchUsers().catch(() => []),
+        getUsers().catch(() => []),
       ])
 
       rawOrders.value = ordersData ?? []

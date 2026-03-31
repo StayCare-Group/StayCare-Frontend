@@ -5,17 +5,9 @@ export async function getPropertiesByUserId(userId: string) {
   return apiFetch(`/api/properties/user/${userId}`)
 }
 
-// Admin can add a property to a specific user in admin panel.
+// Admin can add a property to a specific user.
 export async function createPropertyForUser(userId: string, payload: Record<string, any>) {
   return apiFetch(`/api/properties/user/${userId}`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-// Authenticated user can add their own property.
-export async function createProperty(payload: Record<string, any>) {
-  return apiFetch('/api/properties', {
     method: 'POST',
     body: JSON.stringify(payload),
   })

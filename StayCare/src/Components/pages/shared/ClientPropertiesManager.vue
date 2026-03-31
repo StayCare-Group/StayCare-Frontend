@@ -102,7 +102,6 @@ import { useI18n } from 'vue-i18n'
 import { useUiStore } from '../../../stores/ui.js'
 import {
   getPropertiesByUserId,
-  createProperty,
   createPropertyForUser,
   updateProperty,
   deleteProperty as deletePropertyById,
@@ -118,10 +117,6 @@ const props = defineProps({
   clientId: {
     type: String,
     required: true,
-  },
-  selfManaged: {
-    type: Boolean,
-    default: false,
   },
 })
 
@@ -219,8 +214,6 @@ async function saveProperty() {
   try {
     if (editingPropertyId.value) {
       await updateProperty(editingPropertyId.value, newProp.value)
-    } else if (props.selfManaged) {
-      await createProperty(newProp.value)
     } else {
       await createPropertyForUser(props.clientId, newProp.value)
     }

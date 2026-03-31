@@ -98,7 +98,6 @@
     <ClientPropertiesManager
       v-if="(isClientRole || ownClientId) && ownClientId"
       :client-id="ownClientId"
-      :self-managed="isClientRole"
     />
 
     <!-- Debug hint (only during dev): shown when role is client but no clientId is linked -->

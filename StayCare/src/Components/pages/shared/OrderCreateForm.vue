@@ -15,15 +15,30 @@
         <div v-if="isAdmin">
           <label class="block text-sm font-medium text-gray-600 mb-1">{{ t('common.client') }}</label>
           <select
+            v-if="!noClientsAvailable"
             v-model="form.clientId"
             required
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
           >
             <option value="">{{ t('admin.selectClientPlaceholder') }}</option>
-            <option v-for="c in clients" :key="c._id" :value="c._id">
-              {{ c.company_name || c.name }}
+            <option v-for="c in clients" :key="c.id" :value="c.id">
+              {{ c.name }}
             </option>
           </select>
+          <div v-else class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+            <p class="text-xs text-amber-700">
+              {{ t('admin.noClients') }} {{ t('admin.noClientsCreateHint') }}
+            </p>
+            <AppButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="mt-1"
+              @click="navStore.setPage('users')"
+            >
+              {{ t('nav.users') }}
+            </AppButton>
+          </div>
         </div>
 
         <div>
@@ -34,7 +49,7 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
           >
             <option value="">{{ t('admin.selectPropertyPlaceholder') }}</option>
-            <option v-for="p in properties" :key="p._id" :value="p._id">
+            <option v-for="p in properties" :key="p.id ?? p._id" :value="p.id ?? p._id">
               {{ p.property_name }} - {{ p.address }}, {{ p.city }}
             </option>
           </select>
@@ -145,7 +160,7 @@
       </div>
 
       <div class="flex gap-3">
-        <AppButton type="submit" size="lg" :loading="submitting">
+        <AppButton type="submit" size="lg" :loading="submitting" :disabled="noClientsAvailable">
           {{ t('admin.placeOrder') }}
         </AppButton>
         <button type="button" @click="navStore.goBack('orders')"
@@ -168,10 +183,10 @@ import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
-import { fetchItems, mapItemForCatalog } from '../../../api/items'
+import { getItems, mapItemForCatalog } from '../../../api/items'
 import { createOrder } from '../../../api/orders'
-import { fetchClients, fetchClientById } from '../../../api/clients'
-import { fetchMe } from '../../../api/users'
+import { getUsers, fetchMe } from '../../../api/users'
+import { getPropertiesByUserId } from '../../../api/properties'
 
 const props = defineProps({
   mode: {
@@ -228,18 +243,31 @@ const laundryItems = ref([])
 const loading = ref(true)
 const loadingClient = ref(false)
 
+const noClientsAvailable = computed(() =>
+  isAdmin.value && !loading.value && clients.value.length === 0
+)
+
 onMounted(async () => {
   try {
-    const itemsData = await fetchItems().catch(() => [])
+    const itemsData = await getItems().catch(() => [])
     laundryItems.value = (itemsData ?? []).map(mapItemForCatalog)
 
     if (isAdmin.value) {
-      clients.value = await fetchClients().catch(() => [])
+      const users = await getUsers().catch(() => [])
+      clients.value = (users ?? []).filter(u => u.role === 'client').map(u => ({
+        ...u,
+        _id: u._id ?? u.id,
+        id: u._id ?? u.id,
+        name: u.name,
+      }))
     } else {
       const meData = await fetchMe().catch(() => null)
-      const client = meData?.user?.client ?? authStore.user?.client
-      properties.value = client?.properties ?? []
-      form.clientId = meData?.user?.client?._id || authStore.user?.clientId || authStore.user?.client?._id || ''
+      const userId = meData?.user?.id ?? meData?.user?._id ?? authStore.user?.id ?? ''
+      form.clientId = userId
+      if (userId) {
+        const props = await getPropertiesByUserId(userId).catch(() => [])
+        properties.value = props ?? []
+      }
     }
   } catch {
     // keep empty state
@@ -256,10 +284,10 @@ watch(() => form.clientId, async (newId) => {
 
   loadingClient.value = true
   try {
-    const clientData = await fetchClientById(newId)
-    properties.value = clientData?.properties ?? []
+    const props = await getPropertiesByUserId(newId)
+    properties.value = props ?? []
     if (properties.value.length === 1) {
-      form.propertyId = properties.value[0]._id
+      form.propertyId = properties.value[0].id ?? properties.value[0]._id
     }
   } catch {
     // keep empty state
@@ -269,7 +297,7 @@ watch(() => form.clientId, async (newId) => {
 })
 
 const selectedProperty = computed(() =>
-  properties.value.find(p => p._id === form.propertyId) ?? null
+  properties.value.find(p => (p.id ?? p._id) === form.propertyId) ?? null
 )
 
 const itemQtys = reactive({})
@@ -306,6 +334,10 @@ function resolveClientId() {
 
 async function submitOrder() {
   if (submitting.value) return
+  if (noClientsAvailable.value) {
+    errorMessage.value = `${t('admin.noClients')} ${t('admin.noClientsCreateHint')}`
+    return
+  }
   submitting.value = true
 
   try {
@@ -313,28 +345,19 @@ async function submitOrder() {
     const items = laundryItems.value
       .filter(i => (itemQtys[i.code] || 0) > 0)
       .map(i => ({
-        item_code: i.code,
-        name: i.name,
+        item_id: i._id ?? i.id,
         quantity: itemQtys[i.code],
-        unit_price: i.unitPrice,
-        total_price: (itemQtys[i.code] || 0) * i.unitPrice,
       }))
 
     const payload = {
-      client: resolveClientId(),
-      property: form.propertyId || undefined,
+      client_id: Number(resolveClientId()),
+      property_id: form.propertyId ? Number(form.propertyId) : undefined,
       service_type: form.serviceType.includes('Express') ? 'express' : 'standard',
       pickup_date: form.pickupDate,
       pickup_window: form.pickupTimeWindow ? parseTimeWindow(form.pickupTimeWindow) : undefined,
       estimated_bags: form.estimatedBags,
       special_notes: form.specialNotes,
       items,
-      pricing_snapshot: {
-        subtotal: subtotal.value,
-        vat_percentage: 18,
-        vat_amount: vat.value,
-        total: estimatedTotal.value,
-      },
     }
 
     await createOrder(payload)

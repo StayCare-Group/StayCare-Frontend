@@ -4,6 +4,7 @@ import {
   getRouteStopProgressStatus,
   getRouteTypeFromOrderStatus,
 } from '../utils/orderFlow'
+import { getClientAddress, getClientDisplayName } from '../utils/client'
 
 function resolveProperty(clientObj: any, propertyId: any): any {
   if (!clientObj?.properties?.length) return null
@@ -19,6 +20,10 @@ function resolveProperty(clientObj: any, propertyId: any): any {
 export async function fetchRoutes(params?: Record<string, string>) {
   const query = params ? '?' + new URLSearchParams(params).toString() : ''
   return apiFetch(`/api/routes${query}`)
+}
+
+export async function fetchRoutesByDriver(driverId: string | number) {
+  return fetchRoutes({ driver: String(driverId) })
 }
 
 export async function fetchRouteById(id: string) {
@@ -41,8 +46,11 @@ function formatDate(dateStr: string): string {
   const s = String(dateStr)
   // Plain YYYY-MM-DD with no time component – return as-is
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
-  // ISO datetime (e.g. "2026-03-09T23:00:00.000Z") – parse and use LOCAL date parts
-  // so the browser's timezone (Malta UTC+1) resolves to the correct calendar day
+  // For ISO datetimes returned from DATE-like backend fields, keep the literal date part
+  // to avoid timezone shifts in the route calendar.
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0, 10)
+
+  // Fallback for any other date string.
   const d = new Date(s)
   if (isNaN(d.getTime())) return ''
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
@@ -55,34 +63,41 @@ function formatTime(dateStr: string): string {
 
 export function mapRouteForDriver(route: any) {
   const driverObj = typeof route.driver === 'object' ? route.driver : null
-  const orders = route.orders ?? []
+  const routeId = route._id ?? route.id
+  const orders = Array.isArray(route.orders) ? route.orders : []
   const completedCount = orders.filter(
     (o: any) => COMPLETED_ORDER_STATUSES.includes(o.status)
   ).length
-  const pickupCount = orders.filter((o: any) => getRouteTypeFromOrderStatus(o.status) === 'Pickup' || getRouteTypeFromOrderStatus(o.status) === 'Assigned').length
+  const pickupCount = orders.filter((o: any) => getRouteTypeFromOrderStatus(o.status) === 'Pickup').length
   const deliveryCount = orders.length - pickupCount
 
   return {
-    _id: route._id,
-    driverName: driverObj?.name ?? '',
-    date: formatDate(route.route_date),
+    _id: routeId,
+    id: routeId,
+    driverId: route.driver_id ?? driverObj?._id ?? driverObj?.id ?? null,
+    driverName: route.driver_name ?? driverObj?.name ?? '',
+    driverEmail: route.driver_email ?? driverObj?.email ?? '',
+    driverPhone: route.driver_phone ?? driverObj?.phone ?? '',
+    date: formatDate(route.route_date ?? route.date),
     vehiclePlate: '',
     totalStops: orders.length,
     completedStops: completedCount,
     pickupStops: pickupCount,
     deliveryStops: deliveryCount,
-    status: route.status,
+    status: route.status ?? 'planned',
     stops: orders.map((o: any, idx: number) => {
       const clientObj = typeof o.client === 'object' ? o.client : null
       const property = resolveProperty(clientObj, o.property)
       const addr = property?.address
         ? `${property.address}${property.city ? ', ' + property.city : ''}`
-        : clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? o.delivery_address ?? ''
+        : (clientObj ? getClientAddress(clientObj) : '') || o.pickup_address || o.delivery_address || ''
+      const fallbackClient = o.client_company || o.client_contact || ''
       return {
         id: idx + 1,
-        orderId: o.order_number ?? o._id,
-        _id: o._id,
-        client: clientObj?.company_name ?? clientObj?.name ?? '',
+        orderId: o.order_number ?? o.order_id ?? o._id ?? o.id,
+        _id: o._id ?? o.id ?? o.order_id ?? `${routeId}-stop-${idx + 1}`,
+        routeId,
+        client: clientObj ? getClientDisplayName(clientObj) : fallbackClient,
         address: addr,
         type: getRouteTypeFromOrderStatus(o.status),
         timeWindow: o.pickup_window

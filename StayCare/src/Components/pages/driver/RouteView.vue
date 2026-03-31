@@ -55,12 +55,12 @@
             <AppButton
               v-if="stop.type === 'Pickup' && stop.status !== 'Completed'"
               size="sm"
-              @click="navStore.goToDetail('pickup-confirm', stop.id)"
+              @click="navStore.goToDetail('pickup-confirm', stop._id ?? stop.id, stop.routeId)"
             >{{ $t('driver.confirmPickup') }}</AppButton>
             <AppButton
               v-if="stop.type === 'Delivery' && stop.status !== 'Completed'"
               size="sm" variant="secondary"
-              @click="navStore.goToDetail('delivery-confirm', stop.id)"
+              @click="navStore.goToDetail('delivery-confirm', stop._id ?? stop.id, stop.routeId)"
             >{{ $t('driver.confirmDelivery') }}</AppButton>
             <span v-if="stop.status === 'Completed'" class="text-xs text-green-600 font-medium flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>

@@ -18,8 +18,8 @@
           <select v-model="form.clientId" required @change="onClientChange"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none">
             <option value="">{{ $t('admin.selectClient') }}</option>
-            <option v-for="c in clients" :key="c._id" :value="c._id">
-              {{ c.company_name }}
+            <option v-for="c in clients" :key="getClientId(c)" :value="getClientId(c)">
+              {{ getClientDisplayName(c) }}
             </option>
           </select>
           <p v-if="!clients.length && !loadingData" class="text-xs text-amber-500 mt-1">{{ $t('admin.noClients') }}</p>
@@ -142,6 +142,7 @@ import { useNavStore } from '../../../stores/nav.js'
 import { fetchClients } from '../../../api/clients'
 import { fetchOrders } from '../../../api/orders'
 import { createInvoice, fetchInvoices } from '../../../api/invoices'
+import { getClientDisplayName, getClientId } from '../../../utils/client'
 
 const { t } = useI18n()
 const navStore = useNavStore()

@@ -157,15 +157,6 @@
           <p class="text-xs text-gray-500 mb-1">
             {{ $t('routePlanner.ordersSelected', { count: selectedOrderIds.length }) }}
           </p>
-          <div class="flex flex-wrap gap-1">
-            <span
-              v-for="id in selectedOrderIds"
-              :key="id"
-              class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-xs text-gray-700"
-            >
-              {{ id }}
-            </span>
-          </div>
         </div>
 
         <div class="flex gap-3">
@@ -371,7 +362,7 @@ import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchOrders, fetchAllOrders, mapOrderForList, reassignOrder } from '../../../api/orders'
 import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
-import { fetchUsers } from '../../../api/users'
+import { getUsers } from '../../../api/users'
 import { fetchClients } from '../../../api/clients'
 import { apiFetch } from '../../../api/client'
 import { useUiStore } from '../../../stores/ui.js'
@@ -459,7 +450,7 @@ onMounted(async () => {
   try {
     const [ordersData, usersData, clientsData] = await Promise.all([
       fetchAllOrders().catch(() => []),
-      fetchUsers().catch(() => []),
+      getUsers().catch(() => []),
       fetchClients().catch(() => []),
     ])
 
@@ -583,18 +574,25 @@ const assignableOrders = computed(() => {
       ...mapped,
       client: clientName,
       _id: o._id ?? mapped._id,
+      rawStatus: o.status,
       pickupAddress: resolveAddress(o),
       routeType: getRouteTypeFromOrderStatus(o.status),
     }
   })
 })
 
-const pickupQueueCount = computed(() => assignableOrders.value.filter(o => o.routeType === 'Pickup').length)
+const pickupQueueCount = computed(() =>
+  assignableOrders.value.filter(o => o.routeType === 'Pickup' && String(o.rawStatus) === 'Pending').length
+)
 const deliveryQueueCount = computed(() => assignableOrders.value.filter(o => o.routeType === 'Delivery').length)
 
 const pendingOrders = computed(() => {
   const targetType = assignQueue.value === 'delivery' ? 'Delivery' : 'Pickup'
-  return assignableOrders.value.filter(o => o.routeType === targetType)
+  return assignableOrders.value.filter(o => {
+    if (o.routeType !== targetType) return false
+    if (targetType === 'Pickup') return String(o.rawStatus) === 'Pending'
+    return true
+  })
 })
 
 /* ─────────────────────────────────────────────
@@ -711,6 +709,20 @@ function buildAutoPreview(targetDate) {
   }
 }
 
+function normalizeId(value) {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : value
+}
+
+function buildRouteCreatePayload({ date, driverId, area, orderIds }) {
+  return {
+    route_date: date,
+    driver_id: normalizeId(driverId),
+    area,
+    order_ids: (orderIds ?? []).map(normalizeId),
+  }
+}
+
 async function handleAutoAssign() {
   autoError.value = ''
   autoSuccess.value = ''
@@ -752,19 +764,18 @@ async function confirmAutoAssign() {
   autoError.value = ''
   autoSuccess.value = ''
   try {
-    // Create one route per driver, using the selected date as the route_date
-    // Use UTC noon to prevent any timezone from shifting the date
-    const routeDate = autoPreview.value.date + 'T12:00:00.000Z'
+    // Create one route per driver using the API contract date format (YYYY-MM-DD).
+    const routeDate = autoPreview.value.date
     let created = 0
     for (const a of autoPreview.value.assignments) {
       await apiFetch('/api/routes', {
         method: 'POST',
-        body: JSON.stringify({
-          route_date: routeDate,
-          driver: a.driverId,
+        body: JSON.stringify(buildRouteCreatePayload({
+          date: routeDate,
+          driverId: a.driverId,
           area: 'Auto-assigned',
-          orders: a.orders.map(o => o.id),
-        }),
+          orderIds: a.orders.map(o => o.id),
+        })),
       })
       created++
     }
@@ -789,16 +800,15 @@ async function handleCreateRoute() {
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    // Use UTC noon to prevent any timezone from shifting the date
-    const routeDate = form.date + 'T12:00:00.000Z'
+    const routeDate = form.date
     await apiFetch('/api/routes', {
       method: 'POST',
-      body: JSON.stringify({
-        route_date: routeDate,
-        driver: form.driverId,
+      body: JSON.stringify(buildRouteCreatePayload({
+        date: routeDate,
+        driverId: form.driverId,
         area: form.area,
-        orders: selectedOrderIds.value,
-      }),
+        orderIds: selectedOrderIds.value,
+      })),
     })
     successMessage.value = t('routePlanner.routeCreatedSuccess')
     selectedOrderIds.value = []
@@ -915,17 +925,17 @@ async function runBackgroundAutoAssign() {
       const preview = buildAutoPreview(dateStr)
       if (!preview || !preview.assignments.length) continue
 
-      const routeDate = dateStr + 'T12:00:00.000Z'
+      const routeDate = dateStr
       let created = 0
       for (const a of preview.assignments) {
         await apiFetch('/api/routes', {
           method: 'POST',
-          body: JSON.stringify({
-            route_date: routeDate,
-            driver: a.driverId,
+          body: JSON.stringify(buildRouteCreatePayload({
+            date: routeDate,
+            driverId: a.driverId,
             area: 'Auto-assigned',
-            orders: a.orders.map(o => o.id),
-          }),
+            orderIds: a.orders.map(o => o.id),
+          })),
         })
         created++
       }

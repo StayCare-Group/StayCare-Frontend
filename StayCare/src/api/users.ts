@@ -1,6 +1,6 @@
 import { apiFetch } from './client'
 
-export async function fetchUsers(params?: Record<string, string>) {
+export async function getUsers(params?: Record<string, string>) {
   const query = params ? '?' + new URLSearchParams(params).toString() : ''
   return apiFetch(`/api/users${query}`)
 }

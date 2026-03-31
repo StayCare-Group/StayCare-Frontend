@@ -134,7 +134,7 @@ import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 
 const { t } = useI18n()
-import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
+import { fetchRouteById, mapRouteForDriver } from '../../../api/routes'
 import { confirmPickup as apiConfirmPickup } from '../../../api/orders'
 
 const navStore = useNavStore()
@@ -150,12 +150,11 @@ let isDrawing = false
 
 onMounted(async () => {
   try {
-    const d = new Date()
-    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-    const data = await fetchRoutes({ date: today })
-    const routes = (data ?? []).map(mapRouteForDriver)
-    const allStops = routes.flatMap(r => r.stops)
-    stop.value = allStops.find(s => s.id === navStore.selectedId) ?? null
+    const routeId = navStore.selectedRouteId
+    if (!routeId) return
+    const data = await fetchRouteById(String(routeId))
+    const mapped = mapRouteForDriver(data)
+    stop.value = mapped.stops.find(s => (s._id ?? s.id) == navStore.selectedId) ?? null
   } catch { /* stays null */ } finally {
     loading.value = false
   }

@@ -12,18 +12,21 @@ export const useNavStore = defineStore('nav', () => {
     currentPage.value = page
   }
 
-  // Optional: context data for detail pages (e.g. selected order/invoice ID)
+  // Context for detail pages (selected entity ID)
   const selectedId = ref(null)
+  const selectedRouteId = ref(null)
 
-  function goToDetail(page, id) {
+  function goToDetail(page, id, routeId = null) {
     currentPage.value = page
     selectedId.value = id
+    selectedRouteId.value = routeId
   }
 
   function goBack(page) {
     currentPage.value = page
     selectedId.value = null
+    selectedRouteId.value = null
   }
 
-  return { currentPage, selectedId, setPage, goToDetail, goBack }
+  return { currentPage, selectedId, selectedRouteId, setPage, goToDetail, goBack }
 })
