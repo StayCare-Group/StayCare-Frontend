@@ -9,6 +9,8 @@
     <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
     <!-- Default dashboard overview -->
+    <LoadingPanel v-else-if="loading" />
+
     <div v-else class="space-y-6">
       <!-- KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -81,6 +83,7 @@ import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import DriverHistory from '../pages/driver/DriverHistory.vue'
 import Settings from '../pages/shared/Settings.vue'
 import ProfileAccount from '../pages/shared/ProfileAccount.vue'
+import LoadingPanel from '../ui/LoadingPanel.vue'
 import { useNavStore } from '../../stores/nav.js'
 import AppButton from '../ui/AppButton.vue'
 import { fetchRoutes, mapRouteForDriver } from '../../api/routes'
@@ -91,13 +94,43 @@ const navStore = useNavStore()
 const route = ref(null)
 const loading = ref(true)
 
+function parseLocalDate(dateStr) {
+  if (!dateStr) return null
+  const [y, m, d] = String(dateStr).split('-').map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d)
+}
+
+function pickCurrentOrNextRoute(routes) {
+  if (!routes.length) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const sorted = [...routes].sort((a, b) => {
+    const da = parseLocalDate(a.date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    const db = parseLocalDate(b.date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    return da - db
+  })
+
+  const todayRoute = sorted.find((r) => {
+    const routeDate = parseLocalDate(r.date)
+    return routeDate && routeDate.getTime() === today.getTime()
+  })
+  if (todayRoute) return todayRoute
+
+  const nextRoute = sorted.find((r) => {
+    const routeDate = parseLocalDate(r.date)
+    return routeDate && routeDate.getTime() > today.getTime()
+  })
+
+  return nextRoute ?? sorted[sorted.length - 1]
+}
+
 onMounted(async () => {
   try {
-    const d = new Date()
-    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-    const data = await fetchRoutes({ date: today })
+    const data = await fetchRoutes()
     const routes = (data ?? []).map(mapRouteForDriver)
-    route.value = routes[0] ?? null
+    route.value = pickCurrentOrNextRoute(routes)
   } catch { /* stays null */ } finally {
     loading.value = false
   }

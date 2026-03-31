@@ -15,8 +15,10 @@
       >{{ f.label }}</button>
     </div>
 
+    <LoadingPanel v-if="loading" :label="$t('common.loading')" />
+
     <!-- Invoices table -->
-    <DataTable :headers="invoiceHeaders" :items="filteredInvoices" min-width="650px">
+    <DataTable v-else :headers="invoiceHeaders" :items="filteredInvoices" min-width="650px">
       <template #cell-id="{ value }">
         <span class="font-medium text-gray-800">{{ value }}</span>
       </template>
@@ -54,6 +56,7 @@ import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
+import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchInvoices, mapInvoiceForList } from '../../../api/invoices'

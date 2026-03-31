@@ -17,6 +17,8 @@
     <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
     <!-- Default dashboard overview -->
+    <LoadingPanel v-else-if="loading" />
+
     <div v-else class="space-y-6">
       <!-- KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -83,6 +85,7 @@ import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import InvoicesList from '../pages/shared/InvoicesList.vue'
 import InvoiceDetail from '../pages/shared/InvoiceDetail.vue'
 import CreateInvoice from '../pages/admin/CreateInvoice.vue'
+import LoadingPanel from '../ui/LoadingPanel.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'

@@ -1,5 +1,8 @@
 <template>
   <div class="space-y-6 bg-white rounded-xl shadow-sm p-5">
+    <LoadingPanel v-if="loading" />
+
+    <template v-else>
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
@@ -67,6 +70,7 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -76,6 +80,7 @@ import StatusBadge from '../../ui/StatusBadge.vue'
 import MiniMap from '../../ui/MiniMap.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import AppButton from '../../ui/AppButton.vue'
+import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
 
 const navStore = useNavStore()
@@ -85,15 +90,47 @@ const rawRouteOrders = ref([])
 const loading = ref(true)
 const showMap = ref(false)
 
+function parseLocalDate(dateStr) {
+  if (!dateStr) return null
+  const [y, m, d] = String(dateStr).split('-').map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d)
+}
+
+function pickCurrentOrNextRawRoute(routes) {
+  if (!routes.length) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const sorted = [...routes].sort((a, b) => {
+    const da = parseLocalDate(mapRouteForDriver(a).date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    const db = parseLocalDate(mapRouteForDriver(b).date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    return da - db
+  })
+
+  const todayRoute = sorted.find((raw) => {
+    const mappedDate = mapRouteForDriver(raw).date
+    const routeDate = parseLocalDate(mappedDate)
+    return routeDate && routeDate.getTime() === today.getTime()
+  })
+  if (todayRoute) return todayRoute
+
+  const nextRoute = sorted.find((raw) => {
+    const mappedDate = mapRouteForDriver(raw).date
+    const routeDate = parseLocalDate(mappedDate)
+    return routeDate && routeDate.getTime() > today.getTime()
+  })
+
+  return nextRoute ?? sorted[sorted.length - 1]
+}
+
 onMounted(async () => {
   try {
-    const d = new Date()
-    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-    const data = await fetchRoutes({ date: today })
-    if (data?.length) {
-      rawRouteOrders.value = data[0].orders ?? []
-      const routes = [data[0]].map(mapRouteForDriver)
-      driverRoute.value = routes[0]
+    const data = await fetchRoutes()
+    const selectedRawRoute = pickCurrentOrNextRawRoute(data ?? [])
+    if (selectedRawRoute) {
+      rawRouteOrders.value = selectedRawRoute.orders ?? []
+      driverRoute.value = mapRouteForDriver(selectedRawRoute)
     }
   } catch { /* stays default */ } finally {
     loading.value = false

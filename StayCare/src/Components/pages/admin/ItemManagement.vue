@@ -6,8 +6,10 @@
       <AppButton @click="openModal(null)">{{ $t('admin.addItem') }}</AppButton>
     </div>
 
+    <LoadingPanel v-if="loading" :label="$t('common.loading')" />
+
     <!-- Items table -->
-    <DataTable :headers="itemHeaders" :items="items" row-key="_id" min-width="600px">
+    <DataTable v-else :headers="itemHeaders" :items="items" row-key="_id" min-width="600px">
       <template #cell-code="{ value }">
         <span class="font-mono text-xs text-gray-500">{{ value }}</span>
       </template>
@@ -109,6 +111,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
+import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { fetchItems, createItem, updateItem, deleteItem, mapItemForManagement } from '../../../api/items'
 
 const { t } = useI18n()

@@ -8,7 +8,7 @@
       <h2 class="text-lg font-semibold text-brand-700">{{ client?.company_name ?? $t('clientDetail.title') }}</h2>
     </div>
 
-    <p v-if="loading" class="text-sm text-gray-400">{{ $t('common.loading') }}</p>
+    <LoadingPanel v-if="loading" :label="$t('common.loading')" />
 
     <template v-if="client && !loading">
       <!-- Client Info -->
@@ -67,6 +67,7 @@ import { useNavStore } from '../../../stores/nav.js'
 import { fetchClientById } from '../../../api/clients'
 import { fetchOrders, mapOrderForList } from '../../../api/orders'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import LoadingPanel from '../../ui/LoadingPanel.vue'
 import ClientPropertiesManager from '../shared/ClientPropertiesManager.vue'
 
 const { t } = useI18n()

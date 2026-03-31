@@ -1,5 +1,8 @@
 <template>
   <div class="space-y-6 max-w-2xl">
+    <LoadingPanel v-if="loading" />
+
+    <template v-else>
     <!-- Header -->
     <div class="flex items-center gap-3">
       <button @click="navStore.goBack('route')" class="text-white hover:text-gray-400">
@@ -139,6 +142,7 @@
     <div v-else class="bg-white rounded-xl shadow-sm p-10 text-center">
       <p class="text-gray-400">{{ $t('driver.stopNotFound') }}</p>
     </div>
+    </template>
   </div>
 </template>
 
@@ -147,6 +151,7 @@ import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useNavStore } from '../../../stores/nav.js'
 import AppButton from '../../ui/AppButton.vue'
+import LoadingPanel from '../../ui/LoadingPanel.vue'
 
 const { t } = useI18n()
 import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'

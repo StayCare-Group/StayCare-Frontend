@@ -1,5 +1,8 @@
 <template>
   <div class="space-y-6">
+    <LoadingPanel v-if="loading" />
+
+    <template v-else>
     <h2 class="text-lg font-semibold text-white">Reception &amp; Check-In</h2>
 
     <!-- QR Scan -->
@@ -154,6 +157,7 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -161,6 +165,7 @@
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import AppButton from '../../ui/AppButton.vue'
+import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
 import { receiveAtFacility } from '../../../api/orders'
 import { fetchItems, mapItemForCatalog } from '../../../api/items'

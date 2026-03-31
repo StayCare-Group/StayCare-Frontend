@@ -10,6 +10,8 @@
     <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
     <!-- Default dashboard overview -->
+    <LoadingPanel v-else-if="loading" />
+
     <div v-else class="space-y-6">
       <!-- KPI Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
@@ -44,6 +46,7 @@ import Reception from '../pages/facility/Reception.vue'
 import Processing from '../pages/facility/Processing.vue'
 import Settings from '../pages/shared/Settings.vue'
 import ProfileAccount from '../pages/shared/ProfileAccount.vue'
+import LoadingPanel from '../ui/LoadingPanel.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 

@@ -50,8 +50,10 @@
       </div>
     </div>
 
+    <LoadingPanel v-if="loading" :label="$t('common.loading')" />
+
     <!-- Tabs -->
-    <div class="overflow-x-auto -mx-1 px-1">
+    <div v-else class="overflow-x-auto -mx-1 px-1">
       <div class="inline-flex gap-1 bg-gray-100 rounded-lg p-1 min-w-max">
         <button
           v-for="tab in tabs" :key="tab.key"
@@ -170,6 +172,7 @@ import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
+import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { useNavStore } from '../../../stores/nav.js'
 
 const { t } = useI18n()

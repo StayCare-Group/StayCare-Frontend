@@ -15,7 +15,6 @@ const { locale } = useI18n()
 const token = route.params.token
 const inviteEmail = ref('')
 const inviteRole = ref('')
-const expiresAt = ref('')
 
 const name = ref('')
 const password = ref('')
@@ -33,7 +32,6 @@ onMounted(async () => {
     const data = await validateInvitation(token)
     inviteEmail.value = data.invitation.email
     inviteRole.value = data.invitation.role
-    expiresAt.value = data.invitation.expires_at
   } catch (err) {
     if (err?.message?.includes('expired') || err?.status === 410) {
       expired.value = true
