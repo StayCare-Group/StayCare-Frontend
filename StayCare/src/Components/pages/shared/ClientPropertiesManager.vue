@@ -93,8 +93,11 @@
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useUiStore } from '../../../stores/ui.js'
-import { fetchClientById } from '../../../api/clients'
-import { apiFetch } from '../../../api/client'
+import {
+  getPropertiesByUserId,
+  createPropertyForUser,
+  deleteProperty as deletePropertyById,
+} from '../../../api/properties'
 import MapPicker from '../../ui/MapPicker.vue'
 import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
@@ -142,8 +145,8 @@ async function loadClientProperties() {
     return
   }
   try {
-    const client = await fetchClientById(props.clientId)
-    properties.value = client?.properties ?? []
+    const data = await getPropertiesByUserId(props.clientId)
+    properties.value = Array.isArray(data) ? data : (data?.properties ?? [])
   } catch {
     properties.value = []
   }
@@ -166,10 +169,7 @@ async function addProperty() {
   addingProp.value = true
   propError.value = ''
   try {
-    await apiFetch(`/api/clients/${props.clientId}/properties`, {
-      method: 'POST',
-      body: JSON.stringify(newProp.value),
-    })
+    await createPropertyForUser(props.clientId, newProp.value)
     await loadClientProperties()
     resetForm()
     showAddProperty.value = false
@@ -181,12 +181,10 @@ async function addProperty() {
 }
 
 async function deleteProperty(propertyId) {
-  if (!propertyId || !props.clientId) return
+  if (!propertyId) return
   if (!confirm(t('properties.deleteConfirm'))) return
   try {
-    await apiFetch(`/api/clients/${props.clientId}/properties/${propertyId}`, {
-      method: 'DELETE',
-    })
+    await deletePropertyById(propertyId)
     await loadClientProperties()
   } catch (err) {
     ui.showError(err?.message || t('properties.deleteFailed'))

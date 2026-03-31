@@ -69,26 +69,25 @@
       v-if="activeTab === 'clients'"
       :headers="clientHeaders"
       :items="clientsList"
-      min-width="800px"
+      min-width="600px"
       clickable
       :click-title="$t('common.viewDetailsTitle')"
       @row-click="row => navStore.goToDetail('client-detail', row.id)"
     >
-      <template #cell-id="{ value }">
-        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
-      </template>
       <template #cell-name="{ value }">
         <span class="font-medium text-gray-800">{{ value }}</span>
       </template>
-      <template #cell-contact="{ item }">
-        <p class="text-gray-700 text-xs">{{ item.contact }}</p>
-        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
+      <template #cell-type="{ value }">
+        <span class="text-gray-500 text-xs capitalize">{{ value }}</span>
+      </template>
+      <template #cell-contact="{ value }">
+        <span class="text-gray-700 text-xs">{{ value }}</span>
+      </template>
+      <template #cell-phone="{ value }">
+        <span class="text-gray-500 text-xs">{{ value || '—' }}</span>
       </template>
       <template #cell-status="{ value }">
         <StatusBadge :status="value" />
-      </template>
-      <template #cell-outstandingBalance="{ value }">
-        <span class="font-semibold" :class="value > 0 ? 'text-red-600' : 'text-gray-800'">&euro;{{ value.toFixed(2) }}</span>
       </template>
     </DataTable>
 
@@ -176,10 +175,7 @@ import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { useNavStore } from '../../../stores/nav.js'
 
 const { t } = useI18n()
-import { fetchClients } from '../../../api/clients'
 import { fetchUsers } from '../../../api/users'
-import { fetchOrders } from '../../../api/orders'
-import { fetchInvoices } from '../../../api/invoices'
 import { createInvitation } from '../../../api/invitations'
 import { getInviteRoleOptions } from '../../../constants/roles'
 
@@ -242,85 +238,16 @@ async function handleInvite() {
 
 onMounted(async () => {
   try {
-    const [clientsData, usersData, ordersData, invoicesData] = await Promise.all([
-      fetchClients().catch(() => []),
-      fetchUsers().catch(() => []),
-      fetchOrders().catch(() => []),
-      fetchInvoices().catch(() => []),
-    ])
+    const users = await fetchUsers().catch(() => [])
 
-    const clients = clientsData ?? []
-    const users = usersData ?? []
-    const orders = ordersData ?? []
-    const invoices = invoicesData ?? []
-
-    const ordersByClientId = new Map()
-    for (const o of orders) {
-      const clientObj = typeof o.client === 'object' ? o.client : null
-      const clientId = clientObj?._id ?? (typeof o.client === 'string' ? o.client : null)
-      if (!clientId) continue
-
-      const current = ordersByClientId.get(clientId) ?? { count: 0, revenue: 0 }
-      current.count += 1
-      const total = o.pricing_snapshot?.total ?? 0
-      current.revenue += typeof total === 'number' ? total : 0
-      ordersByClientId.set(clientId, current)
-    }
-
-    const balanceByClientId = new Map()
-    for (const inv of invoices) {
-      const clientObj = typeof inv.client === 'object' ? inv.client : null
-      const clientId = clientObj?._id ?? (typeof inv.client === 'string' ? inv.client : null)
-      if (!clientId) continue
-
-      // Treat non-paid invoices as outstanding
-      if (inv.status && inv.status.toLowerCase() === 'paid') continue
-
-      const current = balanceByClientId.get(clientId) ?? 0
-      const total = inv.total ?? inv.grandTotal ?? 0
-      balanceByClientId.set(clientId, current + (typeof total === 'number' ? total : 0))
-    }
-
-    const companyClients = clients.map(c => {
-      const aggregates = ordersByClientId.get(c._id) ?? { count: 0, revenue: 0 }
-      const outstandingBalance = balanceByClientId.get(c._id) ?? 0
-
-      return {
-        id: c._id,
-        name: c.company_name,
-        type: c.pricing_tier === 'standard' ? t('admin.hotel') : c.pricing_tier,
-        contact: c.email,
-        phone: c.phone,
-        address: c.billing_address,
-        creditTerms: `${c.credits_terms_days ?? 30} days`,
-        status: 'Active',
-        totalOrders: aggregates.count,
-        outstandingBalance,
-      }
-    })
-
-    const clientUsers = users
-      .filter(u => u.role === 'client')
-      .map(u => {
-        const clientId = typeof u.client === 'string' ? u.client : (u.client?._id ?? null)
-        const aggregates = clientId ? ordersByClientId.get(clientId) ?? { count: 0, revenue: 0 } : { count: 0, revenue: 0 }
-        const outstandingBalance = clientId ? balanceByClientId.get(clientId) ?? 0 : 0
-
-        return {
-          id: u._id ?? u.id,
-          name: u.name,
-          type: 'User',
-          contact: u.email,
-          phone: u.phone ?? '',
-          address: '',
-          creditTerms: '',
-          status: u.is_active !== false ? 'Active' : 'Inactive',
-          totalOrders: aggregates.count,
-          outstandingBalance,
-        }
-      })
-
-    clientsList.value = [...companyClients, ...clientUsers]
+    clientsList.value = (users ?? []).filter(u => u.role === 'client').map(u => ({
+      id: u._id ?? u.id ?? u.user_id,
+      name: u.name,
+      type: u.client_type ?? u.type ?? 'client',
+      contact: u.email,
+      phone: u.phone ?? '',
+      status: u.is_active !== false && u.is_active !== 0 ? 'Active' : 'Inactive',
+    }))
 
     driversList.value = users.filter(u => u.role === 'driver').map(u => ({
       id: u._id ?? u.id,
@@ -363,13 +290,11 @@ const tabs = computed(() => [
 ])
 
 const clientHeaders = computed(() => [
-  { key: 'id',                 label: t('common.id') },
-  { key: 'name',               label: t('common.name') },
-  { key: 'type',               label: t('common.type'),    tdClass: 'text-gray-500' },
-  { key: 'contact',            label: t('common.contact') },
-  { key: 'status',             label: t('common.status') },
-  { key: 'totalOrders',        label: t('common.orders'),  tdClass: 'text-gray-700' },
-  { key: 'outstandingBalance', label: t('common.balance') },
+  { key: 'name',    label: t('common.name') },
+  { key: 'type',    label: t('common.type'),    tdClass: 'text-gray-500' },
+  { key: 'contact', label: t('common.contact') },
+  { key: 'phone',   label: t('settings.phone'), tdClass: 'text-gray-500' },
+  { key: 'status',  label: t('common.status') },
 ])
 
 const driverHeaders = computed(() => [

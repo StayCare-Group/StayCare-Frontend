@@ -226,6 +226,7 @@
     "placeInvoice": "Crear Factura",
     "invoiceCreated": "¡Factura creada exitosamente!",
     "noClients": "No se encontraron clientes.",
+    "noClientsCreateHint": "Puedes crear uno en la seccion de Usuarios.",
     "noOrdersForClient": "No hay pedidos pendientes de facturar para este cliente.",
     "exportExcel": "Exportar a Excel",
     "selectMonth": "Seleccionar mes",

@@ -226,6 +226,7 @@
     "placeInvoice": "Create Invoice",
     "invoiceCreated": "Invoice created successfully!",
     "noClients": "No clients found.",
+    "noClientsCreateHint": "You can create one in the Users section.",
     "noOrdersForClient": "No unbilled orders for this client.",
     "exportExcel": "Export to Excel",
     "selectMonth": "Select Month",
