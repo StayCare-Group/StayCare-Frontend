@@ -1,8 +1,8 @@
 <template>
   <div class="space-y-6 max-w-3xl">
     <div>
-      <h2 class="text-lg font-semibold text-white">{{ $t('profile.title') }}</h2>
-      <p class="text-sm text-brand-150 mt-1">{{ $t('profile.subtitle') }}</p>
+      <h2 class="text-lg font-semibold text-brand-700">{{ $t('profile.title') }}</h2>
+      <p class="text-sm text-brand-250 mt-1">{{ $t('profile.subtitle') }}</p>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
@@ -98,6 +98,7 @@
     <ClientPropertiesManager
       v-if="(isClientRole || ownClientId) && ownClientId"
       :client-id="ownClientId"
+      :self-managed="isClientRole"
     />
 
     <!-- Debug hint (only during dev): shown when role is client but no clientId is linked -->
@@ -180,14 +181,18 @@ async function loadProfile() {
   try {
     const data = await fetchMe()
     const user = data?.user ?? data ?? {}
+    const role = String(user.role ?? authStore.user?.role ?? '').toLowerCase()
+    const userId = user.id ?? user._id ?? authStore.user?.id ?? ''
+    const linkedClientId =
+      (typeof user.client === 'object' ? user.client?._id : user.client) ||
+      authStore.user?.clientId ||
+      ''
+
     profile.name = user.name ?? authStore.user?.name ?? ''
     profile.email = user.email ?? authStore.user?.email ?? ''
     profile.phone = user.phone ?? ''
     profile.role = user.role ?? authStore.user?.role ?? ''
-    ownClientId.value =
-      (typeof user.client === 'object' ? user.client?._id : user.client) ||
-      authStore.user?.clientId ||
-      ''
+    ownClientId.value = String(linkedClientId || ((role === 'client' || role === 'user') ? userId : '') || '')
   } catch {
     profile.name = authStore.user?.name ?? ''
     profile.email = authStore.user?.email ?? ''

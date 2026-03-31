@@ -5,7 +5,7 @@
         {{ $t('properties.title', { count: properties.length }) }}
       </h3>
       <button
-        @click="showAddProperty = !showAddProperty"
+        @click="toggleForm"
         class="text-xs font-semibold text-brand-700 hover:underline"
       >
         {{ showAddProperty ? $t('common.cancel') : $t('properties.addCta') }}
@@ -14,7 +14,7 @@
 
     <form
       v-if="showAddProperty"
-      @submit.prevent="addProperty"
+      @submit.prevent="saveProperty"
       class="border border-gray-200 rounded-lg p-4 space-y-3"
     >
       <input
@@ -51,14 +51,17 @@
 
       <div class="flex gap-2">
         <AppButton type="submit" size="sm" :loading="addingProp">
-          {{ addingProp ? $t('properties.adding') : $t('properties.add') }}
+          {{ addingProp ? $t('common.saving') : (editingPropertyId ? $t('common.save') : $t('properties.add')) }}
+        </AppButton>
+        <AppButton type="button" size="sm" variant="secondary" @click="cancelForm">
+          {{ $t('common.cancel') }}
         </AppButton>
       </div>
       <p v-if="propError" class="text-xs text-red-500">{{ propError }}</p>
     </form>
 
     <div v-if="properties.length" class="divide-y divide-gray-100">
-      <div v-for="p in properties" :key="p._id" class="py-3 space-y-2">
+      <div v-for="p in properties" :key="propertyIdOf(p)" class="py-3 space-y-2">
         <div class="flex items-start justify-between gap-3">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
@@ -71,18 +74,22 @@
           <div class="flex items-center gap-2 shrink-0">
             <button
               v-if="p.lat && p.lng"
-              @click="toggleMap(p._id)"
+              @click="toggleMap(propertyIdOf(p))"
               class="text-xs text-brand-700 hover:underline"
             >
-              {{ expandedMap === p._id ? $t('properties.hideMap') : $t('properties.showMap') }}
+              {{ expandedMap === propertyIdOf(p) ? $t('properties.hideMap') : $t('properties.showMap') }}
             </button>
             <button
-              @click="deleteProperty(p._id)"
+              @click="startEdit(p)"
+              class="text-xs text-brand-700 hover:underline"
+            >{{ $t('admin.edit') }}</button>
+            <button
+              @click="deleteProperty(propertyIdOf(p))"
               class="text-xs text-red-500 hover:text-red-700"
             >{{ $t('admin.delete') }}</button>
           </div>
         </div>
-        <MiniMap v-if="expandedMap === p._id && p.lat && p.lng" :lat="p.lat" :lng="p.lng" height="180px" />
+        <MiniMap v-if="expandedMap === propertyIdOf(p) && p.lat && p.lng" :lat="p.lat" :lng="p.lng" height="180px" />
       </div>
     </div>
     <p v-else class="text-xs text-gray-400">{{ $t('properties.empty') }}</p>
@@ -95,7 +102,9 @@ import { useI18n } from 'vue-i18n'
 import { useUiStore } from '../../../stores/ui.js'
 import {
   getPropertiesByUserId,
+  createProperty,
   createPropertyForUser,
+  updateProperty,
   deleteProperty as deletePropertyById,
 } from '../../../api/properties'
 import MapPicker from '../../ui/MapPicker.vue'
@@ -110,6 +119,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  selfManaged: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const properties = ref([])
@@ -117,6 +130,7 @@ const showAddProperty = ref(false)
 const addingProp = ref(false)
 const propError = ref('')
 const expandedMap = ref(null)
+const editingPropertyId = ref(null)
 const newProp = ref({
   property_name: '',
   address: '',
@@ -137,6 +151,21 @@ function resetForm() {
     lat: null,
     lng: null,
   }
+  editingPropertyId.value = null
+}
+
+function toggleForm() {
+  if (showAddProperty.value) {
+    cancelForm()
+    return
+  }
+  showAddProperty.value = true
+}
+
+function cancelForm() {
+  showAddProperty.value = false
+  propError.value = ''
+  resetForm()
 }
 
 async function loadClientProperties() {
@@ -164,15 +193,39 @@ function toggleMap(id) {
   expandedMap.value = expandedMap.value === id ? null : id
 }
 
-async function addProperty() {
+function propertyIdOf(property) {
+  return property?._id ?? property?.id ?? null
+}
+
+function startEdit(property) {
+  editingPropertyId.value = propertyIdOf(property)
+  newProp.value = {
+    property_name: property.property_name ?? '',
+    address: property.address ?? '',
+    city: property.city ?? '',
+    area: property.area ?? '',
+    access_notes: property.access_notes ?? '',
+    lat: property.lat ?? null,
+    lng: property.lng ?? null,
+  }
+  propError.value = ''
+  showAddProperty.value = true
+}
+
+async function saveProperty() {
   if (addingProp.value || !props.clientId) return
   addingProp.value = true
   propError.value = ''
   try {
-    await createPropertyForUser(props.clientId, newProp.value)
+    if (editingPropertyId.value) {
+      await updateProperty(editingPropertyId.value, newProp.value)
+    } else if (props.selfManaged) {
+      await createProperty(newProp.value)
+    } else {
+      await createPropertyForUser(props.clientId, newProp.value)
+    }
     await loadClientProperties()
-    resetForm()
-    showAddProperty.value = false
+    cancelForm()
   } catch (err) {
     propError.value = err?.message || t('properties.addFailed')
   } finally {
