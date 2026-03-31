@@ -68,18 +68,49 @@
           <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Item Check-In</h3>
 
           <div class="divide-y divide-gray-100">
-            <div v-for="item in foundOrder.items" :key="item.code"
+            <div v-for="(item, idx) in checkinItems" :key="`${item.code}-${idx}`"
               class="flex items-center justify-between py-3 gap-4">
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-gray-800">{{ item.name }} <span class="text-xs text-gray-400">({{ item.code }})</span></p>
-                <p class="text-xs text-gray-400">Expected: {{ item.qty }}</p>
+                <p class="text-xs text-gray-400">
+                  Expected: {{ expectedQtyMap[item.code] ?? 0 }}
+                </p>
               </div>
               <div class="flex items-center gap-2">
                 <input
-                  v-model.number="checkinQtys[item.code]" type="number" min="0"
+                  v-model.number="item.qty" type="number" min="0"
                   class="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
-                <span v-if="checkinQtys[item.code] !== item.qty" class="text-xs text-orange-500 font-medium">!</span>
+                <button
+                  type="button"
+                  @click="removeCheckinItem(idx)"
+                  class="text-xs text-red-500 hover:text-red-700 font-medium"
+                >Remove</button>
+                <span v-if="item.qty !== (expectedQtyMap[item.code] ?? 0)" class="text-xs text-orange-500 font-medium">!</span>
               </div>
+            </div>
+          </div>
+
+          <p v-if="!checkinItems.length" class="text-xs text-gray-400">No items currently in check-in list. Add items below.</p>
+
+          <div class="border-t border-gray-100 pt-3 space-y-2">
+            <label class="block text-sm font-medium text-gray-600">Add item to check-in</label>
+            <div class="flex flex-wrap items-center gap-2">
+              <select
+                v-model="selectedCatalogCode"
+                class="min-w-[220px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
+              >
+                <option value="">Select item</option>
+                <option v-for="catItem in itemCatalog" :key="catItem.code" :value="catItem.code">
+                  {{ catItem.name }} ({{ catItem.code }})
+                </option>
+              </select>
+              <button
+                type="button"
+                @click="addCatalogItem"
+                class="bg-gray-100 text-gray-700 text-sm font-medium px-3 py-2 rounded-lg hover:bg-gray-200 transition"
+              >
+                Add item
+              </button>
             </div>
           </div>
 
@@ -132,13 +163,19 @@ import StatusBadge from '../../ui/StatusBadge.vue'
 import AppButton from '../../ui/AppButton.vue'
 import { fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
 import { receiveAtFacility } from '../../../api/orders'
+import { fetchItems, mapItemForCatalog } from '../../../api/items'
+import { useUiStore } from '../../../stores/ui.js'
 import { BrowserMultiFormatReader } from '@zxing/browser'
+
+const ui = useUiStore()
 
 const manualOrderId = ref('')
 const foundOrder = ref(null)
 const damageNotes = ref('')
 const showSuccess = ref(false)
-const checkinQtys = reactive({})
+const checkinItems = ref([])
+const itemCatalog = ref([])
+const selectedCatalogCode = ref('')
 
 const isScanning = ref(false)
 const videoRef = ref(null)
@@ -151,8 +188,12 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const data = await fetchOrders()
+    const [data, catalogData] = await Promise.all([
+      fetchOrders(),
+      fetchItems().catch(() => []),
+    ])
     allOrders.value = data ?? []
+    itemCatalog.value = (catalogData ?? []).map(mapItemForCatalog)
   } catch { /* stays empty */ } finally {
     loading.value = false
   }
@@ -172,14 +213,60 @@ const recentCheckins = computed(() =>
     }))
 )
 
+const expectedQtyMap = computed(() => {
+  const map = {}
+  for (const item of foundOrder.value?.items ?? []) {
+    map[item.code] = item.qty ?? 0
+  }
+  return map
+})
+
+function normalizeQty(value) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 0) return 0
+  return Math.floor(parsed)
+}
+
+function seedCheckinItems(mappedOrder) {
+  checkinItems.value = (mappedOrder.items ?? []).map((item) => ({
+    code: item.code,
+    name: item.name,
+    qty: normalizeQty(item.qty),
+    unitPrice: Number(item.unitPrice) || 0,
+  }))
+}
+
 function lookupOrder() {
   const term = manualOrderId.value.trim()
   const raw = allOrders.value.find(o => o.order_number === term || o._id === term)
   if (raw) {
     const mapped = mapOrderForDetail(raw)
     foundOrder.value = mapped
-    mapped.items.forEach(item => { checkinQtys[item.code] = item.qty })
+    seedCheckinItems(mapped)
   }
+}
+
+function addCatalogItem() {
+  if (!selectedCatalogCode.value) return
+  const selected = itemCatalog.value.find(i => i.code === selectedCatalogCode.value)
+  if (!selected) return
+
+  const existing = checkinItems.value.find(i => i.code === selected.code)
+  if (existing) {
+    existing.qty = normalizeQty(existing.qty) + 1
+  } else {
+    checkinItems.value.push({
+      code: selected.code,
+      name: selected.name,
+      qty: 1,
+      unitPrice: Number(selected.unitPrice) || 0,
+    })
+  }
+  selectedCatalogCode.value = ''
+}
+
+function removeCheckinItem(index) {
+  checkinItems.value.splice(index, 1)
 }
 
 async function startScanner() {
@@ -247,13 +334,30 @@ async function checkIn() {
   )
   if (!rawOrder) return
   try {
-    const items = foundOrder.value.items.map(i => ({
-      item_code: i.code,
-      name: i.name,
-      quantity: checkinQtys[i.code] ?? i.qty,
-      unit_price: i.unitPrice,
-      total_price: (checkinQtys[i.code] ?? i.qty) * i.unitPrice,
-    }))
+    const items = checkinItems.value
+      .map((i) => ({
+        item_code: i.code,
+        name: i.name,
+        quantity: normalizeQty(i.qty),
+        unit_price: Number(i.unitPrice) || 0,
+      }))
+      .filter((i) => i.quantity > 0)
+      .map((i) => ({
+        ...i,
+        total_price: i.quantity * i.unit_price,
+      }))
+
+    if (!items.length) {
+      ui.showError('Add at least one item with quantity greater than zero.')
+      return
+    }
+
+    const invalidPrice = items.find(i => i.unit_price <= 0 || i.total_price <= 0)
+    if (invalidPrice) {
+      ui.showError(`Invalid price for item ${invalidPrice.item_code}. Please verify item catalog pricing.`)
+      return
+    }
+
     await receiveAtFacility(rawOrder._id, {
       items,
       internal_notes: damageNotes.value || undefined,
@@ -265,8 +369,10 @@ async function checkIn() {
       showSuccess.value = false
       foundOrder.value = null
       manualOrderId.value = ''
+      checkinItems.value = []
     }, 1500)
-  } catch {
+  } catch (err) {
+    ui.showError(err?.message || 'Check-in failed. Please try again.')
     showSuccess.value = false
   }
 }

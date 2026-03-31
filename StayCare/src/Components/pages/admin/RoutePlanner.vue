@@ -199,7 +199,8 @@
             @click="assignQueue = 'delivery'"
           >{{ $t('routePlanner.deliveryOrders') }} ({{ deliveryQueueCount }})</button>
         </div>
-        <div class="max-h-[480px] overflow-y-auto divide-y divide-gray-100">
+        <p v-if="initializingRoutes || routesLoading" class="text-sm text-gray-400 py-2">{{ $t('routePlanner.loadingRoutes') }}</p>
+        <div v-else class="max-h-[480px] overflow-y-auto divide-y divide-gray-100">
           <label
             v-for="o in pendingOrders"
             :key="o._id"
@@ -274,10 +275,10 @@
         </button>
       </div>
 
-      <p v-if="routesLoading" class="text-sm text-gray-400">{{ $t('routePlanner.loadingRoutes') }}</p>
+      <p v-if="initializingRoutes || routesLoading" class="text-sm text-gray-400">{{ $t('routePlanner.loadingRoutes') }}</p>
       <p v-else-if="!filteredRoutes.length" class="text-sm text-gray-400">{{ $t('routePlanner.noRoutesFor', { date: routeFilterDate }) }}</p>
 
-      <div v-for="route in filteredRoutes" :key="route._id" class="border border-gray-200 rounded-lg p-4 space-y-3">
+      <div v-for="route in (initializingRoutes || routesLoading ? [] : filteredRoutes)" :key="route._id" class="border border-gray-200 rounded-lg p-4 space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
             <span class="text-sm font-semibold text-gray-800">{{ route.driverName || 'Unassigned' }}</span>
@@ -338,7 +339,7 @@
             </div>
 
             <!-- Reassign dropdown -->
-            <div class="flex items-center gap-2 shrink-0">
+            <div v-if="canReassignStop(stop)" class="flex items-center gap-2 shrink-0">
               <select
                 v-model="reassignTargets[stop._id]"
                 class="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
@@ -357,6 +358,7 @@
                 {{ reassigning[stop._id] ? $t('routePlanner.reassigning') : $t('routePlanner.reassign') }}
               </AppButton>
             </div>
+            <span v-else class="text-xs text-gray-400 font-medium">{{ $t('routePlanner.done') }}</span>
           </div>
         </div>
       </div>
@@ -393,6 +395,10 @@ function getStatusLabel(status) {
   return map[status] ?? status
 }
 
+function canReassignStop(stop) {
+  return String(stop?.status || '').toLowerCase() !== 'completed'
+}
+
 /* ── Constants ── */
 const MAX_PICKUPS_PER_HOUR = 4
 
@@ -406,6 +412,7 @@ const rawOrders = ref([])
 const selectedOrderIds = ref([])
 const existingRoutes = ref([])
 const routesLoading = ref(false)
+const initializingRoutes = ref(true)
 const clientMap = ref({})  // clientId -> client object
 const assignQueue = ref('pickup')
 
@@ -476,9 +483,10 @@ onMounted(async () => {
       err?.error ||
       err?.data?.message ||
       'Failed to load drivers or orders.'
+  } finally {
+    await loadRoutes()
+    initializingRoutes.value = false
   }
-
-  loadRoutes()
 
   // Start background auto-assign polling if enabled
   if (bgAutoAssignEnabled.value && drivers.value.length) {

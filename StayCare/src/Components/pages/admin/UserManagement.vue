@@ -1,8 +1,8 @@
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
       <h2 class="text-lg font-semibold text-brand-700">{{ $t('admin.userManagement') }}</h2>
-      <AppButton @click="showInviteModal = true">
+      <AppButton @click="showInviteModal = true" size="sm" class="shrink-0">
         {{ $t('admin.inviteUser') }}
       </AppButton>
     </div>
@@ -21,11 +21,11 @@
         />
 
         <label class="block text-sm font-medium text-gray-600 mt-4 mb-1">{{ $t('common.role') }}</label>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
           <button
             v-for="r in roleOptions" :key="r.value"
             @click="inviteRole = r.value"
-            class="flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-colors"
+            class="flex-1 min-w-[92px] py-2 rounded-lg text-sm font-medium border-2 transition-colors"
             :class="inviteRole === r.value
               ? 'border-brand-700 bg-brand-150 text-brand-700'
               : 'border-gray-200 text-gray-500 hover:border-gray-300'"
@@ -38,7 +38,7 @@
           <span class="font-medium text-gray-700">{{ $t('admin.backupLink') }}</span> {{ inviteLink }}
         </p>
 
-        <div class="flex gap-3 mt-6">
+        <div class="flex flex-col sm:flex-row gap-3 mt-6">
           <button
             @click="closeInviteModal"
             class="flex-1 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
@@ -51,13 +51,15 @@
     </div>
 
     <!-- Tabs -->
-    <div class="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-      <button
-        v-for="tab in tabs" :key="tab.key"
-        @click="activeTab = tab.key"
-        class="px-4 py-1.5 rounded-md text-sm font-medium transition-colors"
-        :class="activeTab === tab.key ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
-      >{{ tab.label }} ({{ tab.count }})</button>
+    <div class="overflow-x-auto -mx-1 px-1">
+      <div class="inline-flex gap-1 bg-gray-100 rounded-lg p-1 min-w-max">
+        <button
+          v-for="tab in tabs" :key="tab.key"
+          @click="activeTab = tab.key"
+          class="px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
+          :class="activeTab === tab.key ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+        >{{ tab.label }} ({{ tab.count }})</button>
+      </div>
     </div>
 
     <!-- Clients -->
