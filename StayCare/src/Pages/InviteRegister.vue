@@ -1,13 +1,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth.js'
 import AppButton from '../Components/ui/AppButton.vue'
 import { validateInvitation, registerViaInvitation } from '../api/invitations'
+import { toInviteRoleLabel } from '../constants/roles'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const { locale } = useI18n()
 
 const token = route.params.token
 const inviteEmail = ref('')
@@ -42,11 +45,6 @@ onMounted(async () => {
   }
 })
 
-const roleLabel = (role) => {
-  const map = { admin: 'Admin', driver: 'Driver', staff: 'Staff' }
-  return map[role] || role
-}
-
 const handleRegister = async () => {
   if (!name.value || !password.value) {
     error.value = 'Please fill in your name and password.'
@@ -68,6 +66,7 @@ const handleRegister = async () => {
       name: name.value,
       password: password.value,
       phone: phone.value || undefined,
+      language: locale.value || 'en',
     })
     await auth.loadCurrentUser()
     router.push('/dashboard')
@@ -121,7 +120,7 @@ const handleRegister = async () => {
 
       <div class="mt-4 bg-brand-150 rounded-lg px-4 py-3 w-full text-center">
         <p class="text-sm text-gray-600">You're joining as</p>
-        <p class="text-lg font-bold text-brand-700">{{ roleLabel(inviteRole) }}</p>
+        <p class="text-lg font-bold text-brand-700">{{ toInviteRoleLabel(inviteRole) }}</p>
         <p class="text-xs text-gray-500 mt-1">{{ inviteEmail }}</p>
       </div>
 

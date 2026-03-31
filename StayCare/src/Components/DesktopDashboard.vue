@@ -26,10 +26,10 @@ const sidebarOpen = ref(false)
       <TopHeader :role="role" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
       <main class="flex-1 p-4 lg:p-6 overflow-y-auto overflow-x-hidden">
-        <ClientDashboard v-if="role === 'Client'" />
-        <DriverDashboard v-else-if="role === 'Driver'" />
-        <FacilityDashboard v-else-if="role === 'Facility Staff'" />
-        <AdminDashboard v-else-if="role === 'Admin'" />
+        <ClientDashboard v-if="role === 'client'" />
+        <DriverDashboard v-else-if="role === 'driver'" />
+        <FacilityDashboard v-else-if="role === 'staff'" />
+        <AdminDashboard v-else-if="role === 'admin'" />
       </main>
     </div>
   </div>

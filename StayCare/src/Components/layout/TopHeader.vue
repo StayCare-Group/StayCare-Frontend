@@ -6,7 +6,7 @@
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <div>
-        <h2 class="text-base sm:text-lg font-semibold text-brand-700">{{ role }} {{ $t('common.dashboard') }}</h2>
+        <h2 class="text-base sm:text-lg font-semibold text-brand-700">{{ roleLabel }} {{ $t('common.dashboard') }}</h2>
         <p class="text-xs text-gray-400 hidden sm:block">{{ $t('common.welcomeBack') }}{{ authUser?.name ? `, ${authUser.name}` : '' }}</p>
       </div>
     </div>
@@ -52,8 +52,9 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth.js'
 import { useNavStore } from '../../stores/nav.js'
+import { getRoleLabel } from '../../constants/roles'
 
-defineProps({
+const props = defineProps({
   role: String,
 })
 defineEmits(['toggle-sidebar'])
@@ -62,6 +63,7 @@ const router = useRouter()
 const auth = useAuthStore()
 const navStore = useNavStore()
 const authUser = computed(() => auth.user)
+const roleLabel = computed(() => getRoleLabel(props.role))
 
 function goToProfile() {
   navStore.setPage('profile')

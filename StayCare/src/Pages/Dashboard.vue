@@ -3,29 +3,18 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import DesktopDashboard from '../Components/DesktopDashboard.vue'
 import { useAuthStore } from '../stores/auth.js'
+import { toSystemRole } from '../constants/roles'
 
 const auth = useAuthStore()
 const { user } = storeToRefs(auth)
 
-const BACKEND_ROLE_TO_DISPLAY = {
-  admin: 'Admin',
-  client: 'Client',
-  driver: 'Driver',
-  staff: 'Facility Staff',
-  // legacy: backend used to return JWT payload role
-  user: 'Client',
-}
-
-const displayRole = computed(() => {
-  const raw = user.value?.role
-  if (raw == null || raw === '') return 'Client'
-  const role = String(raw).toLowerCase()
-  return BACKEND_ROLE_TO_DISPLAY[role] ?? 'Client'
+const role = computed(() => {
+  return toSystemRole(user.value?.role)
 })
 </script>
 
 <template>
-  <DesktopDashboard :role="displayRole" />
+  <DesktopDashboard :role="role" />
 </template>
 
 <style scoped>

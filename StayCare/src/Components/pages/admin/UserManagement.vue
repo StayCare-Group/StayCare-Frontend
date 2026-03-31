@@ -178,6 +178,7 @@ import { fetchUsers } from '../../../api/users'
 import { fetchOrders } from '../../../api/orders'
 import { fetchInvoices } from '../../../api/invoices'
 import { createInvitation } from '../../../api/invitations'
+import { getInviteRoleOptions } from '../../../constants/roles'
 
 const navStore = useNavStore()
 
@@ -196,11 +197,7 @@ const inviteSuccess = ref('')
 const inviteLink = ref('')
 const inviteSending = ref(false)
 
-const roleOptions = computed(() => [
-  { value: 'driver', label: t('admin.driver') },
-  { value: 'staff', label: t('admin.staff') },
-  { value: 'admin', label: t('admin.admin') },
-])
+const roleOptions = computed(() => getInviteRoleOptions(t))
 
 function closeInviteModal() {
   showInviteModal.value = false

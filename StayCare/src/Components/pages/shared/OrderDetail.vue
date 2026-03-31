@@ -178,7 +178,7 @@ const canReschedule = computed(() => {
   if (!order.value) return false
   const role = authStore.user?.role
   const status = order.value.status
-  return (role === 'admin' || role === 'Client') && status === 'Pending Pickup'
+  return (role === 'admin' || role === 'client') && status === 'Pending Pickup'
 })
 
 // Reschedule modal state

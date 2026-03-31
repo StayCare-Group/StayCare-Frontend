@@ -6,7 +6,7 @@ import { registerUser } from '../api/auth'
 import { useAuthStore } from '../stores/auth.js'
 import AuthSplitLayout from '../Components/layout/AuthSplitLayout.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const email = ref('')
@@ -43,8 +43,9 @@ const handleRegister = async () => {
       email: email.value,
       password: password.value,
       phone: phone.value || undefined,
+      language: locale.value || 'en',
     })
-    await auth.login(email.value, password.value)
+    await auth.loadCurrentUser()
     router.push('/dashboard')
   } catch (err) {
     error.value = err?.message || err?.error || t('auth.errorRegistration')

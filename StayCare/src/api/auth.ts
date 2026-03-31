@@ -1,6 +1,38 @@
 import { isMockEnabled, mockAuthCall } from './mock'
+import type { SystemRole } from '../constants/roles'
 
 const API = import.meta.env.VITE_BACKEND_URL || ''
+
+export type RegisterRole = SystemRole
+
+export interface RegisterClientProfile {
+  contact_person?: string
+  vat_number?: string
+  billing_address?: string
+  credits_terms_days?: number
+  pricing_tier?: string
+}
+
+export interface RegisterProperty {
+  property_name: string
+  address?: string
+  city?: string
+  area?: string
+  access_notes?: string
+  lat?: number
+  lng?: number
+}
+
+export interface RegisterUserPayload {
+  name: string
+  email: string
+  password: string
+  phone?: string
+  language?: string
+  role?: RegisterRole
+  client_profile?: RegisterClientProfile
+  properties?: RegisterProperty[]
+}
 
 async function unwrap(res: Response) {
   const json = await res.json().catch(() => ({}))
@@ -48,13 +80,7 @@ export async function logoutUser() {
   return unwrap(res)
 }
 
-export async function registerUser(payload: {
-  name: string
-  email: string
-  password: string
-  phone?: string
-  language?: string
-}) {
+export async function registerUser(payload: RegisterUserPayload) {
   if (isMockEnabled) {
     return mockAuthCall('register', payload)
   }
