@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { loginUser, refreshAuth, logoutUser } from '../api/auth'
 import { fetchMe } from '../api/users'
 import { useLangStore } from './lang.js'
+import { useNavStore } from './nav.js'
+import { setApiRequestsBlocked, abortActiveApiRequests } from '../api/client'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -19,6 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function loadCurrentUser() {
+    setApiRequestsBlocked(false)
     const data = await fetchMe()
     const raw = data?.user ?? data ?? null
     if (!raw) {
@@ -45,21 +48,28 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(email, password) {
     await loginUser({ email, password })
-    return loadCurrentUser()
+    setApiRequestsBlocked(false)
+    const me = await loadCurrentUser()
+    useNavStore().resetToDashboard()
+    return me
   }
 
   async function logout() {
+    setApiRequestsBlocked(true)
+    abortActiveApiRequests()
     try {
       await logoutUser()
     } catch {
       // server may already have cleared the cookie
     }
     user.value = null
+    useNavStore().resetToDashboard()
   }
 
   async function tryRefresh() {
     loading.value = true
     try {
+      setApiRequestsBlocked(false)
       await refreshAuth()
       await loadCurrentUser()
     } catch {

@@ -28,5 +28,11 @@ export const useNavStore = defineStore('nav', () => {
     selectedRouteId.value = null
   }
 
-  return { currentPage, selectedId, selectedRouteId, setPage, goToDetail, goBack }
+  function resetToDashboard() {
+    currentPage.value = 'dashboard'
+    selectedId.value = null
+    selectedRouteId.value = null
+  }
+
+  return { currentPage, selectedId, selectedRouteId, setPage, goToDetail, goBack, resetToDashboard }
 })

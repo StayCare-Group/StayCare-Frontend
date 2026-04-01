@@ -17,7 +17,6 @@
     </div>
 
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
-
     <!-- Orders table -->
     <DataTable v-else :headers="orderHeaders" :items="filteredOrders" min-width="700px">
       <template #cell-id="{ value }">
@@ -73,7 +72,10 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const data = await fetchOrders()
+    const params = auth.user?.role === 'client' && auth.user?.id
+      ? { client_id: String(auth.user.id) }
+      : undefined
+    const data = await fetchOrders(params)
     orders.value = (data ?? []).map(mapOrderForList)
   } catch { /* stays empty */ } finally {
     loading.value = false

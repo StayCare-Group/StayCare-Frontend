@@ -51,9 +51,11 @@ import AppButton from '../ui/AppButton.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
+import { useAuthStore } from '../../stores/auth.js'
 
 const { t } = useI18n()
 const navStore = useNavStore()
+const authStore = useAuthStore()
 
 const orders = ref([])
 const invoices = ref([])
@@ -61,8 +63,10 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
+    const clientId = authStore.user?.id
+    const orderParams = clientId ? { client_id: String(clientId) } : undefined
     const [ordersData, invoicesData] = await Promise.all([
-      fetchOrders(),
+      fetchOrders(orderParams),
       fetchInvoices(),
     ])
     orders.value = (ordersData ?? []).map(mapOrderForList)
