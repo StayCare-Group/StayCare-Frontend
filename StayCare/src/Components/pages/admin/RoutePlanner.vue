@@ -212,11 +212,16 @@
                   <span class="text-[11px] px-2 py-0.5 rounded-full font-medium"
                     :class="o.routeType === 'Delivery' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'"
                   >{{ o.routeType }}</span>
-                  <span class="text-xs text-gray-500">{{ o.pickupDate }}</span>
                 </div>
               </div>
-              <p class="text-xs text-gray-500">
-                {{ o.pickupAddress || $t('routePlanner.noAddress') }}
+              <p class="text-xs text-gray-600 mt-0.5">
+                Area / Property: {{ o.areaOrProperty || '-' }}
+              </p>
+              <p class="text-xs text-gray-600 mt-0.5">
+                Pickup Date: {{ o.pickupDate || '-' }}
+              </p>
+              <p class="text-xs text-gray-600 mt-0.5">
+                Pickup Time Window: {{ o.pickupTimeWindow || '-' }}
               </p>
               <p class="text-xs text-gray-400 mt-0.5">
                 {{ o.serviceType }} &middot; {{ o.estimatedBags ?? 0 }} {{ $t('routePlanner.bags') }}
@@ -539,6 +544,25 @@ function resolveAddress(o) {
   return clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
 }
 
+function resolveAreaOrProperty(o) {
+  if (o?.area) return String(o.area)
+
+  let clientObj = typeof o.client === 'object' && o.client ? o.client : null
+  if (!clientObj && typeof o.client === 'string') {
+    clientObj = clientMap.value[o.client] ?? null
+  }
+
+  let prop = null
+  if (clientObj?.properties?.length) {
+    if (o.property) {
+      prop = clientObj.properties.find(p => p._id?.toString() === o.property?.toString())
+    }
+    if (!prop) prop = clientObj.properties[0]
+  }
+
+  return prop?.name ?? o?.property_name ?? ''
+}
+
 // Set of order IDs already on a route — prevents duplicates
 const assignedOrderIds = computed(() => {
   const ids = new Set()
@@ -575,7 +599,8 @@ const assignableOrders = computed(() => {
       client: clientName,
       _id: o._id ?? mapped._id,
       rawStatus: o.status,
-      pickupAddress: resolveAddress(o),
+      areaOrProperty: resolveAreaOrProperty(o),
+      pickupTimeWindow: formatSlot(o),
       routeType: getRouteTypeFromOrderStatus(o.status),
     }
   })
@@ -610,12 +635,26 @@ function getPickupHour(order) {
 }
 
 function formatSlot(order) {
-  const pw = order.pickup_window
-  if (!pw?.start_time) return '—'
-  const s = new Date(pw.start_time)
-  const e = pw.end_time ? new Date(pw.end_time) : null
-  const fmt = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-  return e ? `${fmt(s)} – ${fmt(e)}` : fmt(s)
+  const startRaw = order?.pickup_window?.start_time ?? order?.pickup_window_start ?? ''
+  const endRaw = order?.pickup_window?.end_time ?? order?.pickup_window_end ?? ''
+
+  const toHourLabel = (raw) => {
+    if (!raw) return ''
+    const s = String(raw)
+    const timeOnly = s.match(/^(\d{2}):(\d{2})(?::\d{2})?$/)
+    if (timeOnly) return `${timeOnly[1]}:${timeOnly[2]}`
+
+    const d = new Date(s)
+    if (Number.isNaN(d.getTime())) return ''
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const start = toHourLabel(startRaw)
+  const end = toHourLabel(endRaw)
+
+  if (start && end) return `${start} - ${end}`
+  if (start) return start
+  return '—'
 }
 
 function getOrderAddress(o) {

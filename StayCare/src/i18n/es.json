@@ -41,7 +41,10 @@
     "dayFri": "Vie",
     "daySat": "Sáb",
     "daySun": "Dom",
-    "reschedule": "Reprogramar"
+    "reschedule": "Reprogramar",
+    "contactPerson": "Persona de Contacto",
+    "area": "Área",
+    "phone": "Teléfono"
   },
   "auth": {
     "loginHeading": "Iniciar sesión en {brand} gestión de lavandería",
@@ -355,6 +358,7 @@
     "quantity": "Cant.",
     "unitPrice": "Precio Unitario",
     "lineTotal": "Total",
+    "vatAmount": "Monto de IVA",
     "orderTotal": "Total del Pedido",
     "statusTimeline": "Cronología de Estado",
     "loadingOrder": "Cargando pedido...",

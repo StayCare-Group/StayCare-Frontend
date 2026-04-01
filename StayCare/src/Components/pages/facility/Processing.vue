@@ -174,12 +174,12 @@ const addMachineError = ref('')
 const newMachine = reactive({ name: '', type: 'washer', capacity: '' })
 
 const PIPELINE = computed(() => [
-  { status: 'Arrived',        label: t('facilityProcessing.received'),         nextStatus: 'Washing',        assignable: false, machineType: null },
-  { status: 'Washing',        label: t('facility.washing'),                    nextStatus: 'Drying',          assignable: true,  machineType: 'washer' },
-  { status: 'Drying',         label: t('facility.drying'),                     nextStatus: 'Ironing',         assignable: true,  machineType: 'dryer' },
-  { status: 'Ironing',        label: t('facility.ironing'),                    nextStatus: 'QualityCheck',    assignable: true,  machineType: 'iron' },
-  { status: 'QualityCheck',   label: t('facilityProcessing.qualityCheck'),     nextStatus: 'ReadyToDeliver',  assignable: false, machineType: null },
-  { status: 'ReadyToDeliver', label: t('client.readyForDelivery'),             nextStatus: null,              assignable: false, machineType: null },
+  { status: 'arrived',           label: t('facilityProcessing.received'),      nextStatus: 'washing',            assignable: false, machineType: null },
+  { status: 'washing',           label: t('facility.washing'),                 nextStatus: 'drying',             assignable: true,  machineType: 'washer' },
+  { status: 'drying',            label: t('facility.drying'),                  nextStatus: 'ironing',            assignable: true,  machineType: 'dryer' },
+  { status: 'ironing',           label: t('facility.ironing'),                 nextStatus: 'quality_check',      assignable: true,  machineType: 'iron' },
+  { status: 'quality_check',     label: t('facilityProcessing.qualityCheck'),  nextStatus: 'ready_to_delivery',  assignable: false, machineType: null },
+  { status: 'ready_to_delivery', label: t('client.readyForDelivery'),          nextStatus: null,                 assignable: false, machineType: null },
 ])
 
 const LABEL_MAP = computed(() => Object.fromEntries(PIPELINE.value.map(p => [p.status, p.label])))
@@ -199,6 +199,24 @@ function formatTime(dateStr) {
   return new Date(dateStr).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
+function normalizeProcessingStatus(status) {
+  const raw = String(status ?? '').trim()
+  if (!raw) return ''
+
+  const compact = raw.replace(/[\s-]+/g, '_').toLowerCase()
+  if (compact === 'qualitycheck') return 'quality_check'
+  if (compact === 'readytodelivery' || compact === 'readytodeliver') return 'ready_to_delivery'
+
+  if (compact === 'arrived') return 'arrived'
+  if (compact === 'washing') return 'washing'
+  if (compact === 'drying') return 'drying'
+  if (compact === 'ironing') return 'ironing'
+  if (compact === 'quality_check') return 'quality_check'
+  if (compact === 'ready_to_delivery') return 'ready_to_delivery'
+
+  return compact
+}
+
 async function loadData() {
   try {
     const [ordersData, machinesData] = await Promise.all([
@@ -210,7 +228,7 @@ async function loadData() {
       id: raw.order_number ?? raw._id ?? raw.id,
       _id: raw._id ?? raw.id,
       client: raw.client?.name ?? raw.client ?? '',
-      status: raw.status,
+      status: normalizeProcessingStatus(raw.status),
       serviceType: raw.service_type === 'express' ? 'Express' : 'Standard',
       items: (raw.items ?? []).map(i => ({
         code: i.item_code,
@@ -287,7 +305,8 @@ async function advanceOrder(orderId, nextStatus) {
     if (assignedMachine) {
       await releaseMachine(assignedMachine._id)
     }
-    await updateOrderStatus(orderId, nextStatus)
+    const normalizedNextStatus = normalizeProcessingStatus(nextStatus)
+    await updateOrderStatus(orderId, normalizedNextStatus)
     await loadData()
   } catch (err) {
     ui.showError(t('facilityProcessing.updateStatusFailed') + ': ' + (err?.message ?? t('facilityProcessing.unknownError')))

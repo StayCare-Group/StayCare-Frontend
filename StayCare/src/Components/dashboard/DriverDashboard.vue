@@ -64,16 +64,20 @@
                 <StatusBadge :status="stop.type" />
                 <StatusBadge :status="stop.status" />
               </div>
-              <h4 class="text-sm font-semibold text-gray-800">{{ stop.client }}</h4>
-              <p class="text-xs text-gray-500 mt-1">{{ stop.address }}</p>
-              <div class="mt-3 flex items-center justify-between">
+              <h4 class="text-sm font-semibold text-gray-800">{{ stop.company || stop.client }}</h4>
+              <div class="mt-1 space-y-0.5">
+                <p v-if="stop.area" class="text-xs text-gray-500">{{ $t('common.area') }}: {{ stop.area }}</p>
+                <p v-if="stop.address" class="text-xs text-gray-500">{{ $t('common.address') }}: {{ stop.address }}</p>
+                <p v-if="stop.timeWindow" class="text-xs text-gray-400">{{ $t('driver.timeWindow') }}: {{ stop.timeWindow }}</p>
+              </div>
+              <div class="mt-2 flex items-center justify-between">
                 <span class="text-xs text-gray-500">{{ $t('driver.expectedBags') }}</span>
                 <span class="text-sm font-bold text-gray-700">{{ stop.bags }}</span>
               </div>
             </div>
             <div class="mt-3 flex flex-wrap gap-2">
               <AppButton
-                v-if="stop.type === 'Pickup' && stop.status !== 'Completed'"
+                v-if="stop.type === 'Pickup' && stop.status === 'Pending'"
                 size="sm"
                 @click="navStore.goToDetail('pickup-confirm', stop.id, stop.routeId)"
               >
@@ -104,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import StatusBadge from '../ui/StatusBadge.vue'
@@ -178,17 +182,35 @@ function shiftSelectedDate(offset) {
   selectedDate.value = localDateStr(shifted)
 }
 
+async function loadDriverRoutes() {
+  const driverId = authStore.user?.id
+  if (!driverId) return
+  const data = await fetchRoutesByDriver(driverId)
+  routesList.value = (data ?? []).map(mapRouteForDriver)
+  if (!selectedDate.value) {
+    selectedDate.value = pickDefaultDate(routesList.value)
+  }
+}
+
 onMounted(async () => {
   try {
-    const driverId = authStore.user?.id
-    if (!driverId) return
-    const data = await fetchRoutesByDriver(driverId)
-    routesList.value = (data ?? []).map(mapRouteForDriver)
-    selectedDate.value = pickDefaultDate(routesList.value)
+    await loadDriverRoutes()
   } catch { /* stays null */ } finally {
     loading.value = false
   }
 })
+
+watch(
+  () => navStore.currentPage,
+  async (page) => {
+    if (page !== 'dashboard') return
+    try {
+      await loadDriverRoutes()
+    } catch {
+      // keep existing list if refresh fails
+    }
+  }
+)
 
 const filteredRoutes = computed(() => {
   if (!selectedDate.value) return []
@@ -201,7 +223,12 @@ const driverStops = computed(() => {
       id: s._id ?? s.id,
       routeId: s.routeId ?? r.id,
       client: s.client,
+      company: s.company,
+      contactPerson: s.contactPerson,
+      clientPhone: s.clientPhone,
+      area: s.area,
       address: s.address,
+      timeWindow: s.timeWindow,
       bags: s.estimatedBags,
       status: s.status,
       type: s.type,

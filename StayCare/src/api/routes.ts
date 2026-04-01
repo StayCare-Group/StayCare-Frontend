@@ -92,12 +92,20 @@ export function mapRouteForDriver(route: any) {
         ? `${property.address}${property.city ? ', ' + property.city : ''}`
         : (clientObj ? getClientAddress(clientObj) : '') || o.pickup_address || o.delivery_address || ''
       const fallbackClient = o.client_company || o.client_contact || ''
+      const company = clientObj?.company_name ?? clientObj?.company ?? o.client_company ?? ''
+      const contactPerson = clientObj?.contact_name ?? clientObj?.contact_person ?? o.client_contact ?? ''
+      const clientPhone = clientObj?.phone ?? clientObj?.contact_phone ?? o.client_phone ?? ''
+      const area = property?.area ?? o.area ?? ''
       return {
         id: idx + 1,
         orderId: o.order_number ?? o.order_id ?? o._id ?? o.id,
         _id: o._id ?? o.id ?? o.order_id ?? `${routeId}-stop-${idx + 1}`,
         routeId,
         client: clientObj ? getClientDisplayName(clientObj) : fallbackClient,
+        company,
+        contactPerson,
+        clientPhone,
+        area,
         address: addr,
         type: getRouteTypeFromOrderStatus(o.status),
         timeWindow: o.pickup_window

@@ -41,6 +41,26 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
           />
         </div>
+
+        <template v-if="isClientRole">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('clientDetail.contactPerson') }}</label>
+            <input
+              v-model="profile.contactPerson"
+              type="text"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('clientDetail.billingAddress') }}</label>
+            <input
+              v-model="profile.billingAddress"
+              type="text"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
+            />
+          </div>
+        </template>
       </div>
 
       <div class="flex justify-start">
@@ -132,6 +152,8 @@ const profile = reactive({
   name: '',
   email: '',
   phone: '',
+  contactPerson: '',
+  billingAddress: '',
   role: '',
 })
 
@@ -180,6 +202,7 @@ async function loadProfile() {
   try {
     const data = await fetchMe()
     const user = data?.user ?? data ?? {}
+    const clientProfile = data?.client_profile ?? {}
     const role = String(user.role ?? authStore.user?.role ?? '').toLowerCase()
     const userId = user.id ?? user._id ?? authStore.user?.id ?? ''
     const linkedClientId =
@@ -190,12 +213,16 @@ async function loadProfile() {
     profile.name = user.name ?? authStore.user?.name ?? ''
     profile.email = user.email ?? authStore.user?.email ?? ''
     profile.phone = user.phone ?? ''
+    profile.contactPerson = clientProfile.contact_person ?? ''
+    profile.billingAddress = clientProfile.billing_address ?? ''
     profile.role = user.role ?? authStore.user?.role ?? ''
     ownClientId.value = String(linkedClientId || ((role === 'client' || role === 'user') ? userId : '') || '')
   } catch {
     profile.name = authStore.user?.name ?? ''
     profile.email = authStore.user?.email ?? ''
     profile.phone = authStore.user?.phone ?? ''
+    profile.contactPerson = ''
+    profile.billingAddress = ''
     profile.role = authStore.user?.role ?? ''
     ownClientId.value = authStore.user?.clientId ?? ''
   }
@@ -210,6 +237,8 @@ async function saveProfile() {
     await updateMe({
       name: profile.name,
       phone: profile.phone,
+      contact_person: isClientRole.value ? profile.contactPerson : undefined,
+      billing_address: isClientRole.value ? profile.billingAddress : undefined,
     })
     await authStore.loadCurrentUser()
     showToast('success', t('profile.profileUpdated'))

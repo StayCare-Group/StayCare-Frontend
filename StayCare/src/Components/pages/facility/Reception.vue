@@ -3,7 +3,7 @@
     <LoadingPanel v-if="loading" />
 
     <template v-else>
-    <h2 class="text-lg font-semibold text-white">Reception &amp; Check-In</h2>
+    <h2 class="text-lg font-semibold text-brand-700">Reception &amp; Check-In</h2>
 
     <!-- QR Scan -->
     <div class="bg-white rounded-xl shadow-sm p-5">
@@ -61,6 +61,9 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div><span class="text-gray-400">Service Type</span><p class="font-medium text-gray-800">{{ foundOrder.serviceType }}</p></div>
           <div><span class="text-gray-400">Expected Bags</span><p class="font-medium text-gray-800">{{ foundOrder.actualBags ?? foundOrder.estimatedBags }}</p></div>
+          <div><span class="text-gray-400">Property</span><p class="font-medium text-gray-800">{{ foundOrder.propertyName }}</p></div>
+          <div><span class="text-gray-400">Contact Person</span><p class="font-medium text-gray-800">{{ foundOrder.propertyContactPerson }}</p></div>
+          <div><span class="text-gray-400">Contact Phone</span><p class="font-medium text-gray-800">{{ foundOrder.propertyPhone }}</p></div>
           <div v-if="foundOrder.specialNotes"><span class="text-gray-400">Notes</span><p class="font-medium text-gray-800">{{ foundOrder.specialNotes }}</p></div>
         </div>
       </div>
@@ -126,7 +129,7 @@
         </div>
 
         <div class="flex gap-3">
-          <AppButton type="submit" size="lg">
+          <AppButton v-if="canConfirmCheckIn" type="submit" size="lg">
             {{ $t('facility.confirmCheckIn') }}
           </AppButton>
           <button type="button" @click="foundOrder = null"
@@ -134,6 +137,9 @@
             Cancel
           </button>
         </div>
+        <p v-if="!canConfirmCheckIn" class="text-sm text-amber-600 font-medium">
+          This order cannot be checked in at Reception in its current status.
+        </p>
       </form>
 
       <!-- Success toast -->
@@ -166,7 +172,7 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
-import { fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
+import { fetchOrderById, fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
 import { receiveAtFacility } from '../../../api/orders'
 import { getItems, mapItemForCatalog } from '../../../api/items'
 import { useUiStore } from '../../../stores/ui.js'
@@ -226,6 +232,28 @@ const expectedQtyMap = computed(() => {
   return map
 })
 
+function normalizeStatus(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+}
+
+function isReceivableStatus(value) {
+  const status = normalizeStatus(value)
+  return status === 'transit' || status === 'in_transit'
+}
+
+const foundOrderRawStatus = computed(() => {
+  if (!foundOrder.value) return ''
+  const raw = allOrders.value.find(
+    o => o._id === foundOrder.value._id || o.order_number === foundOrder.value.id
+  )
+  return raw?.status ?? ''
+})
+
+const canConfirmCheckIn = computed(() => isReceivableStatus(foundOrderRawStatus.value))
+
 function normalizeQty(value) {
   const parsed = Number(value)
   if (!Number.isFinite(parsed) || parsed < 0) return 0
@@ -234,6 +262,7 @@ function normalizeQty(value) {
 
 function seedCheckinItems(mappedOrder) {
   checkinItems.value = (mappedOrder.items ?? []).map((item) => ({
+    orderItemId: item.id ?? null,
     code: item.code,
     name: item.name,
     qty: normalizeQty(item.qty),
@@ -241,10 +270,18 @@ function seedCheckinItems(mappedOrder) {
   }))
 }
 
-function lookupOrder() {
+async function lookupOrder() {
   const term = manualOrderId.value.trim()
   const raw = allOrders.value.find(o => o.order_number === term || o._id === term)
-  if (raw) {
+  if (!raw) return
+
+  try {
+    // Use detail endpoint to guarantee order item identifiers for reception payload.
+    const detail = await fetchOrderById(String(raw._id ?? raw.id))
+    const mapped = mapOrderForDetail(detail ?? raw)
+    foundOrder.value = mapped
+    seedCheckinItems(mapped)
+  } catch {
     const mapped = mapOrderForDetail(raw)
     foundOrder.value = mapped
     seedCheckinItems(mapped)
@@ -261,6 +298,7 @@ function addCatalogItem() {
     existing.qty = normalizeQty(existing.qty) + 1
   } else {
     checkinItems.value.push({
+      orderItemId: null,
       code: selected.code,
       name: selected.name,
       qty: 1,
@@ -334,6 +372,10 @@ function toggleScanner() {
 
 async function checkIn() {
   if (!foundOrder.value) return
+  if (!canConfirmCheckIn.value) {
+    ui.showError('This order is not eligible for check-in in Reception.')
+    return
+  }
   const rawOrder = allOrders.value.find(
     o => o.order_number === foundOrder.value.id || o._id === foundOrder.value._id
   )
@@ -341,31 +383,23 @@ async function checkIn() {
   try {
     const items = checkinItems.value
       .map((i) => ({
-        item_code: i.code,
-        name: i.name,
-        quantity: normalizeQty(i.qty),
-        unit_price: Number(i.unitPrice) || 0,
+        id: i.orderItemId,
+        qty_good: normalizeQty(i.qty),
+        qty_bad: 0,
+        qty_stained: 0,
       }))
-      .filter((i) => i.quantity > 0)
-      .map((i) => ({
-        ...i,
-        total_price: i.quantity * i.unit_price,
-      }))
+      .filter((i) => i.id !== null && i.id !== undefined && String(i.id).trim() !== '' && i.qty_good > 0)
 
     if (!items.length) {
-      ui.showError('Add at least one item with quantity greater than zero.')
+      ui.showError('No valid order items found for reception. Please verify the order detail and quantities.')
       return
     }
 
-    const invalidPrice = items.find(i => i.unit_price <= 0 || i.total_price <= 0)
-    if (invalidPrice) {
-      ui.showError(`Invalid price for item ${invalidPrice.item_code}. Please verify item catalog pricing.`)
-      return
-    }
+    const staffConfirmedBags = items.reduce((sum, i) => sum + i.qty_good, 0)
 
-    await receiveAtFacility(rawOrder._id, {
+    await receiveAtFacility(foundOrder.value._id ?? rawOrder._id, {
+      staff_confirmed_bags: staffConfirmedBags,
       items,
-      internal_notes: damageNotes.value || undefined,
     })
     showSuccess.value = true
     const refreshed = await fetchOrders()

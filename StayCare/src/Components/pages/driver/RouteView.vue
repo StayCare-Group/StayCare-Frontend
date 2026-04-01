@@ -28,7 +28,7 @@
     <!-- Stops -->
     <div class="space-y-3">
       <div
-        v-for="stop in driverRoute.stops" :key="stop.id"
+        v-for="stop in driverRoute.stops" :key="stop.viewKey"
         class="bg-white rounded-xl shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow"
         :class="{ 'opacity-60': stop.status === 'Completed' }"
       >
@@ -37,7 +37,7 @@
             <!-- Stop number -->
             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
               :class="stop.status === 'Completed' ? 'bg-green-100 text-green-700' : stop.status === 'In Transit' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'">
-              {{ stop.id }}
+              {{ stop.displayIndex }}
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
@@ -53,7 +53,7 @@
 
           <div class="flex gap-2 sm:flex-col sm:items-end">
             <AppButton
-              v-if="stop.type === 'Pickup' && stop.status !== 'Completed'"
+              v-if="stop.type === 'Pickup' && stop.status === 'Pending'"
               size="sm"
               @click="navStore.goToDetail('pickup-confirm', stop._id ?? stop.id, stop.routeId)"
             >{{ $t('driver.confirmPickup') }}</AppButton>
@@ -79,11 +79,13 @@ import { ref, computed, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import MiniMap from '../../ui/MiniMap.vue'
 import { useNavStore } from '../../../stores/nav.js'
+import { useAuthStore } from '../../../stores/auth.js'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
-import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
+import { fetchRoutesByDriver, mapRouteForDriver } from '../../../api/routes'
 
 const navStore = useNavStore()
+const authStore = useAuthStore()
 
 const driverRoute = ref({ driverName: '', date: '', vehiclePlate: '', totalStops: 0, completedStops: 0, stops: [] })
 const rawRouteOrders = ref([])
@@ -97,40 +99,70 @@ function parseLocalDate(dateStr) {
   return new Date(y, m - 1, d)
 }
 
-function pickCurrentOrNextRawRoute(routes) {
+function pickCurrentOrNextRoute(routes) {
   if (!routes.length) return null
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   const sorted = [...routes].sort((a, b) => {
-    const da = parseLocalDate(mapRouteForDriver(a).date)?.getTime() ?? Number.MAX_SAFE_INTEGER
-    const db = parseLocalDate(mapRouteForDriver(b).date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    const da = parseLocalDate(a.date)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    const db = parseLocalDate(b.date)?.getTime() ?? Number.MAX_SAFE_INTEGER
     return da - db
   })
 
-  const todayRoute = sorted.find((raw) => {
-    const mappedDate = mapRouteForDriver(raw).date
-    const routeDate = parseLocalDate(mappedDate)
+  const todayRoute = sorted.find((route) => {
+    const routeDate = parseLocalDate(route.date)
     return routeDate && routeDate.getTime() === today.getTime()
   })
   if (todayRoute) return todayRoute
 
-  const nextRoute = sorted.find((raw) => {
-    const mappedDate = mapRouteForDriver(raw).date
-    const routeDate = parseLocalDate(mappedDate)
+  const nextRoute = sorted.find((route) => {
+    const routeDate = parseLocalDate(route.date)
     return routeDate && routeDate.getTime() > today.getTime()
   })
 
   return nextRoute ?? sorted[sorted.length - 1]
 }
 
+function mergeRoutesForDate(routesForDate, date) {
+  if (!routesForDate.length) {
+    return { driverName: '', date: '', vehiclePlate: '', totalStops: 0, completedStops: 0, stops: [] }
+  }
+
+  const first = routesForDate[0]
+  const mergedStops = routesForDate
+    .flatMap(r => r?.stops ?? [])
+    .map((stop, index) => ({
+      ...stop,
+      displayIndex: index + 1,
+      viewKey: `${stop.routeId ?? 'route'}-${stop._id ?? stop.id ?? index}`,
+    }))
+
+  return {
+    ...first,
+    date,
+    totalStops: routesForDate.reduce((acc, r) => acc + (r.totalStops ?? 0), 0),
+    completedStops: routesForDate.reduce((acc, r) => acc + (r.completedStops ?? 0), 0),
+    stops: mergedStops,
+  }
+}
+
 onMounted(async () => {
   try {
-    const data = await fetchRoutes()
-    const selectedRawRoute = pickCurrentOrNextRawRoute(data ?? [])
-    if (selectedRawRoute) {
-      rawRouteOrders.value = selectedRawRoute.orders ?? []
-      driverRoute.value = mapRouteForDriver(selectedRawRoute)
+    const driverId = authStore.user?.id
+    if (!driverId) return
+
+    const data = await fetchRoutesByDriver(driverId)
+    const rawRoutes = data ?? []
+    const mappedRoutes = rawRoutes.map(mapRouteForDriver)
+    const selectedRoute = pickCurrentOrNextRoute(mappedRoutes)
+    if (selectedRoute) {
+      const day = selectedRoute.date
+      const routesForDate = mappedRoutes.filter(route => route.date === day)
+      rawRouteOrders.value = rawRoutes
+        .filter(route => mapRouteForDriver(route).date === day)
+        .flatMap(route => Array.isArray(route.orders) ? route.orders : [])
+      driverRoute.value = mergeRoutesForDate(routesForDate, day)
     }
   } catch { /* stays default */ } finally {
     loading.value = false

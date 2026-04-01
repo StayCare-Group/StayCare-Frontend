@@ -9,6 +9,13 @@ export async function fetchUserById(id: string) {
   return apiFetch(`/api/users/${id}`)
 }
 
+export async function updateUserById(id: string, data: Record<string, any>) {
+  return apiFetch(`/api/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
 export async function fetchMe() {
   return apiFetch('/api/auth/me')
 }

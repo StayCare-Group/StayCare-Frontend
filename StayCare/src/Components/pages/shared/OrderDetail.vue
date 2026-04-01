@@ -65,9 +65,15 @@
             </template>
           </DataTable>
 
-          <div class="bg-gray-50 rounded-lg px-5 py-3 font-semibold text-sm flex justify-end gap-4">
-            <span class="text-gray-600">{{ $t('orderDetail.orderTotal') }}</span>
-            <span class="text-gray-800">&euro;{{ order.total.toFixed(2) }}</span>
+          <div class="bg-gray-50 rounded-lg px-5 py-3 text-sm space-y-1">
+            <div class="flex justify-end gap-4">
+              <span class="text-gray-600 font-medium">{{ $t('orderDetail.vatAmount') }}</span>
+              <span class="text-gray-800 font-medium">&euro;{{ (order.vatAmount ?? 0).toFixed(2) }}</span>
+            </div>
+            <div class="flex justify-end gap-4 font-semibold">
+              <span class="text-gray-600">{{ $t('orderDetail.orderTotal') }}</span>
+              <span class="text-gray-800">&euro;{{ order.total.toFixed(2) }}</span>
+            </div>
           </div>
         </div>
       </div>

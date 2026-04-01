@@ -41,7 +41,10 @@
     "dayFri": "Fri",
     "daySat": "Sat",
     "daySun": "Sun",
-    "reschedule": "Reschedule"
+    "reschedule": "Reschedule",
+    "contactPerson": "Contact Person",
+    "area": "Area",
+    "phone": "Phone"
   },
   "auth": {
     "loginHeading": "Login for {brand} laundry management",
@@ -355,6 +358,7 @@
     "quantity": "Qty",
     "unitPrice": "Unit Price",
     "lineTotal": "Total",
+    "vatAmount": "VAT Amount",
     "orderTotal": "Order Total",
     "statusTimeline": "Status Timeline",
     "loadingOrder": "Loading order...",

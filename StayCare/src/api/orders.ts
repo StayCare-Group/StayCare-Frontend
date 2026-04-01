@@ -61,16 +61,29 @@ export async function createOrder(payload: any) {
 }
 
 export async function updateOrderStatus(id: string, status: string) {
+  const raw = String(status ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  const normalizedStatus =
+    raw === 'qualitycheck' ? 'quality_check' :
+    (raw === 'readytodelivery' || raw === 'readytodeliver') ? 'ready_to_delivery' :
+    raw
+
   return apiFetch(`/api/orders/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status: normalizedStatus }),
   })
 }
 
 export async function confirmPickup(id: string, payload: any) {
-  return apiFetch(`/api/orders/${id}/pickup`, {
+  const body = {
+    status: 'transit',
+    actual_bags: payload?.actual_bags,
+    photos: payload?.photos,
+    notes: payload?.notes,
+  }
+
+  return apiFetch(`/api/orders/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   })
 }
 
@@ -82,9 +95,15 @@ export async function receiveAtFacility(id: string, payload: any) {
 }
 
 export async function confirmDelivery(id: string, payload: any) {
-  return apiFetch(`/api/orders/${id}/deliver`, {
+  const body = {
+    status: 'delivered',
+    photos: payload?.photos,
+    notes: payload?.notes,
+  }
+
+  return apiFetch(`/api/orders/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   })
 }
 
@@ -186,12 +205,29 @@ export function mapOrderForDetail(o: any) {
 
   const pickupWindowStart = o.pickup_window?.start_time ?? o.pickup_window_start
   const pickupWindowEnd = o.pickup_window?.end_time ?? o.pickup_window_end
+  const subtotal = Number(
+    o.subtotal ??
+    o.pricing_snapshot?.subtotal ??
+    0
+  )
+  const total = Number(o.total ?? o.pricing_snapshot?.total ?? 0)
+  const vatAmount = Number(
+    o.vat_amount ??
+    o.pricing_snapshot?.vat_amount ??
+    Math.max(total - subtotal, 0)
+  )
+
+  const propertyContactPerson = property?.contact_person ?? property?.contact_name ?? ''
+  const propertyPhone = property?.phone ?? property?.contact_phone ?? ''
 
   return {
     id: o.order_number ?? o._id ?? o.id,
     _id: o._id ?? o.id,
     client: clientName,
     clientId: String(clientId ?? ''),
+    propertyName: property?.name ?? o.property_name ?? '',
+    propertyContactPerson,
+    propertyPhone,
     pickupAddress: address,
     deliveryAddress: address,
     serviceType: o.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)',
@@ -207,6 +243,7 @@ export function mapOrderForDetail(o: any) {
     driverPickup: driverObj?.name ?? o.driver_name ?? null,
     driverDelivery: driverObj?.name ?? o.driver_name ?? null,
     items: (o.items ?? []).map((i: any) => ({
+      id: i.id ?? i._id ?? null,
       code: i.item_code ?? i.item_code_snapshot ?? '',
       name: i.name ?? i.name_snapshot ?? '',
       qty: i.quantity ?? 0,
@@ -217,6 +254,8 @@ export function mapOrderForDetail(o: any) {
       date: formatDateTime(h.timestamp ?? h.changed_at),
       note: h.note ?? '',
     })),
-    total: Number(o.total ?? o.pricing_snapshot?.total ?? 0),
+    subtotal,
+    vatAmount,
+    total,
   }
 }

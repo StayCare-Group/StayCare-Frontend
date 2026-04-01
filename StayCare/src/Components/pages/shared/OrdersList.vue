@@ -17,6 +17,7 @@
     </div>
 
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
+
     <!-- Orders table -->
     <DataTable v-else :headers="orderHeaders" :items="filteredOrders" min-width="700px">
       <template #cell-id="{ value }">
