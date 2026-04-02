@@ -263,7 +263,10 @@
     "newPickupDate": "New Pickup Date",
     "newTimeWindow": "New Time Window",
     "rescheduleSuccess": "Order rescheduled successfully!",
-    "markAsPaid": "Mark as Paid"
+    "markAsPaid": "Mark as Paid",
+    "createOrderProfileRequired": "To create an order, you need to update your profile.",
+    "goToProfileCta": "Click here",
+    "goToProfileSuffix": "to go to Profile."
   },
   "invoices": {
     "filterAll": "All",

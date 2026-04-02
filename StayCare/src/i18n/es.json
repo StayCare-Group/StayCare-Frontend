@@ -263,7 +263,10 @@
     "newPickupDate": "Nueva Fecha de Recogida",
     "newTimeWindow": "Nueva Ventana de Tiempo",
     "rescheduleSuccess": "¡Pedido reprogramado exitosamente!",
-    "markAsPaid": "Marcar como pagado"
+    "markAsPaid": "Marcar como pagado",
+    "createOrderProfileRequired": "Para crear una orden debes actualizar tu perfil.",
+    "goToProfileCta": "Haz clic aqui",
+    "goToProfileSuffix": "para ir a Perfil."
   },
   "invoices": {
     "filterAll": "Todas",

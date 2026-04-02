@@ -19,10 +19,17 @@
       </div>
 
       <!-- Create Order Button -->
-      <div>
-        <AppButton @click="navStore.goToDetail('create-order', null)">
+      <div class="space-y-2">
+        <AppButton :disabled="!canCreateOrder" @click="navStore.goToDetail('create-order', null)">
           {{ $t('client.createOrder') }}
         </AppButton>
+        <p v-if="!canCreateOrder" class="text-sm text-amber-700">
+          {{ $t('client.createOrderProfileRequired') }}
+          <button type="button" class="font-semibold text-brand-700 hover:underline" @click="navStore.setPage('profile')">
+            {{ $t('client.goToProfileCta') }}
+          </button>
+          {{ $t('client.goToProfileSuffix') }}
+        </p>
       </div>
 
       <!-- Tables -->
@@ -51,7 +58,9 @@ import AppButton from '../ui/AppButton.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
+import { fetchMe } from '../../api/users'
 import { useAuthStore } from '../../stores/auth.js'
+import { isClientProfileCompleteForOrder } from '../../utils/orderEligibility'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -60,17 +69,20 @@ const authStore = useAuthStore()
 const orders = ref([])
 const invoices = ref([])
 const loading = ref(true)
+const canCreateOrder = ref(true)
 
 onMounted(async () => {
   try {
     const clientId = authStore.user?.id
     const orderParams = clientId ? { client_id: String(clientId) } : undefined
-    const [ordersData, invoicesData] = await Promise.all([
+    const [ordersData, invoicesData, meData] = await Promise.all([
       fetchOrders(orderParams),
       fetchInvoices(),
+      fetchMe().catch(() => null),
     ])
     orders.value = (ordersData ?? []).map(mapOrderForList)
     invoices.value = (invoicesData ?? []).map(mapInvoiceForList)
+    canCreateOrder.value = isClientProfileCompleteForOrder(meData)
   } catch { /* data stays empty */ } finally {
     loading.value = false
   }

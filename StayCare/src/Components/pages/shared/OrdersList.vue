@@ -1,10 +1,17 @@
 <template>
   <div class="space-y-6">
     <!-- Header with back button -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-4">
       <h2 class="text-lg font-semibold text-brand-700">{{ $t('client.allOrders') }}</h2>
-      <AppButton @click="navStore.goToDetail('create-order', null)">{{ $t('client.newOrder') }}</AppButton>
+      <AppButton :disabled="isClient && !canCreateOrder" @click="navStore.goToDetail('create-order', null)">{{ $t('client.newOrder') }}</AppButton>
     </div>
+    <p v-if="isClient && !canCreateOrder" class="text-sm text-amber-700">
+      {{ $t('client.createOrderProfileRequired') }}
+      <button type="button" class="font-semibold text-brand-700 hover:underline" @click="navStore.setPage('profile')">
+        {{ $t('client.goToProfileCta') }}
+      </button>
+      {{ $t('client.goToProfileSuffix') }}
+    </p>
 
     <!-- Filters -->
     <div class="flex flex-wrap gap-2">
@@ -61,23 +68,35 @@ import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchOrders, mapOrderForList } from '../../../api/orders'
+import { fetchMe } from '../../../api/users'
+import { isClientProfileCompleteForOrder } from '../../../utils/orderEligibility'
 
 const { t } = useI18n()
 const navStore = useNavStore()
 const auth = useAuthStore()
 
 const isAdmin = computed(() => auth.user?.role === 'admin')
+const isClient = computed(() => auth.user?.role === 'client')
 
 const orders = ref([])
 const loading = ref(true)
+const canCreateOrder = ref(false)
 
 onMounted(async () => {
   try {
     const params = auth.user?.role === 'client' && auth.user?.id
       ? { client_id: String(auth.user.id) }
       : undefined
-    const data = await fetchOrders(params)
+    const [data, meData] = await Promise.all([
+      fetchOrders(params),
+      isClient.value ? fetchMe().catch(() => null) : Promise.resolve(null),
+    ])
     orders.value = (data ?? []).map(mapOrderForList)
+    if (isClient.value) {
+      canCreateOrder.value = isClientProfileCompleteForOrder(meData)
+    } else {
+      canCreateOrder.value = true
+    }
   } catch { /* stays empty */ } finally {
     loading.value = false
   }
