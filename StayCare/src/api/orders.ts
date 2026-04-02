@@ -243,7 +243,7 @@ export function mapOrderForDetail(o: any) {
     driverPickup: driverObj?.name ?? o.driver_name ?? null,
     driverDelivery: driverObj?.name ?? o.driver_name ?? null,
     items: (o.items ?? []).map((i: any) => ({
-      id: i.id ?? i._id ?? null,
+      itemId: i.item_id ?? i.itemId ?? null,
       code: i.item_code ?? i.item_code_snapshot ?? '',
       name: i.name ?? i.name_snapshot ?? '',
       qty: i.quantity ?? 0,

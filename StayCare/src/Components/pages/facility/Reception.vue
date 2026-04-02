@@ -262,7 +262,7 @@ function normalizeQty(value) {
 
 function seedCheckinItems(mappedOrder) {
   checkinItems.value = (mappedOrder.items ?? []).map((item) => ({
-    orderItemId: item.id ?? null,
+    itemId: item.itemId ?? null,
     code: item.code,
     name: item.name,
     qty: normalizeQty(item.qty),
@@ -298,7 +298,7 @@ function addCatalogItem() {
     existing.qty = normalizeQty(existing.qty) + 1
   } else {
     checkinItems.value.push({
-      orderItemId: null,
+      itemId: selected.id ?? null,
       code: selected.code,
       name: selected.name,
       qty: 1,
@@ -383,12 +383,13 @@ async function checkIn() {
   try {
     const items = checkinItems.value
       .map((i) => ({
-        id: i.orderItemId,
+        item_id: i.itemId,
+        quantity: normalizeQty(i.qty),
         qty_good: normalizeQty(i.qty),
         qty_bad: 0,
         qty_stained: 0,
       }))
-      .filter((i) => i.id !== null && i.id !== undefined && String(i.id).trim() !== '' && i.qty_good > 0)
+      .filter((i) => i.item_id !== null && i.item_id !== undefined && String(i.item_id).trim() !== '' && i.quantity > 0)
 
     if (!items.length) {
       ui.showError('No valid order items found for reception. Please verify the order detail and quantities.')
