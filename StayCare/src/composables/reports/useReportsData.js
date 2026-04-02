@@ -1,7 +1,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { fetchAllOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
-import { fetchClients } from '../../api/clients'
 import { getUsers } from '../../api/users'
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -68,15 +67,15 @@ export function useReportsData(t) {
       const [ordersData, invoicesData, clientsData, usersData] = await Promise.all([
         fetchAllOrders(dateParams).catch(() => []),
         fetchInvoices({ ...dateParams, limit: '200' }).catch(() => []),
-        fetchClients().catch(() => []),
-        getUsers().catch(() => []),
+        getUsers({ role: 'client', is_active: 'true', limit: '500' }).catch(() => []),
+        getUsers({ role: 'driver', limit: '200' }).catch(() => []),
       ])
 
       rawOrders.value = ordersData ?? []
       orders.value = (ordersData ?? []).map(mapOrderForList)
       invoices.value = (invoicesData ?? []).map(mapInvoiceForList)
       clientsList.value = clientsData ?? []
-      driversList.value = (usersData ?? []).filter(u => u.role === 'driver').map(u => ({
+      driversList.value = (usersData ?? []).map(u => ({
         ...u,
         status: u.is_active ? 'Active' : 'Inactive',
       }))

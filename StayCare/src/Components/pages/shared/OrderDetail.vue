@@ -105,7 +105,7 @@ import AppButton from '../../ui/AppButton.vue'
 import DataTable from '../../ui/DataTable.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchOrderById, mapOrderForDetail } from '../../../api/orders'
-import { fetchClientById } from '../../../api/clients'
+import { fetchUserById } from '../../../api/users'
 import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
 
 const { t } = useI18n()
@@ -151,13 +151,17 @@ async function loadOrder() {
     // If client name is missing but we have a clientId, fetch client info
     if (!mapped.client && mapped.clientId) {
       try {
-        const clientData = await fetchClientById(mapped.clientId)
-        mapped.client = clientData.name ?? ''
+        const userPayload = await fetchUserById(mapped.clientId)
+        const userData = userPayload?.user ?? userPayload ?? {}
+        const clientProfile = userPayload?.client_profile ?? {}
+        const properties = Array.isArray(userPayload?.properties) ? userPayload.properties : []
+
+        mapped.client = userData.name ?? clientProfile.contact_person ?? ''
         if (!mapped.pickupAddress) {
-          const prop = clientData.properties?.[0]
+          const prop = properties[0]
           mapped.pickupAddress = prop?.address
             ? `${prop.address}, ${prop.city ?? ''}`
-            : clientData.billing_address ?? clientData.address ?? ''
+            : clientProfile.billing_address ?? userData.address ?? ''
           mapped.deliveryAddress = mapped.pickupAddress
         }
       } catch { /* client fetch failed, leave empty */ }

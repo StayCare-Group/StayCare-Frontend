@@ -368,7 +368,6 @@ import { useI18n } from 'vue-i18n'
 import { fetchOrders, fetchAllOrders, mapOrderForList, reassignOrder } from '../../../api/orders'
 import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
 import { getUsers } from '../../../api/users'
-import { fetchClients } from '../../../api/clients'
 import { apiFetch } from '../../../api/client'
 import { useUiStore } from '../../../stores/ui.js'
 import {
@@ -453,14 +452,14 @@ const successMessage = ref('')
 
 onMounted(async () => {
   try {
-    const [ordersData, usersData, clientsData] = await Promise.all([
+    const [ordersData, driversData, clientsData] = await Promise.all([
       fetchAllOrders().catch(() => []),
-      getUsers().catch(() => []),
-      fetchClients().catch(() => []),
+      getUsers({ role: 'driver', is_active: 'true', limit: '200' }).catch(() => []),
+      getUsers({ role: 'client', is_active: 'true', limit: '500' }).catch(() => []),
     ])
 
     rawOrders.value = ordersData ?? []
-    drivers.value = (usersData ?? []).filter(u => u.role === 'driver').map(u => ({
+    drivers.value = (driversData ?? []).map(u => ({
       id: u._id ?? u.id,
       name: u.name,
       email: u.email,

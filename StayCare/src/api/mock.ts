@@ -414,26 +414,42 @@ export async function mockApiFetch(path: string, options: RequestInit = {}) {
 
   // Users
   if (pathname === '/api/users' && method === 'GET') {
-    return users.map((u) => publicUser(u))
+    let list = users.map((u) => publicUser(u))
+    const role = String(query.get('role') || '').trim().toLowerCase()
+    const isActive = query.get('is_active')
+
+    if (role) {
+      list = list.filter((u) => String(u?.role || '').toLowerCase() === role)
+    }
+    if (isActive === 'true' || isActive === 'false') {
+      const activeBool = isActive === 'true'
+      list = list.filter((u) => Boolean(u?.is_active) === activeBool)
+    }
+
+    return list
   }
 
   if (pathname.startsWith('/api/users/') && method === 'GET') {
     const id = pathname.split('/').pop()
     const found = users.find((u) => u._id === id)
     if (!found) throw new Error('User not found')
-    return publicUser(found)
-  }
+    const user = publicUser(found)
+    const linkedClient = typeof found.client === 'string'
+      ? clients.find((c) => c._id === found.client)
+      : found.client
 
-  // Clients
-  if (pathname === '/api/clients' && method === 'GET') {
-    return clone(clients)
-  }
-
-  if (pathname.startsWith('/api/clients/') && method === 'GET') {
-    const id = pathname.split('/').pop()
-    const found = clients.find((c) => c._id === id)
-    if (!found) throw new Error('Client not found')
-    return clone(found)
+    return {
+      user,
+      client_profile: linkedClient
+        ? {
+            contact_person: linkedClient.contact_person || user?.name || '',
+            billing_address: linkedClient.billing_address || '',
+            credits_terms_days: linkedClient.credits_terms_days || 0,
+            pricing_tier: linkedClient.pricing_tier || 'standard',
+          }
+        : null,
+      properties: Array.isArray(linkedClient?.properties) ? linkedClient.properties : [],
+    }
   }
 
   // Items

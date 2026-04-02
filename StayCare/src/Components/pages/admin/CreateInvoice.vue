@@ -139,7 +139,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { fetchClients } from '../../../api/clients'
+import { getUsers } from '../../../api/users'
 import { fetchOrders } from '../../../api/orders'
 import { createInvoice, fetchInvoices } from '../../../api/invoices'
 import { getClientDisplayName, getClientId } from '../../../utils/client'
@@ -171,7 +171,7 @@ const form = reactive({
 onMounted(async () => {
   try {
     const [clientsData, ordersData, invoicesData] = await Promise.all([
-      fetchClients().catch(() => []),
+      getUsers({ role: 'client', is_active: 'true', limit: '200' }).catch(() => []),
       fetchOrders().catch(() => []),
       fetchInvoices().catch(() => []),
     ])
