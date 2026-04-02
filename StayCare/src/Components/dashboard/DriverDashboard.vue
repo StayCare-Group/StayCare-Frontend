@@ -61,7 +61,7 @@
           >
             <div>
               <div class="flex items-center justify-between mb-2">
-                <StatusBadge :status="stop.type" />
+                <StatusBadge v-if="stop.status !== 'Completed'" :status="stop.type" />
                 <StatusBadge :status="stop.status" />
               </div>
               <h4 class="text-sm font-semibold text-gray-800">{{ stop.company || stop.client }}</h4>

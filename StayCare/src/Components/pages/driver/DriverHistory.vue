@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-white">{{ $t('driver.history') }}</h2>
+      <h2 class="text-lg font-semibold text-brand-700">{{ $t('driver.history') }}</h2>
       <input
         v-model="dateFilter"
         type="date"
@@ -60,9 +60,13 @@
 import { ref, onMounted, watch } from 'vue'
 import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
 
+function localDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
 const loading = ref(true)
 const pastRoutes = ref([])
-const dateFilter = ref('')
+const dateFilter = ref(localDateStr())
 
 async function loadHistory() {
   loading.value = true

@@ -41,7 +41,7 @@
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
-                <StatusBadge :status="stop.type" />
+                <StatusBadge v-if="stop.status !== 'Completed'" :status="stop.type" />
                 <StatusBadge :status="stop.status" />
               </div>
               <h3 class="text-sm font-semibold text-gray-800 mt-1">{{ stop.client }}</h3>

@@ -14,7 +14,11 @@ export function isDeliveryAssignableStatus(status: string): boolean {
 }
 
 export function getRouteTypeFromOrderStatus(status: string): RouteType {
-  return isDeliveryAssignableStatus(status) ? 'Delivery' : 'Pickup'
+  if (isDeliveryAssignableStatus(status)) return 'Delivery'
+  if (COMPLETED_ORDER_STATUSES.includes(status as (typeof COMPLETED_ORDER_STATUSES)[number])) {
+    return 'Delivery'
+  }
+  return 'Pickup'
 }
 
 export function getRouteStopProgressStatus(status: string): RouteStopStatus {
