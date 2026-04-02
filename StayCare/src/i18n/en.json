@@ -338,6 +338,14 @@
     "machineIron": "Iron",
     "capacityPlaceholder": "e.g. 25 kg",
     "adding": "Adding...",
+    "addMachine": "Add Machine",
+    "editMachine": "Edit Machine",
+    "statusAvailable": "Available",
+    "statusRunning": "In Use",
+    "statusMaintenance": "Maintenance",
+    "machineAdded": "Machine added successfully",
+    "machineUpdated": "Machine updated successfully",
+    "machineDeleted": "Machine deleted successfully",
     "received": "Received",
     "qualityCheck": "Quality Check",
     "assignFailed": "Assign failed",
@@ -345,7 +353,8 @@
     "updateStatusFailed": "Failed to update status",
     "unknownError": "Unknown error",
     "seedFailed": "Failed to seed machines. You may need admin permissions.",
-    "addMachineFailed": "Failed to add machine."
+    "addMachineFailed": "Failed to add machine.",
+    "deleteFailed": "Failed to delete machine."
   },
   "orderDetail": {
     "orderInformation": "Order Information",

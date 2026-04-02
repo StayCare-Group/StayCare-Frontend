@@ -338,6 +338,14 @@
     "machineIron": "Plancha",
     "capacityPlaceholder": "ej. 25 kg",
     "adding": "Agregando...",
+    "addMachine": "Agregar Máquina",
+    "editMachine": "Editar Máquina",
+    "statusAvailable": "Disponible",
+    "statusRunning": "En uso",
+    "statusMaintenance": "Mantenimiento",
+    "machineAdded": "Máquina agregada exitosamente",
+    "machineUpdated": "Máquina actualizada exitosamente",
+    "machineDeleted": "Máquina eliminada exitosamente",
     "received": "Recibido",
     "qualityCheck": "Control de Calidad",
     "assignFailed": "Error al asignar",
@@ -345,7 +353,8 @@
     "updateStatusFailed": "No se pudo actualizar el estado",
     "unknownError": "Error desconocido",
     "seedFailed": "No se pudieron cargar máquinas. Puede requerir permisos de administrador.",
-    "addMachineFailed": "No se pudo agregar la máquina."
+    "addMachineFailed": "No se pudo agregar la máquina.",
+    "deleteFailed": "No se pudo eliminar la máquina."
   },
   "orderDetail": {
     "orderInformation": "Información del Pedido",
