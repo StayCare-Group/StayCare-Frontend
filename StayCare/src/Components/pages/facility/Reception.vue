@@ -3,12 +3,12 @@
     <LoadingPanel v-if="loading" />
 
     <template v-else>
-    <h2 class="text-lg font-semibold text-brand-700">Reception &amp; Check-In</h2>
+    <h2 class="text-lg font-semibold text-brand-700">{{ $t('facility.receptionTitle') }}</h2>
 
     <!-- QR Scan -->
     <div class="bg-white rounded-xl shadow-sm p-5">
-      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Scan Order</h3>
-      <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-5 text-center space-y-3">
+      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">{{ $t('facility.getOrder') }}</h3>
+      <!-- <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 sm:p-5 text-center space-y-3">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,13 +37,13 @@
         <p v-if="lastScannedCode" class="text-xs text-gray-500 mt-1">
           Last scanned: <span class="font-mono">{{ lastScannedCode }}</span>
         </p>
-      </div>
+      </div> -->
       <div class="mt-3">
-        <label class="block text-sm font-medium text-gray-600 mb-1">Or enter Order ID manually</label>
+        <!-- <label class="block text-sm font-medium text-gray-600 mb-1">Or enter Order ID manually</label> -->
         <div class="flex gap-2">
           <input v-model="manualOrderId" type="text"
             class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-            placeholder="e.g. ORD-1024" />
+            :placeholder="$t('facility.orderIdPlaceholder')" />
           <AppButton @click="lookupOrder">
             {{ $t('facility.lookUp') }}
           </AppButton>
@@ -59,19 +59,19 @@
           <StatusBadge :status="foundOrder.status" />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div><span class="text-gray-400">Service Type</span><p class="font-medium text-gray-800">{{ foundOrder.serviceType }}</p></div>
-          <div><span class="text-gray-400">Expected Bags</span><p class="font-medium text-gray-800">{{ foundOrder.actualBags ?? foundOrder.estimatedBags }}</p></div>
-          <div><span class="text-gray-400">Property</span><p class="font-medium text-gray-800">{{ foundOrder.propertyName }}</p></div>
-          <div><span class="text-gray-400">Contact Person</span><p class="font-medium text-gray-800">{{ foundOrder.propertyContactPerson }}</p></div>
-          <div><span class="text-gray-400">Contact Phone</span><p class="font-medium text-gray-800">{{ foundOrder.propertyPhone }}</p></div>
-          <div v-if="foundOrder.specialNotes"><span class="text-gray-400">Notes</span><p class="font-medium text-gray-800">{{ foundOrder.specialNotes }}</p></div>
+          <div><span class="text-gray-400">{{ $t('facility.serviceType') }}</span><p class="font-medium text-gray-800">{{ foundOrder.serviceType }}</p></div>
+          <div><span class="text-gray-400">{{ $t('facility.expectedBags') }}</span><p class="font-medium text-gray-800">{{ foundOrder.actualBags ?? foundOrder.estimatedBags }}</p></div>
+          <div><span class="text-gray-400">{{ $t('facility.property') }}</span><p class="font-medium text-gray-800">{{ foundOrder.propertyName }}</p></div>
+          <div><span class="text-gray-400">{{ $t('facility.contactPerson') }}</span><p class="font-medium text-gray-800">{{ foundOrder.propertyContactPerson }}</p></div>
+          <div><span class="text-gray-400">{{ $t('facility.contactPhone') }}</span><p class="font-medium text-gray-800">{{ foundOrder.propertyPhone }}</p></div>
+          <div v-if="foundOrder.specialNotes"><span class="text-gray-400">{{ $t('facility.notes') }}</span><p class="font-medium text-gray-800">{{ foundOrder.specialNotes }}</p></div>
         </div>
       </div>
 
       <!-- Check-in form -->
       <form @submit.prevent="checkIn" class="space-y-5">
         <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Item Check-In</h3>
+          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('facility.itemCheckIn') }}</h3>
 
           <div class="divide-y divide-gray-100">
             <div v-for="(item, idx) in checkinItems" :key="`${item.code}-${idx}`"
@@ -79,7 +79,7 @@
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-gray-800">{{ item.name }} <span class="text-xs text-gray-400">({{ item.code }})</span></p>
                 <p class="text-xs text-gray-400">
-                  Expected: {{ expectedQtyMap[item.code] ?? 0 }}
+                  {{ $t('facility.expected') }}: {{ expectedQtyMap[item.code] ?? 0 }}
                 </p>
               </div>
               <div class="flex items-center gap-2">
@@ -90,22 +90,22 @@
                   type="button"
                   @click="removeCheckinItem(idx)"
                   class="text-xs text-red-500 hover:text-red-700 font-medium"
-                >Remove</button>
+                >{{ $t('facility.remove') }}</button>
                 <span v-if="item.qty !== (expectedQtyMap[item.code] ?? 0)" class="text-xs text-orange-500 font-medium">!</span>
               </div>
             </div>
           </div>
 
-          <p v-if="!checkinItems.length" class="text-xs text-gray-400">No items currently in check-in list. Add items below.</p>
+          <p v-if="!checkinItems.length" class="text-xs text-gray-400">{{ $t('facility.noCheckInItems') }}</p>
 
           <div class="border-t border-gray-100 pt-3 space-y-2">
-            <label class="block text-sm font-medium text-gray-600">Add item to check-in</label>
+            <label class="block text-sm font-medium text-gray-600">{{ $t('facility.addItemToCheckIn') }}</label>
             <div class="flex flex-wrap items-center gap-2">
               <select
                 v-model="selectedCatalogCode"
                 class="min-w-[220px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
               >
-                <option value="">Select item</option>
+                <option value="">{{ $t('facility.selectItem') }}</option>
                 <option v-for="catItem in itemCatalog" :key="catItem.code" :value="catItem.code">
                   {{ catItem.name }} ({{ catItem.code }})
                 </option>
@@ -115,16 +115,16 @@
                 @click="addCatalogItem"
                 class="bg-gray-100 text-gray-700 text-sm font-medium px-3 py-2 rounded-lg hover:bg-gray-200 transition"
               >
-                Add item
+                {{ $t('facility.addItem') }}
               </button>
             </div>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Damage Notes</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('facility.damageNotes') }}</label>
             <textarea v-model="damageNotes" rows="2"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
-              placeholder="Note any damaged items..."></textarea>
+              :placeholder="$t('facility.damageNotesPlaceholder')"></textarea>
           </div>
         </div>
 
@@ -134,24 +134,24 @@
           </AppButton>
           <button type="button" @click="foundOrder = null"
             class="bg-gray-100 text-gray-600 font-medium py-2.5 px-6 rounded-lg hover:bg-gray-200 transition text-sm">
-            Cancel
+            {{ $t('common.cancel') }}
           </button>
         </div>
         <p v-if="!canConfirmCheckIn" class="text-sm text-amber-600 font-medium">
-          This order cannot be checked in at Reception in its current status.
+          {{ $t('facility.checkInNotAllowed') }}
         </p>
       </form>
 
       <!-- Success toast -->
       <div v-if="showSuccess" class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
-        Order checked in successfully!
+        {{ $t('facility.checkInSuccess') }}
       </div>
     </div>
 
     <!-- Recent check-ins -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-100">
-        <h3 class="text-sm font-semibold text-gray-700">Recent Check-Ins</h3>
+        <h3 class="text-sm font-semibold text-gray-700">{{ $t('facility.recentCheckIns') }}</h3>
       </div>
       <div class="divide-y divide-gray-100">
         <div v-for="order in recentCheckins" :key="order.id" class="px-5 py-3 flex items-center justify-between">
@@ -169,6 +169,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
@@ -179,6 +180,7 @@ import { useUiStore } from '../../../stores/ui.js'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 
 const ui = useUiStore()
+const { t } = useI18n()
 
 const manualOrderId = ref('')
 const foundOrder = ref(null)
@@ -339,7 +341,7 @@ async function startScanner() {
     })
   } catch (err) {
     console.error(err)
-    scanError.value = 'Unable to access camera. Check browser permissions.'
+    scanError.value = t('facility.cameraAccessError')
     isScanning.value = false
   }
 }
@@ -373,7 +375,7 @@ function toggleScanner() {
 async function checkIn() {
   if (!foundOrder.value) return
   if (!canConfirmCheckIn.value) {
-    ui.showError('This order is not eligible for check-in in Reception.')
+    ui.showError(t('facility.checkInNotEligible'))
     return
   }
   const rawOrder = allOrders.value.find(
@@ -392,7 +394,7 @@ async function checkIn() {
       .filter((i) => i.item_id !== null && i.item_id !== undefined && String(i.item_id).trim() !== '' && i.quantity > 0)
 
     if (!items.length) {
-      ui.showError('No valid order items found for reception. Please verify the order detail and quantities.')
+      ui.showError(t('facility.noValidItemsForReception'))
       return
     }
 
@@ -412,7 +414,7 @@ async function checkIn() {
       checkinItems.value = []
     }, 1500)
   } catch (err) {
-    ui.showError(err?.message || 'Check-in failed. Please try again.')
+    ui.showError(err?.message || t('facility.checkInFailed'))
     showSuccess.value = false
   }
 }

@@ -18,20 +18,6 @@
         <KpiCard v-for="kpi in clientKPIs" :key="kpi.label" :label="kpi.label" :value="kpi.value" :color="kpi.color" />
       </div>
 
-      <!-- Create Order Button -->
-      <div class="space-y-2">
-        <AppButton :disabled="!canCreateOrder" @click="navStore.goToDetail('create-order', null)">
-          {{ $t('client.createOrder') }}
-        </AppButton>
-        <p v-if="!canCreateOrder" class="text-sm text-amber-700">
-          {{ $t('client.createOrderProfileRequired') }}
-          <button type="button" class="font-semibold text-brand-700 hover:underline" @click="navStore.setPage('profile')">
-            {{ $t('client.goToProfileCta') }}
-          </button>
-          {{ $t('client.goToProfileSuffix') }}
-        </p>
-      </div>
-
       <!-- Tables -->
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         <DataTable :title="$t('client.recentOrders')" :columns="orderCols" :rows="recentOrders" />
