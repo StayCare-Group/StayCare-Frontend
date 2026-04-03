@@ -2,7 +2,7 @@
   <div class="space-y-6 max-w-3xl">
     <!-- Header -->
     <div class="flex items-center gap-3">
-      <button @click="navStore.goBack('invoices')" class="text-white hover:text-gray-400">
+      <button @click="navStore.goBack('invoices')" class="text-brand-700 hover:text-gray-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <h2 class="text-lg font-semibold text-brand-700">{{ invoice?.id }}</h2>

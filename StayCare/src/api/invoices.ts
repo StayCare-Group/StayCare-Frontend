@@ -40,31 +40,58 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+function toNumber(value: any): number {
+  const n = Number(value ?? 0)
+  return Number.isFinite(n) ? n : 0
+}
+
+function getInvoicePk(inv: any): string {
+  return String(inv?._id ?? inv?.id ?? inv?.invoice_id ?? '')
+}
+
+function getInvoiceClientName(inv: any, clientObj: any): string {
+  if (clientObj) return getClientDisplayName(clientObj)
+  return String(inv?.client_name ?? inv?.contact_person ?? inv?.client ?? '')
+}
+
+function getInvoiceClientId(inv: any, clientObj: any): string {
+  if (clientObj) return getClientId(clientObj)
+  return String(inv?.client_id ?? inv?.client ?? '')
+}
+
+function getInvoiceOrderId(firstOrder: any): string {
+  if (!firstOrder) return ''
+  if (typeof firstOrder === 'string' || typeof firstOrder === 'number') return String(firstOrder)
+  return String(firstOrder.order_number ?? firstOrder._id ?? firstOrder.id ?? '')
+}
+
 export function mapInvoiceForList(inv: any) {
   const firstOrder = Array.isArray(inv.orders) ? inv.orders[0] : null
   const clientObj = typeof inv.client === 'object' && inv.client ? inv.client : null
+  const invoicePk = getInvoicePk(inv)
   return {
-    id: inv.invoice_number ?? inv._id,
-    _id: inv._id,
-    orderId: firstOrder?.order_number ?? firstOrder ?? '',
-    client: clientObj ? getClientDisplayName(clientObj) : (inv.client ?? ''),
-    clientId: clientObj ? getClientId(clientObj) : '',
+    id: String(inv.invoice_number ?? invoicePk),
+    _id: invoicePk,
+    orderId: getInvoiceOrderId(firstOrder),
+    client: getInvoiceClientName(inv, clientObj),
+    clientId: getInvoiceClientId(inv, clientObj),
     issueDate: formatDate(inv.issue_date),
     dueDate: formatDate(inv.due_date),
     status: capitalize(inv.status),
-    grandTotal: inv.total ?? 0,
+    grandTotal: toNumber(inv.total),
   }
 }
 
 export function mapInvoiceForDetail(inv: any) {
   const firstOrder = Array.isArray(inv.orders) ? inv.orders[0] : null
   const clientObj = typeof inv.client === 'object' && inv.client ? inv.client : null
+  const invoicePk = getInvoicePk(inv)
   return {
-    id: inv.invoice_number ?? inv._id,
-    _id: inv._id,
-    orderId: firstOrder?.order_number ?? firstOrder ?? '',
-    client: clientObj ? getClientDisplayName(clientObj) : (inv.client ?? ''),
-    clientId: clientObj ? getClientId(clientObj) : '',
+    id: String(inv.invoice_number ?? invoicePk),
+    _id: invoicePk,
+    orderId: getInvoiceOrderId(firstOrder),
+    client: getInvoiceClientName(inv, clientObj),
+    clientId: getInvoiceClientId(inv, clientObj),
     issueDate: formatDate(inv.issue_date),
     dueDate: formatDate(inv.due_date),
     status: capitalize(inv.status),
@@ -73,13 +100,13 @@ export function mapInvoiceForDetail(inv: any) {
       code: '',
       name: li.description,
       qty: li.quantity,
-      unitPrice: li.unit_price ?? 0,
-      total: li.total_price ?? 0,
+      unitPrice: toNumber(li.unit_price),
+      total: toNumber(li.total_price),
     })),
-    subtotal: inv.subtotal ?? 0,
+    subtotal: toNumber(inv.subtotal),
     expressCharge: 0,
-    vat: inv.vat_amount ?? 0,
-    grandTotal: inv.total ?? 0,
+    vat: toNumber(inv.vat_amount),
+    grandTotal: toNumber(inv.total),
     notes: '',
   }
 }

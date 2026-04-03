@@ -32,13 +32,13 @@
               <span class="text-sm text-brand-700 font-medium">{{ $t('createInvoice.uninvoicedFound', { count: clientOrders.length }) }}</span>
             </div>
             <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-              <label v-for="o in clientOrders" :key="o._id"
+              <label v-for="o in clientOrders" :key="getOrderId(o)"
                 class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded px-2 py-1.5 transition-colors">
-                <input type="checkbox" :value="o._id" v-model="form.orderIds"
+                <input type="checkbox" :value="getOrderId(o)" v-model="form.orderIds"
                   class="rounded border-gray-300 text-brand-700 focus:ring-brand-400" />
                 <div class="flex-1 min-w-0">
                   <span class="text-sm font-medium text-gray-800">{{ o.order_number }}</span>
-                  <span class="text-xs text-gray-400 ml-2">{{ o.status }} &middot; &euro;{{ (o.pricing_snapshot?.total ?? 0).toFixed(2) }}</span>
+                  <span class="text-xs text-gray-400 ml-2">{{ o.status }} &middot; &euro;{{ getOrderTotal(o).toFixed(2) }}</span>
                 </div>
               </label>
             </div>
@@ -168,6 +168,27 @@ const form = reactive({
   lineItems: [{ description: '', quantity: 1, unit_price: 0 }],
 })
 
+function getOrderId(order) {
+  return String(order?._id ?? order?.id ?? '')
+}
+
+function getOrderClientId(order) {
+  return String(order?.client?._id ?? order?.client?._id ?? order?.client ?? order?.client_id ?? '')
+}
+
+function normalizeStatus(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+}
+
+function getOrderTotal(order) {
+  const value = order?.pricing_snapshot?.total ?? order?.total ?? 0
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 onMounted(async () => {
   try {
     const [clientsData, ordersData, invoicesData] = await Promise.all([
@@ -181,7 +202,8 @@ onMounted(async () => {
     const ids = new Set()
     for (const inv of (invoicesData ?? [])) {
       for (const o of (inv.orders ?? [])) {
-        ids.add(typeof o === 'string' ? o : o._id ?? o)
+        const oid = typeof o === 'string' || typeof o === 'number' ? o : (o?._id ?? o?.id ?? o)
+        ids.add(String(oid))
       }
     }
     invoicedOrderIds.value = ids
@@ -190,26 +212,45 @@ onMounted(async () => {
   }
 })
 
-const UNINVOICED_STATUSES = ['Delivered', 'ReadyToDeliver', 'Collected']
+const UNINVOICED_STATUSES = new Set(['delivered', 'ready_to_deliver', 'readytodeliver', 'collected'])
+
+const selectedClientMatchIds = computed(() => {
+  const selectedId = String(form.clientId ?? '')
+  if (!selectedId) return new Set()
+
+  const selected = clients.value.find(c => String(getClientId(c)) === selectedId)
+  const ids = new Set([selectedId])
+
+  if (selected) {
+    ids.add(String(selected._id ?? ''))
+    ids.add(String(selected.id ?? ''))
+    ids.add(String(selected.client_profile_id ?? ''))
+    ids.add(String(selected.user_id ?? ''))
+  }
+
+  ids.delete('')
+  return ids
+})
 
 const clientOrders = computed(() => {
   if (!form.clientId) return []
   return allOrders.value.filter(o => {
-    const orderClientId = o.client?._id ?? o.client
-    if (orderClientId !== form.clientId) return false
-    if (!UNINVOICED_STATUSES.includes(o.status)) return false
-    if (invoicedOrderIds.value.has(o._id)) return false
+    const orderClientId = String(getOrderClientId(o))
+    if (!orderClientId || !selectedClientMatchIds.value.has(orderClientId)) return false
+    if (!UNINVOICED_STATUSES.has(normalizeStatus(o.status))) return false
+    if (invoicedOrderIds.value.has(getOrderId(o))) return false
     return true
   })
 })
 
 function onClientChange() {
-  form.orderIds = clientOrders.value.map(o => o._id)
+  form.orderIds = clientOrders.value.map(o => getOrderId(o))
   populateLineItems()
 }
 
 function populateLineItems() {
-  const selected = allOrders.value.filter(o => form.orderIds.includes(o._id))
+  const selectedIds = new Set((form.orderIds ?? []).map(id => String(id)))
+  const selected = allOrders.value.filter(o => selectedIds.has(getOrderId(o)))
   const items = []
   for (const order of selected) {
     if (order.items?.length) {
@@ -260,7 +301,7 @@ async function submitInvoice() {
 
     const payload = {
       client: form.clientId,
-      orders: form.orderIds,
+      orders: (form.orderIds ?? []).map(id => Number.isNaN(Number(id)) ? id : Number(id)),
       due_date: new Date(form.dueDate).toISOString(),
       line_items: lineItems,
       subtotal: subtotal.value,
