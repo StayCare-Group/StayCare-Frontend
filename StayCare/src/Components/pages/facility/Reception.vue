@@ -75,23 +75,43 @@
 
           <div class="divide-y divide-gray-100">
             <div v-for="(item, idx) in checkinItems" :key="`${item.code}-${idx}`"
-              class="flex items-center justify-between py-3 gap-4">
+              class="py-3 space-y-2">
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-gray-800">{{ item.name }} <span class="text-xs text-gray-400">({{ item.code }})</span></p>
                 <p class="text-xs text-gray-400">
                   {{ $t('facility.expected') }}: {{ expectedQtyMap[item.code] ?? 0 }}
                 </p>
+                <p class="text-xs text-gray-500">
+                  {{ $t('facility.totalReceived') }}: {{ itemTotal(item) }}
+                </p>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <label class="text-xs text-gray-600">
+                  {{ $t('facility.goodQty') }}
+                  <input
+                    v-model.number="item.qtyGood" type="number" min="0"
+                    class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
+                </label>
+                <label class="text-xs text-gray-600">
+                  {{ $t('facility.badQty') }}
+                  <input
+                    v-model.number="item.qtyBad" type="number" min="0"
+                    class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
+                </label>
+                <label class="text-xs text-gray-600">
+                  {{ $t('facility.stainedQty') }}
+                  <input
+                    v-model.number="item.qtyStained" type="number" min="0"
+                    class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
+                </label>
               </div>
               <div class="flex items-center gap-2">
-                <input
-                  v-model.number="item.qty" type="number" min="0"
-                  class="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 <button
                   type="button"
                   @click="removeCheckinItem(idx)"
                   class="text-xs text-red-500 hover:text-red-700 font-medium"
                 >{{ $t('facility.remove') }}</button>
-                <span v-if="item.qty !== (expectedQtyMap[item.code] ?? 0)" class="text-xs text-orange-500 font-medium">!</span>
+                <span v-if="itemTotal(item) !== (expectedQtyMap[item.code] ?? 0)" class="text-xs text-orange-500 font-medium">!</span>
               </div>
             </div>
           </div>
@@ -262,12 +282,18 @@ function normalizeQty(value) {
   return Math.floor(parsed)
 }
 
+function itemTotal(item) {
+  return normalizeQty(item.qtyGood) + normalizeQty(item.qtyBad) + normalizeQty(item.qtyStained)
+}
+
 function seedCheckinItems(mappedOrder) {
   checkinItems.value = (mappedOrder.items ?? []).map((item) => ({
     itemId: item.itemId ?? null,
     code: item.code,
     name: item.name,
-    qty: normalizeQty(item.qty),
+    qtyGood: normalizeQty(item.qty),
+    qtyBad: 0,
+    qtyStained: 0,
     unitPrice: Number(item.unitPrice) || 0,
   }))
 }
@@ -297,13 +323,15 @@ function addCatalogItem() {
 
   const existing = checkinItems.value.find(i => i.code === selected.code)
   if (existing) {
-    existing.qty = normalizeQty(existing.qty) + 1
+    existing.qtyGood = normalizeQty(existing.qtyGood) + 1
   } else {
     checkinItems.value.push({
       itemId: selected.id ?? null,
       code: selected.code,
       name: selected.name,
-      qty: 1,
+      qtyGood: 1,
+      qtyBad: 0,
+      qtyStained: 0,
       unitPrice: Number(selected.unitPrice) || 0,
     })
   }
@@ -385,11 +413,11 @@ async function checkIn() {
   try {
     const items = checkinItems.value
       .map((i) => ({
+        qty_good: normalizeQty(i.qtyGood),
+        qty_bad: normalizeQty(i.qtyBad),
+        qty_stained: normalizeQty(i.qtyStained),
         item_id: i.itemId,
-        quantity: normalizeQty(i.qty),
-        qty_good: normalizeQty(i.qty),
-        qty_bad: 0,
-        qty_stained: 0,
+        quantity: normalizeQty(i.qtyGood) + normalizeQty(i.qtyBad) + normalizeQty(i.qtyStained),
       }))
       .filter((i) => i.item_id !== null && i.item_id !== undefined && String(i.item_id).trim() !== '' && i.quantity > 0)
 
@@ -398,7 +426,7 @@ async function checkIn() {
       return
     }
 
-    const staffConfirmedBags = items.reduce((sum, i) => sum + i.qty_good, 0)
+    const staffConfirmedBags = items.reduce((sum, i) => sum + i.quantity, 0)
 
     await receiveAtFacility(foundOrder.value._id ?? rawOrder._id, {
       staff_confirmed_bags: staffConfirmedBags,
