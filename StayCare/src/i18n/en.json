@@ -467,6 +467,26 @@
     "noValidItemsForReception": "No valid order items found for reception. Please verify the order detail and quantities.",
     "checkInFailed": "Check-in failed. Please try again."
   },
+  "inviteRegister": {
+    "validatingInvitation": "Validating invitation...",
+    "invalidTitle": "Invalid Invitation",
+    "invalidDescription": "This invitation link is invalid or has already been used.",
+    "expiredTitle": "Invitation Expired",
+    "expiredDescription": "This invitation link has expired. Please ask your administrator to send a new one.",
+    "goToLogin": "Go to Login",
+    "joinTitle": "Join StayFresh",
+    "joiningAs": "You're joining as",
+    "fullName": "Full name",
+    "phone": "Phone",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "creatingAccount": "Creating account...",
+    "createAccount": "Create Account",
+    "errorNamePasswordRequired": "Please fill in your name and password.",
+    "errorPasswordMin": "Password must be at least 6 characters.",
+    "errorPasswordMismatch": "Passwords do not match.",
+    "errorRegistrationFailed": "Registration failed. The link may have expired."
+  },
   "routePlanner": {
     "title": "Route Planner",
     "autoAssignTitle": "Auto-Assign Routes",

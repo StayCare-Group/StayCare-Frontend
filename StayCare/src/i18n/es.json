@@ -467,6 +467,26 @@
     "noValidItemsForReception": "No se encontraron artículos válidos para recepción. Verifica el detalle del pedido y las cantidades.",
     "checkInFailed": "Falló el check-in. Inténtalo de nuevo."
   },
+  "inviteRegister": {
+    "validatingInvitation": "Validando invitación...",
+    "invalidTitle": "Invitación inválida",
+    "invalidDescription": "Este enlace de invitación es inválido o ya fue usado.",
+    "expiredTitle": "Invitación expirada",
+    "expiredDescription": "Este enlace de invitación ha expirado. Pide a tu administrador que envíe uno nuevo.",
+    "goToLogin": "Ir al inicio de sesión",
+    "joinTitle": "Únete a StayFresh",
+    "joiningAs": "Te unes como",
+    "fullName": "Nombre completo",
+    "phone": "Teléfono",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "creatingAccount": "Creando cuenta...",
+    "createAccount": "Crear cuenta",
+    "errorNamePasswordRequired": "Por favor completa tu nombre y contraseña.",
+    "errorPasswordMin": "La contraseña debe tener al menos 6 caracteres.",
+    "errorPasswordMismatch": "Las contraseñas no coinciden.",
+    "errorRegistrationFailed": "El registro falló. Es posible que el enlace haya expirado."
+  },
   "routePlanner": {
     "title": "Planificador de Rutas",
     "autoAssignTitle": "Asignación Automática de Rutas",
