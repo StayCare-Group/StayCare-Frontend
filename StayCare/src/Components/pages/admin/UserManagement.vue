@@ -141,6 +141,28 @@
       </template>
     </DataTable>
 
+    <!-- Operators -->
+    <DataTable
+      v-if="activeTab === 'operators'"
+      :headers="operatorsHeaders"
+      :items="operatorsList"
+      min-width="600px"
+    >
+      <template #cell-id="{ value }">
+        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
+      </template>
+      <template #cell-name="{ value }">
+        <span class="font-medium text-gray-800">{{ value }}</span>
+      </template>
+      <template #cell-contact="{ item }">
+        <p class="text-gray-700 text-xs">{{ item.email }}</p>
+        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
+      </template>
+      <template #cell-status="{ value }">
+        <StatusBadge :status="value" />
+      </template>
+    </DataTable>
+  </div>
     <!-- Admins -->
     <DataTable
       v-if="activeTab === 'admins'"
@@ -162,7 +184,6 @@
         <StatusBadge :status="value" />
       </template>
     </DataTable>
-  </div>
 </template>
 
 <script setup>
@@ -187,6 +208,7 @@ const clientsList = ref([])
 const driversList = ref([])
 const staffList = ref([])
 const adminsList = ref([])
+const operatorsList = ref([])
 
 const showInviteModal = ref(false)
 const inviteEmail = ref('')
@@ -270,6 +292,14 @@ onMounted(async () => {
       status: u.is_active !== false ? 'Active' : 'Inactive',
     }))
 
+      operatorsList.value = users.filter(u => u.role === 'operator').map(u => ({
+        id: u._id ?? u.id,
+        name: u.name,
+        phone: u.phone ?? '',
+        email: u.email,
+        status: u.is_active !== false ? 'Active' : 'Inactive',
+      }))
+
     adminsList.value = users.filter(u => u.role === 'admin').map(u => ({
       id: u._id ?? u.id,
       name: u.name,
@@ -286,6 +316,7 @@ const tabs = computed(() => [
   { key: 'clients', label: t('admin.clients'), count: clientsList.value.length },
   { key: 'drivers', label: t('admin.drivers'), count: driversList.value.length },
   { key: 'staff', label: t('admin.facilityStaff'), count: staffList.value.length },
+  { key: 'operators', label: t('admin.operators'), count: operatorsList.value.length },
   { key: 'admins', label: t('admin.admins'), count: adminsList.value.length },
 ])
 
@@ -312,6 +343,12 @@ const staffHeaders = computed(() => [
   { key: 'name',    label: t('common.name') },
   { key: 'contact', label: t('common.contact') },
   { key: 'shift',   label: t('admin.shift') },
+  { key: 'status',  label: t('common.status') },
+])
+const operatorsHeaders = computed(() => [
+  { key: 'id',      label: t('common.id') },
+  { key: 'name',    label: t('common.name') },
+  { key: 'contact', label: t('common.contact') },
   { key: 'status',  label: t('common.status') },
 ])
 

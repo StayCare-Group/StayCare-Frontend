@@ -5,6 +5,7 @@ import TopHeader from './layout/TopHeader.vue'
 import ClientDashboard from './dashboard/ClientDashboard.vue'
 import DriverDashboard from './dashboard/DriverDashboard.vue'
 import FacilityDashboard from './dashboard/FacilityDashboard.vue'
+import OperatorDashboard from './dashboard/OperatorDashboard.vue'
 import AdminDashboard from './dashboard/AdminDashboard.vue'
 
 defineProps({
@@ -29,6 +30,7 @@ const sidebarOpen = ref(false)
         <ClientDashboard v-if="role === 'client'" />
         <DriverDashboard v-else-if="role === 'driver'" />
         <FacilityDashboard v-else-if="role === 'staff'" />
+        <OperatorDashboard v-else-if="role === 'operator'" />
         <AdminDashboard v-else-if="role === 'admin'" />
       </main>
     </div>
