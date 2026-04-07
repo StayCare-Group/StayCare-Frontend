@@ -51,6 +51,30 @@
       </div>
     </div>
 
+    <!-- Orders ready to receive -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+        <h3 class="text-sm font-semibold text-gray-700">Orders in Transit</h3>
+        <span class="text-xs text-gray-500">{{ receivableOrders.length }} pending</span>
+      </div>
+      <div v-if="receivableOrders.length" class="divide-y divide-gray-100">
+        <div v-for="order in receivableOrders" :key="order._id" class="px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <p class="text-sm font-medium text-gray-800">{{ order.id }} - {{ order.client }}</p>
+            <p class="text-xs text-gray-500">{{ order.serviceType }} · {{ order.pickupDate }}</p>
+          </div>
+          <button
+            type="button"
+            @click="selectOrderFromList(order)"
+            class="self-start sm:self-auto bg-brand-700 text-white text-xs font-medium px-3 py-2 rounded-lg hover:bg-brand-800 transition"
+          >
+            Receive
+          </button>
+        </div>
+      </div>
+      <p v-else class="px-5 py-4 text-sm text-gray-400">No in-transit orders available.</p>
+    </div>
+
     <!-- Order found -->
     <div v-if="foundOrder" class="space-y-5">
       <div class="bg-white rounded-xl shadow-sm p-5">
@@ -276,6 +300,21 @@ const foundOrderRawStatus = computed(() => {
 
 const canConfirmCheckIn = computed(() => isReceivableStatus(foundOrderRawStatus.value))
 
+const receivableOrders = computed(() =>
+  allOrders.value
+    .filter(o => isReceivableStatus(o.status))
+    .map((o) => {
+      const mapped = mapOrderForDetail(o)
+      return {
+        _id: o._id ?? o.id,
+        id: mapped.id,
+        client: mapped.client,
+        serviceType: mapped.serviceType,
+        pickupDate: mapped.pickupDate,
+      }
+    })
+)
+
 function normalizeQty(value) {
   const parsed = Number(value)
   if (!Number.isFinite(parsed) || parsed < 0) return 0
@@ -303,6 +342,12 @@ async function lookupOrder() {
   const raw = allOrders.value.find(o => o.order_number === term || o._id === term)
   if (!raw) return
 
+  await openRawOrder(raw)
+}
+
+async function openRawOrder(raw) {
+  if (!raw) return
+
   try {
     // Use detail endpoint to guarantee order item identifiers for reception payload.
     const detail = await fetchOrderById(String(raw._id ?? raw.id))
@@ -314,6 +359,14 @@ async function lookupOrder() {
     foundOrder.value = mapped
     seedCheckinItems(mapped)
   }
+}
+
+async function selectOrderFromList(order) {
+  if (!order?._id) return
+  manualOrderId.value = String(order.id ?? order._id)
+  const raw = allOrders.value.find(o => (o._id ?? o.id) === order._id)
+  if (!raw) return
+  await openRawOrder(raw)
 }
 
 function addCatalogItem() {
