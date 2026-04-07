@@ -6,6 +6,7 @@
     <OrderCreateForm v-else-if="navStore.currentPage === 'create-order'" mode="admin" />
     <Reception v-else-if="navStore.currentPage === 'reception'" />
     <Processing v-else-if="navStore.currentPage === 'processing'" />
+    <RoutePlanner v-else-if="navStore.currentPage === 'routes'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
     <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
@@ -44,6 +45,7 @@ import OrderDetail from '../pages/shared/OrderDetail.vue'
 import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
 import Reception from '../pages/facility/Reception.vue'
 import Processing from '../pages/facility/Processing.vue'
+import RoutePlanner from '../pages/admin/RoutePlanner.vue'
 import Settings from '../pages/shared/Settings.vue'
 import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
