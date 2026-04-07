@@ -130,39 +130,12 @@
                 </label>
               </div>
               <div class="flex items-center gap-2">
-                <button
-                  type="button"
-                  @click="removeCheckinItem(idx)"
-                  class="text-xs text-red-500 hover:text-red-700 font-medium"
-                >{{ $t('facility.remove') }}</button>
-                <span v-if="itemTotal(item) !== (expectedQtyMap[item.code] ?? 0)" class="text-xs text-orange-500 font-medium">!</span>
+                <span v-if="itemTotal(item) !== (expectedQtyMap[item.code] ?? 0)" class="text-xs text-orange-500 font-medium">Qty mismatch!</span>
               </div>
             </div>
           </div>
 
           <p v-if="!checkinItems.length" class="text-xs text-gray-400">{{ $t('facility.noCheckInItems') }}</p>
-
-          <div class="border-t border-gray-100 pt-3 space-y-2">
-            <label class="block text-sm font-medium text-gray-600">{{ $t('facility.addItemToCheckIn') }}</label>
-            <div class="flex flex-wrap items-center gap-2">
-              <select
-                v-model="selectedCatalogCode"
-                class="min-w-[220px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-              >
-                <option value="">{{ $t('facility.selectItem') }}</option>
-                <option v-for="catItem in itemCatalog" :key="catItem.code" :value="catItem.code">
-                  {{ catItem.name }} ({{ catItem.code }})
-                </option>
-              </select>
-              <button
-                type="button"
-                @click="addCatalogItem"
-                class="bg-gray-100 text-gray-700 text-sm font-medium px-3 py-2 rounded-lg hover:bg-gray-200 transition"
-              >
-                {{ $t('facility.addItem') }}
-              </button>
-            </div>
-          </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('facility.damageNotes') }}</label>
@@ -326,15 +299,25 @@ function itemTotal(item) {
 }
 
 function seedCheckinItems(mappedOrder) {
-  checkinItems.value = (mappedOrder.items ?? []).map((item) => ({
-    itemId: item.itemId ?? null,
-    code: item.code,
-    name: item.name,
-    qtyGood: normalizeQty(item.qty),
-    qtyBad: 0,
-    qtyStained: 0,
-    unitPrice: Number(item.unitPrice) || 0,
-  }))
+  // Create a map of items from the order
+  const orderItemMap = {}
+  for (const item of (mappedOrder.items ?? [])) {
+    orderItemMap[item.code] = item
+  }
+  
+  // Precload all items from catalog
+  checkinItems.value = itemCatalog.value.map((catItem) => {
+    const orderItem = orderItemMap[catItem.code]
+    return {
+      itemId: orderItem?.itemId ?? catItem.id ?? null,
+      code: catItem.code,
+      name: catItem.name,
+      qtyGood: orderItem ? normalizeQty(orderItem.qty) : 0,
+      qtyBad: 0,
+      qtyStained: 0,
+      unitPrice: Number(catItem.unitPrice) || Number(orderItem?.unitPrice) || 0,
+    }
+  })
 }
 
 async function lookupOrder() {
