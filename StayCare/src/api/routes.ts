@@ -90,12 +90,20 @@ export function mapRouteForDriver(route: any) {
       const property = resolveProperty(clientObj, o.property)
       const addr = property?.address
         ? `${property.address}${property.city ? ', ' + property.city : ''}`
-        : (clientObj ? getClientAddress(clientObj) : '') || o.pickup_address || o.delivery_address || ''
-      const fallbackClient = o.client_company || o.client_contact || ''
-      const company = clientObj?.company_name ?? clientObj?.company ?? o.client_company ?? ''
-      const contactPerson = clientObj?.contact_name ?? clientObj?.contact_person ?? o.client_contact ?? ''
+        : (o.property_address
+            ? `${o.property_address}${o.property_city ? ', ' + o.property_city : ''}`
+            : '') ||
+          (clientObj ? getClientAddress(clientObj) : '') ||
+          o.pickup_address ||
+          o.delivery_address ||
+          ''
+      const fallbackClient = o.client_name ?? o.client_company ?? o.client_contact ?? ''
+      const company = clientObj?.company_name ?? clientObj?.company ?? o.client_company ?? o.client_name ?? ''
+      const contactPerson = clientObj?.contact_name ?? clientObj?.contact_person ?? o.client_contact ?? o.client_name ?? ''
       const clientPhone = clientObj?.phone ?? clientObj?.contact_phone ?? o.client_phone ?? ''
-      const area = property?.area ?? o.area ?? ''
+      const area = property?.area ?? o.property_area ?? o.area ?? ''
+      const startWindow = o.pickup_window?.start_time ?? o.pickup_window_start
+      const endWindow = o.pickup_window?.end_time ?? o.pickup_window_end
       return {
         id: idx + 1,
         orderId: o.order_number ?? o.order_id ?? o._id ?? o.id,
@@ -108,8 +116,8 @@ export function mapRouteForDriver(route: any) {
         area,
         address: addr,
         type: getRouteTypeFromOrderStatus(o.status),
-        timeWindow: o.pickup_window
-          ? `${formatTime(o.pickup_window?.start_time)} - ${formatTime(o.pickup_window?.end_time)}`
+        timeWindow: startWindow && endWindow
+          ? `${formatTime(startWindow)} - ${formatTime(endWindow)}`
           : '',
         estimatedBags: o.estimated_bags ?? 0,
         actualBags: o.actual_bags ?? null,

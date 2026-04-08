@@ -218,13 +218,16 @@
                 Area / Property: {{ o.areaOrProperty || '-' }}
               </p>
               <p class="text-xs text-gray-600 mt-0.5">
+                Address: {{ o.address || '-' }}
+              </p>
+              <p class="text-xs text-gray-600 mt-0.5">
                 Pickup Date: {{ o.pickupDate || '-' }}
               </p>
               <p class="text-xs text-gray-600 mt-0.5">
                 Pickup Time Window: {{ o.pickupTimeWindow || '-' }}
               </p>
               <p class="text-xs text-gray-400 mt-0.5">
-                {{ o.serviceType }} &middot; {{ o.estimatedBags ?? 0 }} {{ $t('routePlanner.bags') }}
+                {{ o.serviceType }} &middot; Est: {{ o.estimatedBags ?? 0 }} {{ $t('routePlanner.bags') }} &middot; Act: {{ o.actualBags ?? '-' }} {{ $t('routePlanner.bags') }}
               </p>
             </div>
           </label>
@@ -332,6 +335,9 @@
                 {{ stop.orderId }} — {{ stop.client }}
               </p>
               <p class="text-xs text-gray-500">{{ stop.type }} &middot; {{ stop.status }} &middot; {{ stop.address || $t('routePlanner.noAddress') }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">
+                {{ stop.timeWindow || '—' }} &middot; Est: {{ stop.estimatedBags ?? 0 }} {{ $t('routePlanner.bags') }} &middot; Act: {{ stop.actualBags ?? '-' }} {{ $t('routePlanner.bags') }}
+              </p>
             </div>
 
             <!-- Reassign dropdown -->
@@ -535,12 +541,16 @@ function resolveAddress(o) {
   }
   let prop = null
   if (clientObj?.properties?.length) {
-    if (o.property) {
-      prop = clientObj.properties.find(p => p._id?.toString() === o.property?.toString())
+    const propId = o.property ?? o.property_id
+    if (propId) {
+      prop = clientObj.properties.find(p => p._id?.toString() === propId?.toString())
     }
     if (!prop) prop = clientObj.properties[0]
   }
   if (prop?.address) return `${prop.address}${prop.city ? ', ' + prop.city : ''}`
+  if (o?.property_address) {
+    return `${o.property_address}${o.property_city ? ', ' + o.property_city : ''}`
+  }
   return clientObj?.billing_address ?? clientObj?.address ?? o.pickup_address ?? ''
 }
 
@@ -599,6 +609,7 @@ const assignableOrders = computed(() => {
       client: clientName,
       _id: o._id ?? mapped._id,
       rawStatus: o.status,
+      address: resolveAddress(o),
       areaOrProperty: resolveAreaOrProperty(o),
       pickupTimeWindow: formatSlot(o),
       routeType: getRouteTypeFromOrderStatus(o.status),
