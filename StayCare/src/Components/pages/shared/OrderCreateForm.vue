@@ -333,8 +333,8 @@ async function submitOrder() {
       }))
 
     const payload = {
-      client_id: Number(resolveClientId()),
-      property_id: form.propertyId ? Number(form.propertyId) : undefined,
+      client_id: String(resolveClientId()),
+      property_id: form.propertyId ? String(form.propertyId) : undefined,
       service_type: 'standard',
       pickup_date: form.pickupDate,
       pickup_window: form.pickupTimeWindow ? parseTimeWindow(form.pickupTimeWindow) : undefined,

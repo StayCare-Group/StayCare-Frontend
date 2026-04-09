@@ -301,7 +301,7 @@ async function submitInvoice() {
 
     const payload = {
       client: form.clientId,
-      orders: (form.orderIds ?? []).map(id => Number.isNaN(Number(id)) ? id : Number(id)),
+      orders: (form.orderIds ?? []).map(id => String(id)),
       due_date: new Date(form.dueDate).toISOString(),
       line_items: lineItems,
       subtotal: subtotal.value,

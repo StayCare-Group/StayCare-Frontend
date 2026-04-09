@@ -760,8 +760,7 @@ function buildAutoPreview(targetDate) {
 }
 
 function normalizeId(value) {
-  const num = Number(value)
-  return Number.isFinite(num) ? num : value
+  return String(value)
 }
 
 function buildRouteCreatePayload({ date, driverId, area, orderIds }) {
