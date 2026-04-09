@@ -155,6 +155,8 @@
     "orderInTransit": "Pedido en tránsito",
     "orderReady": "Pedido listo",
     "orderUpdated": "Pedido actualizado",
+    "editOrder": "Editar Orden",
+    "saveChanges": "Guardar Cambios",
     "userManagement": "Gestión de Usuarios",
     "inviteUser": "+ Invitar Usuario",
     "inviteNewUser": "Invitar a un Nuevo Usuario",

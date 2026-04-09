@@ -155,6 +155,8 @@
     "orderInTransit": "Order in transit",
     "orderReady": "Order ready",
     "orderUpdated": "Order updated",
+    "editOrder": "Edit Order",
+    "saveChanges": "Save Changes",
     "userManagement": "User Management",
     "inviteUser": "+ Invite User",
     "inviteNewUser": "Invite a New User",
