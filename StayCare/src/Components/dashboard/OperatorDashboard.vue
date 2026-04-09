@@ -1,12 +1,7 @@
 <template>
   <div>
     <!-- Sub-pages -->
-    <OrdersList v-if="navStore.currentPage === 'orders'" />
-    <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
-    <OrderCreateForm v-else-if="navStore.currentPage === 'create-order'" mode="admin" />
-    <Reception v-else-if="navStore.currentPage === 'reception'" />
-    <Processing v-else-if="navStore.currentPage === 'processing'" />
-    <RoutePlanner v-else-if="navStore.currentPage === 'routes'" />
+    <Processing v-if="navStore.currentPage === 'processing'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
     <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
@@ -16,7 +11,7 @@
     <div v-else class="space-y-6">
       <!-- KPI Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        <KpiCard v-for="kpi in facilityKPIs" :key="kpi.label" :label="kpi.label" :value="kpi.value" :color="kpi.color" />
+        <KpiCard v-for="kpi in processingKPIs" :key="kpi.label" :label="kpi.label" :value="kpi.value" :color="kpi.color" />
       </div>
 
       <!-- Kanban Board -->
@@ -40,12 +35,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import KanbanColumn from '../ui/KanbanColumn.vue'
-import OrdersList from '../pages/shared/OrdersList.vue'
-import OrderDetail from '../pages/shared/OrderDetail.vue'
-import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
-import Reception from '../pages/facility/Reception.vue'
 import Processing from '../pages/facility/Processing.vue'
-import RoutePlanner from '../pages/admin/RoutePlanner.vue'
 import Settings from '../pages/shared/Settings.vue'
 import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
@@ -75,17 +65,17 @@ watch(() => navStore.currentPage, (page) => {
   if (page === 'dashboard') loadOrders()
 })
 
-const facilityStatuses = ['Received at Facility', 'Washing', 'Drying', 'Ironing', 'Quality Control', 'Ready for Delivery']
+const processingStatuses = ['Received at Facility', 'Washing', 'Drying', 'Ironing', 'Quality Control', 'Ready for Delivery']
 
-const facilityKPIs = computed(() => {
+const processingKPIs = computed(() => {
   const counts = {}
-  for (const s of facilityStatuses) counts[s] = 0
+  for (const s of processingStatuses) counts[s] = 0
   for (const o of orders.value) {
     if (counts[o.status] !== undefined) counts[o.status]++
   }
   const colors = { 'Received at Facility': 'blue', Washing: 'cyan', Drying: 'yellow', Ironing: 'orange', 'Quality Control': 'purple', 'Ready for Delivery': 'green' }
   const labels = { 'Received at Facility': t('facility.incoming'), Washing: t('facility.washing'), Drying: t('facility.drying'), Ironing: t('facility.ironing'), 'Quality Control': t('facility.qc'), 'Ready for Delivery': t('facility.ready') }
-  return facilityStatuses.map(s => ({
+  return processingStatuses.map(s => ({
     label: labels[s],
     value: counts[s],
     color: colors[s],

@@ -51,6 +51,30 @@
       </div>
     </div>
 
+    <!-- Orders ready to receive -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+        <h3 class="text-sm font-semibold text-gray-700">Orders in Transit</h3>
+        <span class="text-xs text-gray-500">{{ receivableOrders.length }} pending</span>
+      </div>
+      <div v-if="receivableOrders.length" class="divide-y divide-gray-100">
+        <div v-for="order in receivableOrders" :key="order._id" class="px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <p class="text-sm font-medium text-gray-800">{{ order.id }} - {{ order.client }}</p>
+            <p class="text-xs text-gray-500">{{ order.serviceType }} · {{ order.pickupDate }}</p>
+          </div>
+          <button
+            type="button"
+            @click="selectOrderFromList(order)"
+            class="self-start sm:self-auto bg-brand-700 text-white text-xs font-medium px-3 py-2 rounded-lg hover:bg-brand-800 transition"
+          >
+            Receive
+          </button>
+        </div>
+      </div>
+      <p v-else class="px-5 py-4 text-sm text-gray-400">No in-transit orders available.</p>
+    </div>
+
     <!-- Order found -->
     <div v-if="foundOrder" class="space-y-5">
       <div class="bg-white rounded-xl shadow-sm p-5">
@@ -106,39 +130,12 @@
                 </label>
               </div>
               <div class="flex items-center gap-2">
-                <button
-                  type="button"
-                  @click="removeCheckinItem(idx)"
-                  class="text-xs text-red-500 hover:text-red-700 font-medium"
-                >{{ $t('facility.remove') }}</button>
-                <span v-if="itemTotal(item) !== (expectedQtyMap[item.code] ?? 0)" class="text-xs text-orange-500 font-medium">!</span>
+                <span v-if="itemTotal(item) !== (expectedQtyMap[item.code] ?? 0)" class="text-xs text-orange-500 font-medium">Qty mismatch!</span>
               </div>
             </div>
           </div>
 
           <p v-if="!checkinItems.length" class="text-xs text-gray-400">{{ $t('facility.noCheckInItems') }}</p>
-
-          <div class="border-t border-gray-100 pt-3 space-y-2">
-            <label class="block text-sm font-medium text-gray-600">{{ $t('facility.addItemToCheckIn') }}</label>
-            <div class="flex flex-wrap items-center gap-2">
-              <select
-                v-model="selectedCatalogCode"
-                class="min-w-[220px] border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-              >
-                <option value="">{{ $t('facility.selectItem') }}</option>
-                <option v-for="catItem in itemCatalog" :key="catItem.code" :value="catItem.code">
-                  {{ catItem.name }} ({{ catItem.code }})
-                </option>
-              </select>
-              <button
-                type="button"
-                @click="addCatalogItem"
-                class="bg-gray-100 text-gray-700 text-sm font-medium px-3 py-2 rounded-lg hover:bg-gray-200 transition"
-              >
-                {{ $t('facility.addItem') }}
-              </button>
-            </div>
-          </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('facility.damageNotes') }}</label>
@@ -276,6 +273,21 @@ const foundOrderRawStatus = computed(() => {
 
 const canConfirmCheckIn = computed(() => isReceivableStatus(foundOrderRawStatus.value))
 
+const receivableOrders = computed(() =>
+  allOrders.value
+    .filter(o => isReceivableStatus(o.status))
+    .map((o) => {
+      const mapped = mapOrderForDetail(o)
+      return {
+        _id: o._id ?? o.id,
+        id: mapped.id,
+        client: mapped.client,
+        serviceType: mapped.serviceType,
+        pickupDate: mapped.pickupDate,
+      }
+    })
+)
+
 function normalizeQty(value) {
   const parsed = Number(value)
   if (!Number.isFinite(parsed) || parsed < 0) return 0
@@ -287,20 +299,36 @@ function itemTotal(item) {
 }
 
 function seedCheckinItems(mappedOrder) {
-  checkinItems.value = (mappedOrder.items ?? []).map((item) => ({
-    itemId: item.itemId ?? null,
-    code: item.code,
-    name: item.name,
-    qtyGood: normalizeQty(item.qty),
-    qtyBad: 0,
-    qtyStained: 0,
-    unitPrice: Number(item.unitPrice) || 0,
-  }))
+  // Create a map of items from the order
+  const orderItemMap = {}
+  for (const item of (mappedOrder.items ?? [])) {
+    orderItemMap[item.code] = item
+  }
+  
+  // Precload all items from catalog
+  checkinItems.value = itemCatalog.value.map((catItem) => {
+    const orderItem = orderItemMap[catItem.code]
+    return {
+      itemId: orderItem?.itemId ?? catItem.id ?? null,
+      code: catItem.code,
+      name: catItem.name,
+      qtyGood: orderItem ? normalizeQty(orderItem.qty) : 0,
+      qtyBad: 0,
+      qtyStained: 0,
+      unitPrice: Number(catItem.unitPrice) || Number(orderItem?.unitPrice) || 0,
+    }
+  })
 }
 
 async function lookupOrder() {
   const term = manualOrderId.value.trim()
   const raw = allOrders.value.find(o => o.order_number === term || o._id === term)
+  if (!raw) return
+
+  await openRawOrder(raw)
+}
+
+async function openRawOrder(raw) {
   if (!raw) return
 
   try {
@@ -314,6 +342,14 @@ async function lookupOrder() {
     foundOrder.value = mapped
     seedCheckinItems(mapped)
   }
+}
+
+async function selectOrderFromList(order) {
+  if (!order?._id) return
+  manualOrderId.value = String(order.id ?? order._id)
+  const raw = allOrders.value.find(o => (o._id ?? o.id) === order._id)
+  if (!raw) return
+  await openRawOrder(raw)
 }
 
 function addCatalogItem() {

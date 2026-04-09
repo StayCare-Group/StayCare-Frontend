@@ -60,6 +60,13 @@ export async function createOrder(payload: any) {
   })
 }
 
+export async function updateOrder(id: string, payload: any) {
+  return apiFetch(`/api/orders/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function updateOrderStatus(id: string, status: string) {
   const raw = String(status ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')
   const normalizedStatus =
@@ -225,6 +232,7 @@ export function mapOrderForDetail(o: any) {
     _id: o._id ?? o.id,
     client: clientName,
     clientId: String(clientId ?? ''),
+    isInvoiced: Boolean(o.is_invoiced),
     propertyName: property?.name ?? o.property_name ?? '',
     propertyContactPerson,
     propertyPhone,

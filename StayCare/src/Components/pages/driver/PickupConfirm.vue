@@ -17,11 +17,11 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div><span class="text-gray-400">{{ $t('common.client') }}</span><p class="font-medium text-gray-800">{{ stop.company || stop.client }}</p></div>
           <div><span class="text-gray-400">{{ $t('common.order') }}</span><p class="font-medium text-gray-800">{{ stop.orderId }}</p></div>
-          <div><span class="text-gray-400">{{ $t('common.contactPerson') }}</span><p class="font-medium text-gray-800">{{ stop.contactPerson }}</p></div>
-          <div><span class="text-gray-400">{{ $t('common.phone') }}</span><p class="font-medium text-gray-800">{{ stop.clientPhone }}</p></div>
-          <div><span class="text-gray-400">{{ $t('common.area') }}</span><p class="font-medium text-gray-800">{{ stop.area }}</p></div>
-          <div><span class="text-gray-400">{{ $t('common.address') }}</span><p class="font-medium text-gray-800">{{ stop.address }}</p></div>
-          <div><span class="text-gray-400">{{ $t('driver.timeWindow') }}</span><p class="font-medium text-gray-800">{{ stop.timeWindow }}</p></div>
+          <div><span class="text-gray-400">{{ $t('common.contactPerson') }}</span><p class="font-medium text-gray-800">{{ stop.contactPerson || '-' }}</p></div>
+          <div><span class="text-gray-400">{{ $t('common.phone') }}</span><p class="font-medium text-gray-800">{{ stop.clientPhone || '-' }}</p></div>
+          <div><span class="text-gray-400">{{ $t('common.area') }}</span><p class="font-medium text-gray-800">{{ stop.area || '-' }}</p></div>
+          <div><span class="text-gray-400">{{ $t('common.address') }}</span><p class="font-medium text-gray-800">{{ stop.address || '-' }}</p></div>
+          <div><span class="text-gray-400">{{ $t('driver.timeWindow') }}</span><p class="font-medium text-gray-800">{{ stop.timeWindow || '-' }}</p></div>
           <div><span class="text-gray-400">{{ $t('driver.expectedBags') }}</span><p class="font-medium text-gray-800">{{ stop.estimatedBags }}</p></div>
         </div>
       </div>

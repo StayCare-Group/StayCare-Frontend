@@ -1,4 +1,4 @@
-export const SYSTEM_ROLES = ['client', 'driver', 'staff', 'admin'] as const
+export const SYSTEM_ROLES = ['client', 'driver', 'staff', 'operator', 'admin'] as const
 
 export type SystemRole = (typeof SYSTEM_ROLES)[number]
 
@@ -7,6 +7,7 @@ export const ROLE_LABELS: Record<SystemRole, string> = {
   client: 'Client',
   driver: 'Driver',
   staff: 'Facility Staff',
+  operator: 'Operator',
 }
 
 export function toSystemRole(raw: unknown): SystemRole {
@@ -28,6 +29,7 @@ export function getInviteRoleOptions(t: (key: string) => string) {
     { value: 'client', label: t('common.client') },
     { value: 'driver', label: t('admin.driver') },
     { value: 'staff', label: t('admin.staff') },
+    { value: 'operator', label: t('admin.operator') },
     { value: 'admin', label: t('admin.admin') },
   ] as const
 }
