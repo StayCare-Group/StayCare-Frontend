@@ -817,16 +817,41 @@ async function confirmAutoAssign() {
     const routeDate = autoPreview.value.date
     let created = 0
     for (const a of autoPreview.value.assignments) {
-      await apiFetch('/api/routes', {
-        method: 'POST',
-        body: JSON.stringify(buildRouteCreatePayload({
-          date: routeDate,
-          driverId: a.driverId,
+      // Separate delivery orders from pickup orders for this driver
+      const deliveryOrderIds = []
+      const pickupOrderIds = []
+
+      for (const orderObj of a.orders) {
+        const order = rawOrders.value.find(o => (o._id ?? o.id) === orderObj.id)
+        if (order && isDeliveryAssignableStatus(order.status)) {
+          deliveryOrderIds.push(orderObj.id)
+        } else {
+          pickupOrderIds.push(orderObj.id)
+        }
+      }
+
+      // Reassign delivery orders (preserves their status)
+      for (const orderId of deliveryOrderIds) {
+        await reassignOrder(orderId, a.driverId, {
+          route_date: routeDate,
           area: 'Auto-assigned',
-          orderIds: a.orders.map(o => o.id),
-        })),
-      })
-      created++
+        })
+        created++
+      }
+
+      // Create route for pickup orders (changes status to ASSIGNED)
+      if (pickupOrderIds.length > 0) {
+        await apiFetch('/api/routes', {
+          method: 'POST',
+          body: JSON.stringify(buildRouteCreatePayload({
+            date: routeDate,
+            driverId: a.driverId,
+            area: 'Auto-assigned',
+            orderIds: pickupOrderIds,
+          })),
+        })
+        created++
+      }
     }
     autoSuccess.value = t('routePlanner.routesCreated', { count: created, date: autoPreview.value.date })
     autoPreview.value = null
@@ -850,15 +875,41 @@ async function handleCreateRoute() {
   successMessage.value = ''
   try {
     const routeDate = form.date
-    await apiFetch('/api/routes', {
-      method: 'POST',
-      body: JSON.stringify(buildRouteCreatePayload({
-        date: routeDate,
-        driverId: form.driverId,
+
+    // Separate delivery orders from pickup orders
+    const deliveryOrderIds = []
+    const pickupOrderIds = []
+
+    for (const orderId of selectedOrderIds.value) {
+      const order = rawOrders.value.find(o => (o._id ?? o.id) === orderId)
+      if (order && isDeliveryAssignableStatus(order.status)) {
+        deliveryOrderIds.push(orderId)
+      } else {
+        pickupOrderIds.push(orderId)
+      }
+    }
+
+    // Reassign delivery orders (preserves their status)
+    for (const orderId of deliveryOrderIds) {
+      await reassignOrder(orderId, form.driverId, {
+        route_date: routeDate,
         area: form.area,
-        orderIds: selectedOrderIds.value,
-      })),
-    })
+      })
+    }
+
+    // Create route for pickup orders (changes status to ASSIGNED)
+    if (pickupOrderIds.length > 0) {
+      await apiFetch('/api/routes', {
+        method: 'POST',
+        body: JSON.stringify(buildRouteCreatePayload({
+          date: routeDate,
+          driverId: form.driverId,
+          area: form.area,
+          orderIds: pickupOrderIds,
+        })),
+      })
+    }
+
     successMessage.value = t('routePlanner.routeCreatedSuccess')
     selectedOrderIds.value = []
     const ordersData = await fetchAllOrders().catch(() => [])
@@ -977,16 +1028,41 @@ async function runBackgroundAutoAssign() {
       const routeDate = dateStr
       let created = 0
       for (const a of preview.assignments) {
-        await apiFetch('/api/routes', {
-          method: 'POST',
-          body: JSON.stringify(buildRouteCreatePayload({
-            date: routeDate,
-            driverId: a.driverId,
+        // Separate delivery orders from pickup orders for this driver
+        const deliveryOrderIds = []
+        const pickupOrderIds = []
+
+        for (const orderObj of a.orders) {
+          const order = rawOrders.value.find(o => (o._id ?? o.id) === orderObj.id)
+          if (order && isDeliveryAssignableStatus(order.status)) {
+            deliveryOrderIds.push(orderObj.id)
+          } else {
+            pickupOrderIds.push(orderObj.id)
+          }
+        }
+
+        // Reassign delivery orders (preserves their status)
+        for (const orderId of deliveryOrderIds) {
+          await reassignOrder(orderId, a.driverId, {
+            route_date: routeDate,
             area: 'Auto-assigned',
-            orderIds: a.orders.map(o => o.id),
-          })),
-        })
-        created++
+          })
+          created++
+        }
+
+        // Create route for pickup orders (changes status to ASSIGNED)
+        if (pickupOrderIds.length > 0) {
+          await apiFetch('/api/routes', {
+            method: 'POST',
+            body: JSON.stringify(buildRouteCreatePayload({
+              date: routeDate,
+              driverId: a.driverId,
+              area: 'Auto-assigned',
+              orderIds: pickupOrderIds,
+            })),
+          })
+          created++
+        }
       }
 
       if (created > 0) {

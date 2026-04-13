@@ -114,10 +114,18 @@ export async function confirmDelivery(id: string, payload: any) {
   })
 }
 
-export async function reassignOrder(orderId: string, driverId: string) {
+export async function reassignOrder(
+  orderId: string,
+  driverId: string,
+  options?: { route_date?: string; area?: string }
+) {
   return apiFetch(`/api/orders/${orderId}/reassign`, {
     method: 'PATCH',
-    body: JSON.stringify({ driver_id: driverId }),
+    body: JSON.stringify({
+      driver_id: driverId,
+      route_date: options?.route_date,
+      area: options?.area,
+    }),
   })
 }
 
@@ -156,6 +164,20 @@ function formatDate(dateStr: string): string {
   const d = new Date(s)
   if (isNaN(d.getTime())) return ''
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
+function formatTimelineNote(note: string, fallbackDriverName?: string): string {
+  if (!note) return ''
+  const reassignedPrefix = 'Reassigned to driver '
+  if (!note.startsWith(reassignedPrefix)) return note
+
+  const value = note.slice(reassignedPrefix.length).trim()
+  const uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  if (!uuidLike) return note
+
+  return fallbackDriverName
+    ? `${reassignedPrefix}${fallbackDriverName}`
+    : `${reassignedPrefix}${value.slice(0, 8)}...`
 }
 
 function formatTime(dateStr: string): string {
@@ -260,7 +282,7 @@ export function mapOrderForDetail(o: any) {
     timeline: (o.status_history ?? []).map((h: any) => ({
       status: mapStatus(h.status),
       date: formatDateTime(h.timestamp ?? h.changed_at),
-      note: h.note ?? '',
+      note: formatTimelineNote(h.note ?? '', driverObj?.name ?? o.driver_name ?? ''),
     })),
     subtotal,
     vatAmount,
