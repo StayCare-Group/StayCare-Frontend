@@ -96,10 +96,10 @@
         </div>
 
         <div class="flex gap-3">
-          <AppButton type="submit" size="lg">
+          <AppButton type="submit" size="lg" :loading="submitting" :disabled="submitting">
             {{ $t('driver.confirmPickup') }}
           </AppButton>
-          <button type="button" @click="navStore.goBack('route')"
+          <button type="button" @click="navStore.goBack('route')" :disabled="submitting"
             class="bg-gray-100 text-gray-600 font-medium py-2.5 px-6 rounded-lg hover:bg-gray-200 transition text-sm">
             {{ $t('common.cancel') }}
           </button>
@@ -145,6 +145,7 @@ const showSuccess = ref(false)
 const errorMsg = ref('')
 const stop = ref(null)
 const loading = ref(true)
+const submitting = ref(false)
 
 const photoPreview = ref(null)
 // TODO: Signature - Commented out for future implementation
@@ -241,11 +242,13 @@ function onPhotoChange(event) {
 
 async function confirmPickup() {
   if (!stop.value?._id) return
+  if (submitting.value) return
   if (stop.value.status !== 'Pending') {
     errorMsg.value = 'Pickup already confirmed for this stop.'
     showSuccess.value = false
     return
   }
+  submitting.value = true
   errorMsg.value = ''
   try {
     const payload = {
@@ -262,6 +265,7 @@ async function confirmPickup() {
   } catch (err) {
     errorMsg.value = err?.message || err?.error || JSON.stringify(err)
     showSuccess.value = false
+    submitting.value = false
   }
 }
 </script>
