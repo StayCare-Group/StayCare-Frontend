@@ -397,6 +397,7 @@
     "routeProgress": "Progreso de ruta",
     "assignedStops": "Paradas asignadas",
     "expectedBags": "Bolsas esperadas",
+    "actualBags": "Bolsas reales",
     "confirmPickup": "Confirmar recogida",
     "confirmDelivery": "Confirmar entrega",
     "history": "Historial de entregas",

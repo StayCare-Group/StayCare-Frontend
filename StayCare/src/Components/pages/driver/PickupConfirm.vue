@@ -66,8 +66,8 @@
             </div>
           </div>
 
-          <!-- Digital signature -->
-          <div>
+          <!-- TODO: Digital signature - Commented out for future implementation -->
+          <!-- <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.signature') }}</label>
             <div class="border border-gray-200 rounded-lg bg-gray-50 p-2">
               <canvas
@@ -92,7 +92,7 @@
                 </button>
               </div>
             </div>
-          </div>
+          </div> -->
         </div>
 
         <div class="flex gap-3">
@@ -147,9 +147,10 @@ const stop = ref(null)
 const loading = ref(true)
 
 const photoPreview = ref(null)
-const signatureCanvas = ref(null)
-let signatureCtx = null
-let isDrawing = false
+// TODO: Signature - Commented out for future implementation
+// const signatureCanvas = ref(null)
+// let signatureCtx = null
+// let isDrawing = false
 
 onMounted(async () => {
   try {
@@ -162,23 +163,25 @@ onMounted(async () => {
     loading.value = false
   }
 
-  const canvas = signatureCanvas.value
-  if (canvas) {
-    const dpr = window.devicePixelRatio || 1
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    signatureCtx = canvas.getContext('2d')
-    signatureCtx.scale(dpr, dpr)
-    signatureCtx.lineWidth = 2
-    signatureCtx.lineCap = 'round'
-    signatureCtx.strokeStyle = '#111827'
-  }
+  // TODO: Signature canvas initialization - Commented out for future implementation
+  // const canvas = signatureCanvas.value
+  // if (canvas) {
+  //   const dpr = window.devicePixelRatio || 1
+  //   const rect = canvas.getBoundingClientRect()
+  //   canvas.width = rect.width * dpr
+  //   canvas.height = rect.height * dpr
+  //   signatureCtx = canvas.getContext('2d')
+  //   signatureCtx.scale(dpr, dpr)
+  //   signatureCtx.lineWidth = 2
+  //   signatureCtx.lineCap = 'round'
+  //   signatureCtx.strokeStyle = '#111827'
+  // }
 })
 
-onBeforeUnmount(() => {
-  isDrawing = false
-})
+// TODO: Cleanup signature state - Commented out for future implementation
+// onBeforeUnmount(() => {
+//   isDrawing = false
+// })
 
 const form = reactive({
   actualBags: null,
@@ -198,42 +201,43 @@ function onPhotoChange(event) {
   reader.readAsDataURL(file)
 }
 
-function getCanvasPos(evt) {
-  const canvas = signatureCanvas.value
-  const rect = canvas.getBoundingClientRect()
-  const isTouch = evt.touches && evt.touches.length > 0
-  const point = isTouch ? evt.touches[0] : evt
-  return {
-    x: point.clientX - rect.left,
-    y: point.clientY - rect.top,
-  }
-}
+// TODO: Signature functions - Commented out for future implementation
+// function getCanvasPos(evt) {
+//   const canvas = signatureCanvas.value
+//   const rect = canvas.getBoundingClientRect()
+//   const isTouch = evt.touches && evt.touches.length > 0
+//   const point = isTouch ? evt.touches[0] : evt
+//   return {
+//     x: point.clientX - rect.left,
+//     y: point.clientY - rect.top,
+//   }
+// }
 
-function startSignature(evt) {
-  if (!signatureCtx) return
-  isDrawing = true
-  const { x, y } = getCanvasPos(evt)
-  signatureCtx.beginPath()
-  signatureCtx.moveTo(x, y)
-}
+// function startSignature(evt) {
+//   if (!signatureCtx) return
+//   isDrawing = true
+//   const { x, y } = getCanvasPos(evt)
+//   signatureCtx.beginPath()
+//   signatureCtx.moveTo(x, y)
+// }
 
-function moveSignature(evt) {
-  if (!isDrawing || !signatureCtx) return
-  const { x, y } = getCanvasPos(evt)
-  signatureCtx.lineTo(x, y)
-  signatureCtx.stroke()
-}
+// function moveSignature(evt) {
+//   if (!isDrawing || !signatureCtx) return
+//   const { x, y } = getCanvasPos(evt)
+//   signatureCtx.lineTo(x, y)
+//   signatureCtx.stroke()
+// }
 
-function endSignature() {
-  if (!signatureCtx) return
-  isDrawing = false
-}
+// function endSignature() {
+//   if (!signatureCtx) return
+//   isDrawing = false
+// }
 
-function clearSignature() {
-  const canvas = signatureCanvas.value
-  if (!canvas || !signatureCtx) return
-  signatureCtx.clearRect(0, 0, canvas.width, canvas.height)
-}
+// function clearSignature() {
+//   const canvas = signatureCanvas.value
+//   if (!canvas || !signatureCtx) return
+//   signatureCtx.clearRect(0, 0, canvas.width, canvas.height)
+// }
 
 async function confirmPickup() {
   if (!stop.value?._id) return

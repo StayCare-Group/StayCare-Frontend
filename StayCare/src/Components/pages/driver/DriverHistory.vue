@@ -44,7 +44,7 @@
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-gray-800">{{ stop.client }}</p>
             <p class="text-xs text-gray-500">{{ stop.address || $t('driver.noAddress') }}</p>
-            <p class="text-xs text-gray-400">{{ stop.type }} &middot; {{ stop.timeWindow }} &middot; {{ stop.estimatedBags }} {{ $t('driver.bags') }}</p>
+            <p class="text-xs text-gray-400">{{ stop.type }} &middot; {{ stop.timeWindow }} &middot; Est: {{ stop.estimatedBags }} {{ $t('driver.bags') }}<span v-if="stop.actualBags !== null"> &middot; Act: {{ stop.actualBags }} {{ $t('driver.bags') }}</span></p>
           </div>
           <span
             class="text-xs font-medium shrink-0"

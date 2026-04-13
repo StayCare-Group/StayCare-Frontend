@@ -70,9 +70,15 @@
                 <p v-if="stop.address" class="text-xs text-gray-500">{{ $t('common.address') }}: {{ stop.address }}</p>
                 <p v-if="stop.timeWindow" class="text-xs text-gray-400">{{ $t('driver.timeWindow') }}: {{ stop.timeWindow }}</p>
               </div>
-              <div class="mt-2 flex items-center justify-between">
-                <span class="text-xs text-gray-500">{{ $t('driver.expectedBags') }}</span>
-                <span class="text-sm font-bold text-gray-700">{{ stop.bags }}</span>
+              <div class="mt-2 space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-500">{{ $t('driver.expectedBags') }}</span>
+                  <span class="text-sm font-bold text-gray-700">{{ stop.estimatedBags }}</span>
+                </div>
+                <div v-if="stop.actualBags !== null" class="flex items-center justify-between">
+                  <span class="text-xs text-gray-500">{{ $t('driver.actualBags') }}</span>
+                  <span class="text-sm font-bold text-gray-700">{{ stop.actualBags }}</span>
+                </div>
               </div>
             </div>
             <div class="mt-3 flex flex-wrap gap-2">
@@ -229,7 +235,8 @@ const driverStops = computed(() => {
       area: s.area,
       address: s.address,
       timeWindow: s.timeWindow,
-      bags: s.estimatedBags,
+      estimatedBags: s.estimatedBags,
+      actualBags: s.actualBags,
       status: s.status,
       type: s.type,
     }))

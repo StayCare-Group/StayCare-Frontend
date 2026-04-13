@@ -46,7 +46,7 @@
               </div>
               <h3 class="text-sm font-semibold text-gray-800 mt-1">{{ stop.client }}</h3>
               <p class="text-xs text-gray-500">{{ stop.address }}</p>
-              <p class="text-xs text-gray-400 mt-1">{{ stop.timeWindow }} &middot; ~{{ stop.estimatedBags }} bags</p>
+              <p class="text-xs text-gray-400 mt-1">{{ stop.timeWindow }} &middot; Est: ~{{ stop.estimatedBags }} bags<span v-if="stop.actualBags !== null"> &middot; Act: {{ stop.actualBags }} bags</span></p>
               <p v-if="stop.notes" class="text-xs text-gray-500 mt-1 italic">{{ stop.notes }}</p>
             </div>
           </div>
