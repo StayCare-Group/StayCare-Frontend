@@ -30,3 +30,11 @@ export function getRouteStopProgressStatus(status: string): RouteStopStatus {
   }
   return 'Pending'
 }
+
+export function canConfirmPickup(stopType: string, originalStatus: string): boolean {
+  return stopType === 'Pickup' && originalStatus === 'Assigned'
+}
+
+export function canConfirmDelivery(stopType: string, stopStatus: RouteStopStatus): boolean {
+  return stopType === 'Delivery' && stopStatus !== 'Completed'
+}

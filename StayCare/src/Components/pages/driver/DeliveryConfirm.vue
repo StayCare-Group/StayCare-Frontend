@@ -49,7 +49,8 @@
               :placeholder="$t('driver.notesPlaceholder')"></textarea>
           </div>
 
-          <div>
+          <!-- TODO: pendiente por desarrollar - confirmation method (photo/signature/pin) -->
+          <!-- <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.confirmationMethod') }}</label>
             <select
               v-model="form.confirmationMethod"
@@ -59,10 +60,10 @@
               <option value="signature">{{ $t('common.signature') }}</option>
               <option value="pin">{{ $t('driver.pin') }}</option>
             </select>
-          </div>
+          </div> -->
 
-          <!-- Photo proof -->
-          <div>
+          <!-- TODO: pendiente por desarrollar - proof of delivery (photo capture) -->
+          <!-- <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.proofOfDeliveryOptional') }}</label>
             <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center space-y-2">
               <input
@@ -80,10 +81,10 @@
                 class="mt-2 mx-auto max-h-32 rounded-md object-cover"
               />
             </div>
-          </div>
+          </div> -->
 
-          <!-- Digital signature -->
-          <div>
+          <!-- TODO: pendiente por desarrollar - recipient digital signature -->
+          <!-- <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.recipientSignature') }}</label>
             <div class="border border-gray-200 rounded-lg bg-gray-50 p-2">
               <canvas
@@ -108,7 +109,7 @@
                 </button>
               </div>
             </div>
-          </div>
+          </div> -->
         </div>
 
         <div class="flex gap-3">

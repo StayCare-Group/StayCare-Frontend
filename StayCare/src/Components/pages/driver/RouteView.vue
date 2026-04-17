@@ -53,12 +53,12 @@
 
           <div class="flex gap-2 sm:flex-col sm:items-end">
             <AppButton
-              v-if="stop.type === 'Pickup' && stop.status === 'Pending'"
+              v-if="canConfirmPickup(stop.type, stop.originalStatus)"
               size="sm"
               @click="navStore.goToDetail('pickup-confirm', stop._id ?? stop.id, stop.routeId)"
             >{{ $t('driver.confirmPickup') }}</AppButton>
             <AppButton
-              v-if="stop.type === 'Delivery' && stop.status !== 'Completed'"
+              v-if="canConfirmDelivery(stop.type, stop.status)"
               size="sm" variant="secondary"
               @click="navStore.goToDetail('delivery-confirm', stop._id ?? stop.id, stop.routeId)"
             >{{ $t('driver.confirmDelivery') }}</AppButton>
@@ -83,6 +83,7 @@ import { useAuthStore } from '../../../stores/auth.js'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { fetchRoutesByDriver, mapRouteForDriver } from '../../../api/routes'
+import { canConfirmPickup, canConfirmDelivery } from '../../../utils/orderFlow'
 
 const navStore = useNavStore()
 const authStore = useAuthStore()

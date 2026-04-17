@@ -353,7 +353,7 @@
               </select>
               <AppButton
                 size="sm"
-                @click="handleReassign(stop._id, reassignTargets[stop._id])"
+                @click="handleReassign(stop._id, reassignTargets[stop._id], route.date)"
                 :disabled="!reassignTargets[stop._id] || reassigning[stop._id]"
                 :loading="reassigning[stop._id]"
               >
@@ -926,11 +926,11 @@ async function handleCreateRoute() {
   }
 }
 
-async function handleReassign(orderId, driverId) {
+async function handleReassign(orderId, driverId, routeDate) {
   if (!orderId || !driverId) return
   reassigning[orderId] = true
   try {
-    await reassignOrder(orderId, driverId)
+    await reassignOrder(orderId, driverId, routeDate ? { route_date: routeDate } : undefined)
     await loadRoutes()
     reassignTargets[orderId] = ''
   } catch (err) {

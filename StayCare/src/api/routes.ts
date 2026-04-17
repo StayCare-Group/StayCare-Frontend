@@ -122,6 +122,7 @@ export function mapRouteForDriver(route: any) {
         estimatedBags: o.estimated_bags ?? 0,
         actualBags: o.actual_bags ?? null,
         status: getRouteStopProgressStatus(o.status),
+        originalStatus: o.status,
         notes: o.special_notes ?? '',
         photos: [],
         signature: false,

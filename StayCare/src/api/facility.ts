@@ -1,7 +1,7 @@
 import { apiFetch } from './client'
 
 export async function fetchMachineStatus() {
-  return apiFetch('/api/machines')
+  return apiFetch('/api/machines', { cache: 'no-store' })
 }
 
 export async function assignMachine(machineId: string, orderId: string) {

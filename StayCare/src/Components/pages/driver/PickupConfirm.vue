@@ -46,7 +46,7 @@
           </div>
 
           <!-- Photo capture/upload -->
-          <div>
+          <!-- <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('driver.photoOptional') }}</label>
             <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center space-y-2">
               <input
@@ -64,7 +64,7 @@
                 class="mt-2 mx-auto max-h-32 rounded-md object-cover"
               />
             </div>
-          </div>
+          </div> -->
 
           <!-- TODO: Digital signature - Commented out for future implementation -->
           <!-- <div>

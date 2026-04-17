@@ -83,14 +83,14 @@
             </div>
             <div class="mt-3 flex flex-wrap gap-2">
               <AppButton
-                v-if="stop.type === 'Pickup' && stop.status === 'Pending'"
+                v-if="canConfirmPickup(stop.type, stop.originalStatus)"
                 size="sm"
                 @click="navStore.goToDetail('pickup-confirm', stop.id, stop.routeId)"
               >
                 {{ $t('driver.confirmPickup') }}
               </AppButton>
               <AppButton
-                v-if="stop.type === 'Delivery' && stop.status !== 'Completed'"
+                v-if="canConfirmDelivery(stop.type, stop.status)"
                 size="sm" variant="secondary"
                 @click="navStore.goToDetail('delivery-confirm', stop.id, stop.routeId)"
               >
@@ -129,6 +129,7 @@ import { useNavStore } from '../../stores/nav.js'
 import { useAuthStore } from '../../stores/auth.js'
 import AppButton from '../ui/AppButton.vue'
 import { fetchRoutesByDriver, mapRouteForDriver } from '../../api/routes'
+import { canConfirmPickup, canConfirmDelivery } from '../../utils/orderFlow'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -238,6 +239,7 @@ const driverStops = computed(() => {
       estimatedBags: s.estimatedBags,
       actualBags: s.actualBags,
       status: s.status,
+      originalStatus: s.originalStatus,
       type: s.type,
     }))
   )

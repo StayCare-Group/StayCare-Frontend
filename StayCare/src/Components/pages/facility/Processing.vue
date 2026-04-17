@@ -31,36 +31,36 @@
 
             <!-- Machine assignment (for Washing, Drying, Ironing columns) -->
             <div v-if="col.assignable" class="mt-2">
-              <div v-if="getAssignedMachine(order._id)" class="flex items-center justify-between bg-green-50 rounded px-2 py-1">
-                <span class="text-xs text-green-700 font-medium">{{ getAssignedMachine(order._id).name }}</span>
-                <button @click="handleRelease(getAssignedMachine(order._id)._id)"
+              <div v-if="getAssignedMachine(getOrderId(order))" class="flex items-center justify-between bg-green-50 rounded px-2 py-1">
+                <span class="text-xs text-green-700 font-medium">{{ getAssignedMachine(getOrderId(order)).name }}</span>
+                <button @click="handleRelease(getMachineId(getAssignedMachine(getOrderId(order))))"
                   class="text-xs text-red-500 hover:text-red-700">{{ $t('facilityProcessing.release') }}</button>
               </div>
               <div v-else class="flex gap-1">
-                <select v-model="machineSelections[order._id]"
+                <select v-model="machineSelections[getOrderId(order)]"
                   class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-400 outline-none">
                   <option value="">{{ $t('facilityProcessing.assignMachine') }}</option>
-                  <option v-for="m in availableMachines(col.machineType)" :key="m._id" :value="m._id">
+                  <option v-for="m in availableMachines(col.machineType)" :key="getMachineId(m)" :value="getMachineId(m)">
                     {{ m.name }} ({{ m.capacity }})
                   </option>
                 </select>
                 <AppButton
-                  v-if="machineSelections[order._id]"
+                  v-if="machineSelections[getOrderId(order)]"
                   size="sm"
-                  @click="handleAssign(machineSelections[order._id], order._id)"
-                  :disabled="assigning === order._id"
-                >{{ assigning === order._id ? $t('facilityProcessing.assigning') : $t('facilityProcessing.go') }}</AppButton>
+                  @click="handleAssign(machineSelections[getOrderId(order)], getOrderId(order))"
+                  :disabled="assigning === getOrderId(order)"
+                >{{ assigning === getOrderId(order) ? $t('facilityProcessing.assigning') : $t('facilityProcessing.go') }}</AppButton>
               </div>
             </div>
 
             <AppButton
               v-if="col.nextStatus"
               size="sm"
-              :disabled="advancing === order._id"
+              :disabled="advancing === getOrderId(order)"
               class="mt-2 w-full"
-              @click="advanceOrder(order._id, col.nextStatus)"
+              @click="advanceOrder(getOrderId(order), col.nextStatus)"
             >
-              {{ advancing === order._id ? $t('facilityProcessing.moving') : $t('facilityProcessing.moveTo', { status: nextLabel(col.nextStatus) }) }}
+              {{ advancing === getOrderId(order) ? $t('facilityProcessing.moving') : $t('facilityProcessing.moveTo', { status: nextLabel(col.nextStatus) }) }}
             </AppButton>
           </div>
           <div v-if="col.orders.length === 0" class="text-xs text-gray-300 text-center py-4">{{ $t('facilityProcessing.noOrders') }}</div>
@@ -206,6 +206,14 @@ function machineStatusLabel(status) {
   return 'Available'
 }
 
+function getOrderId(order) {
+  return order?._id ?? order?.id ?? ''
+}
+
+function getMachineId(machine) {
+  return machine?._id ?? machine?.id ?? ''
+}
+
 function formatTime(dateStr) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
@@ -249,7 +257,19 @@ async function loadData() {
       })),
     }))
 
-    machines.value = machinesData ?? []
+    machines.value = (machinesData ?? []).map(raw => ({
+      ...raw,
+      _id: raw._id ?? raw.id,
+      current_order:
+        raw.current_order ??
+        (raw.current_order_id
+          ? {
+              _id: raw.current_order_id,
+              order_number: raw.order_number ?? null,
+              status: raw.order_status ?? null,
+            }
+          : null),
+    }))
   } catch {
     allOrders.value = []
     machines.value = []
@@ -290,6 +310,10 @@ function availableMachines(machineType) {
 }
 
 async function handleAssign(machineId, orderId) {
+  if (!machineId || !orderId) {
+    ui.showError(t('facilityProcessing.assignFailed') + ': Missing machine or order id')
+    return
+  }
   assigning.value = orderId
   try {
     await assignMachine(machineId, orderId)
@@ -312,14 +336,37 @@ async function handleRelease(machineId) {
 }
 
 async function advanceOrder(orderId, nextStatus) {
+  if (!orderId) {
+    ui.showError(t('facilityProcessing.updateStatusFailed') + ': Missing order id')
+    return
+  }
+
   advancing.value = orderId
   try {
     const assignedMachine = getAssignedMachine(orderId)
     if (assignedMachine) {
-      await releaseMachine(assignedMachine._id)
+      const assignedMachineId = getMachineId(assignedMachine)
+      if (assignedMachineId) {
+        await releaseMachine(assignedMachineId)
+      }
     }
+
     const normalizedNextStatus = normalizeProcessingStatus(nextStatus)
     await updateOrderStatus(orderId, normalizedNextStatus)
+
+    // Refresh first so machine availability reflects the latest release/status updates.
+    await loadData()
+
+    // When entering a machine-driven stage, auto-assign the first available machine of that type.
+    const nextStage = PIPELINE.value.find(stage => stage.status === normalizedNextStatus)
+    if (nextStage?.assignable && nextStage.machineType && !getAssignedMachine(orderId)) {
+      const nextMachine = availableMachines(nextStage.machineType)[0]
+      const nextMachineId = getMachineId(nextMachine)
+      if (nextMachineId) {
+        await assignMachine(nextMachineId, orderId)
+      }
+    }
+
     await loadData()
   } catch (err) {
     ui.showError(t('facilityProcessing.updateStatusFailed') + ': ' + (err?.message ?? t('facilityProcessing.unknownError')))
