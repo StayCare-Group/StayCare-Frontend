@@ -112,6 +112,7 @@
               <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
                 <tr>
                   <th class="px-4 py-2 font-medium">{{ $t('common.order') }}</th>
+                  <th class="px-4 py-2 font-medium">{{ $t('facility.property') }}</th>
                   <th class="px-4 py-2 font-medium">{{ $t('client.date') }}</th>
                   <th class="px-4 py-2 font-medium">{{ $t('common.status') }}</th>
                   <th class="px-4 py-2 font-medium">{{ $t('client.total') }}</th>
@@ -121,6 +122,7 @@
                 <tr v-for="o in clientOrders" :key="o._id" class="hover:bg-gray-50 cursor-pointer"
                   @click="navStore.goToDetail('order-detail', o._id)">
                   <td class="px-4 py-2 font-medium text-gray-800">{{ o.id }}</td>
+                  <td class="px-4 py-2 text-gray-600">{{ o.propertyName || o.property_name || '—' }}</td>
                   <td class="px-4 py-2 text-gray-500">{{ o.pickupDate }}</td>
                   <td class="px-4 py-2"><StatusBadge :status="o.status" /></td>
                   <td class="px-4 py-2 font-medium">&euro;{{ (o.total ?? 0).toFixed(2) }}</td>

@@ -18,10 +18,12 @@
             class="bg-white rounded-lg p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
           >
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-bold text-gray-800">{{ order.id }}</span>
+              <div class="min-w-0">
+                <p class="text-xs font-semibold text-gray-700 truncate">{{ order.client || '—' }}</p>
+                <span class="text-xs font-bold text-gray-800">{{ order.id }}</span>
+              </div>
               <span class="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">{{ order.serviceType }}</span>
             </div>
-            <p class="text-xs text-gray-600">{{ order.client }}</p>
             <div class="mt-2 text-xs text-gray-400">
               <span v-for="item in order.items.slice(0, 3)" :key="item.code" class="mr-1">
                 {{ item.code }}&times;{{ item.qty }}
@@ -247,7 +249,7 @@ async function loadData() {
     allOrders.value = (ordersData ?? []).map(raw => ({
       id: raw.order_number ?? raw._id ?? raw.id,
       _id: raw._id ?? raw.id,
-      client: raw.client?.name ?? raw.client ?? '',
+      client: raw.client?.name ?? raw.client ?? raw.client_name ?? '',
       status: normalizeProcessingStatus(raw.status),
       serviceType: raw.service_type === 'express' ? 'Express' : 'Standard',
       items: (raw.items ?? []).map(i => ({

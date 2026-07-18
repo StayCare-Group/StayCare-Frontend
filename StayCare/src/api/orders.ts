@@ -206,6 +206,7 @@ export function mapOrderForList(o: any) {
     status: mapStatus(o.status),
     total: Number(o.total ?? o.pricing_snapshot?.total ?? 0),
     specialNotes: o.special_notes ?? '',
+    propertyName: o.property_name ?? '',
   }
 }
 

@@ -4,6 +4,7 @@
     <OrdersList v-if="navStore.currentPage === 'orders'" />
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
     <OrderCreateForm v-else-if="navStore.currentPage === 'create-order'" mode="admin" />
+    <Reception v-else-if="navStore.currentPage === 'reception'" />
     <ItemManagement v-else-if="navStore.currentPage === 'items'" />
     <InvoicesList v-else-if="navStore.currentPage === 'invoices'" />
     <InvoiceDetail v-else-if="navStore.currentPage === 'invoice-detail'" />
@@ -77,6 +78,7 @@ import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
 import ItemManagement from '../pages/admin/ItemManagement.vue'
 import UserManagement from '../pages/admin/UserManagement.vue'
 import ClientDetail from '../pages/admin/ClientDetail.vue'
+import Reception from '../pages/facility/Reception.vue'
 import Processing from '../pages/facility/Processing.vue'
 import RoutePlanner from '../pages/admin/RoutePlanner.vue'
 import Reports from '../pages/admin/Reports.vue'
