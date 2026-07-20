@@ -195,7 +195,7 @@
           <label
             v-for="o in pendingOrders"
             :key="o._id"
-            class="flex items-start gap-3 py-3 cursor-pointer hover:bg-gray-50 px-2 rounded-lg"
+            class="flex items-start gap-4 py-3 cursor-pointer hover:bg-gray-50 px-2 rounded-lg"
           >
             <input
               type="checkbox"
@@ -230,6 +230,16 @@
                 {{ o.serviceType }} &middot; Est: {{ o.estimatedBags ?? 0 }} {{ $t('routePlanner.bags') }} &middot; Act: {{ o.actualBags ?? '-' }} {{ $t('routePlanner.bags') }}
               </p>
             </div>
+            <AppButton
+              size="sm"
+              variant="secondary"
+              @click="assignQueue === 'pickup' ? navStore.goToDetail('pickup-confirm', o._id, null) : navStore.goToDetail('delivery-confirm', o._id, null)"
+              >
+            
+            
+         Continue without driver
+          
+            </AppButton>
           </label>
           <p v-if="!pendingOrders.length" class="text-xs text-gray-400 py-4 px-2">
             {{ assignQueue === 'pickup' ? $t('routePlanner.noPickupOrders') : $t('routePlanner.noDeliveryOrders') }}
@@ -371,7 +381,7 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fetchOrders, fetchAllOrders, mapOrderForList, reassignOrder } from '../../../api/orders'
+import { fetchOrders, fetchAllOrders, mapOrderForList, reassignOrder, confirmPickup as apiConfirmPickup } from '@/api/orders'
 import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
 import { getUsers } from '../../../api/users'
 import { fetchClients } from '../../../api/clients'
@@ -384,8 +394,21 @@ import {
 } from '../../../utils/orderFlow'
 import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
+import { useNavStore } from '../../../stores/nav.js'
+
+
+const navStore = useNavStore()
 
 const { t } = useI18n()
+const processingOrderId = ref(null)
+const showManualDeliveryModal = ref(false)
+const selectedManualDeliveryOrder = ref(null)
+
+const manualDeliveryForm = ref({
+  packagesDelivered: null,
+  receivedBy: '',
+  notes: '',
+})
 const ui = useUiStore()
 
 function getStatusLabel(status) {
@@ -978,6 +1001,27 @@ async function handleDeleteRoute(routeId) {
     ui.showError(err?.message || err?.error || 'Failed to delete route')
   } finally {
     deleting[routeId] = false
+  }
+}
+
+
+async function continueWithoutDriver(order) {
+  console.log(order)
+  const confirmed = window.confirm(
+    'This order will continue without a driver. The facility must still confirm when the order arrives.'
+  )
+
+  if (!confirmed) return
+
+  try {
+    await apiConfirmPickup(order._id)
+  } catch (error) {
+    console.error(error)
+    window.alert(
+      error?.message || 'The order could not be updated.'
+    )
+  } finally {
+    processingOrderId.value = null
   }
 }
 

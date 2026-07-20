@@ -2,6 +2,8 @@
   <div>
     <!-- Sub-pages -->
     <OrdersList v-if="navStore.currentPage === 'orders'" />
+    <PickupConfirm v-else-if="navStore.currentPage === 'pickup-confirm'" />
+    <DeliveryConfirm v-else-if="navStore.currentPage === 'delivery-confirm'" />
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
     <OrderCreateForm v-else-if="navStore.currentPage === 'create-order'" mode="admin" />
     <Reception v-else-if="navStore.currentPage === 'reception'" />
@@ -88,6 +90,8 @@ import InvoicesList from '../pages/shared/InvoicesList.vue'
 import InvoiceDetail from '../pages/shared/InvoiceDetail.vue'
 import CreateInvoice from '../pages/admin/CreateInvoice.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
+import PickupConfirm from '../pages/driver/PickupConfirm.vue'
+import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
