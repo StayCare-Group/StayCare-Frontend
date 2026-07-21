@@ -270,7 +270,7 @@ async function loadUsers() {
 
 async function handleInvite() {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  const phonePattern = /^\d{10}$/
+  const phonePattern = /^\d{8}$/
 
   if (!inviteEmail.value || !emailPattern.test(inviteEmail.value)) {
     inviteError.value = t('admin.invalidEmailError')

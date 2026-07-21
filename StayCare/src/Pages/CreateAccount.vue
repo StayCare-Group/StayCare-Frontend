@@ -17,7 +17,7 @@ const phone = ref('')
 
 const handleRegister = async () => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  const phonePattern = /^\d{10}$/
+  const phonePattern = /^\d{8}$/
 
   if (!password.value || !username.value) {
     error.value = t('auth.errorUsernamePassword')

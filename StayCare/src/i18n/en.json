@@ -60,7 +60,7 @@
     "errorUsernamePassword": "Please fill in username and password.",
     "errorEmailOrPhone": "Please provide either an email address or phone number.",
     "errorInvalidEmail": "Please enter a valid email address.",
-    "errorInvalidPhone": "Please enter a valid 10-digit phone number.",
+    "errorInvalidPhone": "Please enter a valid 8-digit phone number.",
     "errorRegistration": "Registration failed. Please try again.",
     "forgotPassword": "Forgot password?",
     "forgotPasswordDesc": "Enter your email and we'll send you a link to reset your password.",
