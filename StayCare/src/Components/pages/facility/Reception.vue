@@ -192,7 +192,7 @@ import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { fetchOrderById, fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
 import { receiveAtFacility } from '../../../api/orders'
-import { getItems, mapItemForCatalog } from '../../../api/items'
+import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { useUiStore } from '../../../stores/ui.js'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 
@@ -220,7 +220,7 @@ onMounted(async () => {
   try {
     const [data, catalogData] = await Promise.all([
       fetchOrders(),
-      getItems().catch(() => []),
+      fetchAllItems().catch(() => []),
     ])
     allOrders.value = data ?? []
     itemCatalog.value = (catalogData ?? []).map(mapItemForCatalog)

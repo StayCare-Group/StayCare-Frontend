@@ -31,6 +31,55 @@
       </template>
     </DataTable>
 
+    <!-- Pagination -->
+    <div
+      v-if="!loading && totalPages > 1"
+      class="flex flex-col sm:flex-row items-center justify-between gap-3"
+    >
+      <p class="text-sm text-gray-500">
+        {{ totalItems }} items
+      </p>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          :disabled="currentPage === 1"
+          class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium
+                text-gray-600 hover:bg-gray-50 disabled:opacity-40
+                disabled:cursor-not-allowed"
+          @click="goToPage(currentPage - 1)"
+        >
+          Previous
+        </button>
+
+        <button
+          v-for="page in totalPages"
+          :key="page"
+          type="button"
+          class="min-w-10 px-3 py-2 border rounded-lg text-sm font-medium transition"
+          :class="
+            page === currentPage
+              ? 'bg-brand-700 border-brand-700 text-white'
+              : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+          "
+          @click="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+
+        <button
+          type="button"
+          :disabled="currentPage === totalPages"
+          class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium
+                text-gray-600 hover:bg-gray-50 disabled:opacity-40
+                disabled:cursor-not-allowed"
+          @click="goToPage(currentPage + 1)"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+
     <!-- Add/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @click.self="showModal = false">
       <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
@@ -118,6 +167,10 @@ const { t } = useI18n()
 
 const items = ref([])
 const loading = ref(true)
+const currentPage = ref(1)
+const pageSize = 10
+const totalItems = ref(0)
+const totalPages = ref(1)
 
 const itemHeaders = computed(() => [
   { key: 'code', label: t('admin.itemCode') },
@@ -127,13 +180,58 @@ const itemHeaders = computed(() => [
   { key: 'actions', label: t('admin.actions'), thClass: 'text-right', tdClass: 'text-right' },
 ])
 
-async function loadItems() {
+async function loadItems(page = currentPage.value) {
   loading.value = true
   try {
-    const data = await getItems() 
-    items.value = (data ?? []).map(mapItemForManagement)
-  } catch { items.value = [] } finally {
+    const response = await getItems(false, {
+      page,
+      limit: pageSize,
+    })
+
+    const pagination = response?._pagination
+    const rawItems = Array.isArray(response)
+      ? response
+      : Array.isArray(response?.data)
+        ? response.data
+        : []
+
+    if (pagination) {
+      items.value = rawItems.map(mapItemForManagement)
+      currentPage.value = pagination.page ?? page
+      totalItems.value = pagination.total ?? rawItems.length
+      totalPages.value = pagination.pages ?? 1
+      return
+    }
+
+    items.value = rawItems.map(mapItemForManagement)
+    currentPage.value = Math.max(1, page)
+    totalItems.value = rawItems.length
+    totalPages.value = Math.max(1, Math.ceil(rawItems.length / pageSize))
+  } catch (error) {
+    console.error('Failed to load items:', error)
+
+    items.value = []
+    totalItems.value = 0
+    totalPages.value = 1
+  } finally {
     loading.value = false
+  }
+}
+
+async function goToPage(page) {
+  if (
+    page < 1 ||
+    page > totalPages.value ||
+    page === currentPage.value ||
+    loading.value
+  ) {
+    return
+  }
+
+  await loadItems(page)
+
+  if (items.value.length === 0 && currentPage.value > 1) {
+    await loadItems(currentPage.value - 1)
   }
 }
 

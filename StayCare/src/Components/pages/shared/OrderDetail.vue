@@ -203,7 +203,7 @@ import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchOrderById, mapOrderForDetail, updateOrder } from '../../../api/orders'
 import { fetchClientById } from '../../../api/clients'
-import { getItems, mapItemForCatalog } from '../../../api/items'
+import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
 
 const { t } = useI18n()
@@ -273,7 +273,7 @@ async function openEditModal() {
   editLoadingItems.value = true
   showEditModal.value = true
   try {
-    const rawItems = await getItems().catch(() => [])
+    const rawItems = await fetchAllItems().catch(() => [])
     editItems.value = (rawItems ?? []).map(mapItemForCatalog)
 
     // Reset quantities, then pre-fill from current order items

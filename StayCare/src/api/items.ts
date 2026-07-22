@@ -1,8 +1,59 @@
 import { apiFetch } from './client'
 
-export async function getItems(activeOnly = false) {
-  const query = activeOnly ? '?active=true' : ''
-  return apiFetch(`/api/items${query}`)
+export async function getItems(
+  activeOnly = false,
+  { page = 1, limit = 10, search = '' } = {}
+) {
+  const params = new URLSearchParams()
+
+  if (activeOnly) {
+    params.set('is_active', 'true')
+  }
+
+  params.set('page', String(page))
+  params.set('limit', String(limit))
+
+  if (search.trim()) {
+    params.set('search', search.trim())
+  }
+
+  return apiFetch(`/api/items?${params.toString()}`)
+}
+
+export async function fetchAllItems(activeOnly = false, search = '') {
+  const allItems: any[] = []
+  let page = 1
+  const pageSize = 200
+  const maxPages = 50
+
+  while (page <= maxPages) {
+    const data = await getItems(activeOnly, {
+      page,
+      limit: pageSize,
+      search,
+    })
+
+    const items = Array.isArray(data)
+      ? data
+      : Array.isArray((data as any)?.items)
+        ? (data as any).items
+        : []
+
+    if (!items.length) break
+
+    allItems.push(...items)
+
+    const pagination = (data as any)?._pagination
+    if (pagination) {
+      const totalPages = pagination.totalPages ?? pagination.pages ?? pagination.total_pages ?? pagination.lastPage ?? 0
+      if (totalPages && page >= totalPages) break
+    }
+
+    if (items.length < pageSize) break
+    page++
+  }
+
+  return allItems
 }
 
 export async function createItem(payload: any) {
