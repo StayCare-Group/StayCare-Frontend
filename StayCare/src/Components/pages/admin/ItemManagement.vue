@@ -279,7 +279,7 @@ async function handleSave() {
     showModal.value = false
     await loadItems()
   } catch (err) {
-    modalError.value = err?.message || 'Failed to save item.'
+    modalError.value = err?.message || t('admin.errorSaveItem')
   } finally {
     saving.value = false
   }

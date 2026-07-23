@@ -36,12 +36,11 @@
         class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3"
       >
         <p class="text-sm font-medium text-blue-800">
-          Delivery without driver
+          {{ $t('driver.deliveryWithoutDriver') }}
         </p>
 
         <p class="mt-1 text-xs text-blue-700">
-          This delivery will be confirmed without creating a route
-          or assigning a driver.
+          {{ $t('driver.deliveryWithoutDriverDesc') }}
         </p>
       </div>
 
@@ -311,6 +310,7 @@ import {
   reactive,
   ref,
 } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { useNavStore } from '../../../stores/nav.js'
 import AppButton from '../../ui/AppButton.vue'
@@ -326,6 +326,7 @@ import {
   confirmDelivery as apiConfirmDelivery,
 } from '../../../api/orders'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 
 const stop = ref(null)
@@ -676,7 +677,7 @@ onMounted(async () => {
 
     errorMsg.value =
       error?.message ??
-      'The delivery information could not be loaded.'
+      t('driver.errorLoadDelivery')
   } finally {
     loading.value = false
   }
@@ -692,14 +693,14 @@ async function confirmDelivery() {
     Number(form.packagesDelivered) < 1
   ) {
     errorMsg.value =
-      'Enter a valid number of packages delivered.'
+      t('driver.errorInvalidPackages')
 
     return
   }
 
   if (!form.receivedBy.trim()) {
     errorMsg.value =
-      'Enter the name of the person who received the delivery.'
+      t('driver.errorRecipientRequired')
 
     return
   }
@@ -712,7 +713,7 @@ async function confirmDelivery() {
 
   if (!orderId) {
     errorMsg.value =
-      'The order ID could not be identified.'
+      t('driver.errorInvalidOrderId')
 
     return
   }
@@ -758,7 +759,7 @@ async function confirmDelivery() {
     errorMsg.value =
       error?.message ??
       error?.error ??
-      'The delivery could not be confirmed.'
+      t('driver.errorConfirmDelivery')
 
     showSuccess.value = false
   } finally {

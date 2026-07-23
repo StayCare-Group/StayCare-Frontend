@@ -203,7 +203,7 @@ async function saveClientProfile() {
     isEditing.value = false
     ui.showSuccess('Client updated')
   } catch (err) {
-    ui.showError(err?.message || 'Failed to update client')
+    ui.showError(err?.message || t('admin.errorUpdateClient'))
   } finally {
     saving.value = false
   }

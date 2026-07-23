@@ -240,7 +240,15 @@
     "exportExcel": "Exportar a Excel",
     "selectMonth": "Seleccionar mes",
     "reportByMonth": "Por mes",
-    "reportByYear": "Por año"
+    "reportByYear": "Por año",
+    "errorCreateOrder": "No se pudo crear el pedido. Inténtalo de nuevo.",
+    "errorLoadDriversOrders": "No se pudieron cargar los conductores o pedidos.",
+    "errorFetchOrders": "No se pudieron obtener los pedidos.",
+    "errorAutoAssign": "No se pudieron crear las rutas de asignación automática.",
+    "errorCreateRoute": "No se pudo crear la ruta. Inténtalo de nuevo.",
+    "errorDeleteRoute": "No se pudo eliminar la ruta.",
+    "errorSaveItem": "No se pudo guardar el artículo.",
+    "errorUpdateClient": "No se pudo actualizar el cliente."
   },
   "client": {
     "activeOrders": "Pedidos activos",
@@ -272,7 +280,8 @@
     "markAsPaid": "Marcar como pagado",
     "createOrderProfileRequired": "Para crear una orden debes actualizar tu perfil.",
     "goToProfileCta": "Haz clic aqui",
-    "goToProfileSuffix": "para ir a Perfil."
+    "goToProfileSuffix": "para ir a Perfil.",
+    "specialNotes": "Notas Especiales"
   },
   "invoices": {
     "filterAll": "Todas",
@@ -380,6 +389,7 @@
     "statusTimeline": "Cronología de Estado",
     "loadingOrder": "Cargando pedido...",
     "orderNotFound": "Pedido no encontrado.",
+    "cannotEditInvoicedOrder": "No se puede editar una orden facturada.",
     "selectDateAndWindow": "Seleccione una fecha y una ventana horaria.",
     "rescheduleFailed": "No se pudo reprogramar el pedido.",
     "noItems": "Sin artículos registrados.",
@@ -427,7 +437,20 @@
     "proofOfDeliveryOptional": "Prueba de entrega (opcional)",
     "deliveryPhotoHint": "Capture o suba una foto como prueba de entrega.",
     "recipientSignature": "Firma del destinatario",
-    "recipientSignHint": "Pida al destinatario que firme en el recuadro."
+    "recipientSignHint": "Pida al destinatario que firme en el recuadro.",
+    "pickupWithoutDriver": "Recogida sin conductor",
+    "pickupWithoutDriverDesc": "Este pedido continuará sin ruta ni conductor. La planta aún debe confirmar cuando llegue el pedido.",
+    "deliveryWithoutDriver": "Entrega sin conductor",
+    "deliveryWithoutDriverDesc": "Esta entrega se confirmará sin crear una ruta ni asignar un conductor.",
+    "errorLoadPickup": "No se pudo cargar la información de recogida.",
+    "errorAlreadyConfirmed": "La recogida ya ha sido confirmada para este pedido.",
+    "errorInvalidBags": "Ingresa un número válido de bolsas.",
+    "errorInvalidOrderId": "No se pudo identificar el ID del pedido.",
+    "errorConfirmPickup": "No se pudo confirmar la recogida.",
+    "errorLoadDelivery": "No se pudo cargar la información de entrega.",
+    "errorInvalidPackages": "Ingresa un número válido de paquetes entregados.",
+    "errorRecipientRequired": "Ingresa el nombre de la persona que recibió la entrega.",
+    "errorConfirmDelivery": "No se pudo confirmar la entrega."
   },
   "facility": {
     "processingBoard": "Tablero de procesamiento",
@@ -552,6 +575,7 @@
     "reassigning": "...",
     "statusCompleted": "Completada",
     "statusInProgress": "En Progreso",
-    "statusPlanned": "Planificada"
+    "statusPlanned": "Planificada",
+    "continueWithoutDriver": "Continuar sin conductor"
   }
 }

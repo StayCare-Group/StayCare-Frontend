@@ -240,7 +240,15 @@
     "exportExcel": "Export to Excel",
     "selectMonth": "Select Month",
     "reportByMonth": "By Month",
-    "reportByYear": "By Year"
+    "reportByYear": "By Year",
+    "errorCreateOrder": "Failed to create order. Please try again.",
+    "errorLoadDriversOrders": "Failed to load drivers or orders.",
+    "errorFetchOrders": "Failed to fetch orders.",
+    "errorAutoAssign": "Failed to create auto-assigned routes.",
+    "errorCreateRoute": "Failed to create route. Please try again.",
+    "errorDeleteRoute": "Failed to delete route.",
+    "errorSaveItem": "Failed to save item.",
+    "errorUpdateClient": "Failed to update client."
   },
   "client": {
     "activeOrders": "Active Orders",
@@ -272,7 +280,8 @@
     "markAsPaid": "Mark as Paid",
     "createOrderProfileRequired": "To create an order, you need to update your profile.",
     "goToProfileCta": "Click here",
-    "goToProfileSuffix": "to go to Profile."
+    "goToProfileSuffix": "to go to Profile.",
+    "specialNotes": "Special Notes"
   },
   "invoices": {
     "filterAll": "All",
@@ -380,6 +389,7 @@
     "statusTimeline": "Status Timeline",
     "loadingOrder": "Loading order...",
     "orderNotFound": "Order not found.",
+    "cannotEditInvoicedOrder": "An invoiced order cannot be edited.",
     "selectDateAndWindow": "Please select a date and time window.",
     "rescheduleFailed": "Failed to reschedule order.",
     "noItems": "No items recorded.",
@@ -427,7 +437,20 @@
     "proofOfDeliveryOptional": "Proof of Delivery (optional)",
     "deliveryPhotoHint": "Capture or upload a photo as proof of delivery.",
     "recipientSignature": "Recipient Signature",
-    "recipientSignHint": "Have the recipient sign in the box."
+    "recipientSignHint": "Have the recipient sign in the box.",
+    "pickupWithoutDriver": "Pickup without driver",
+    "pickupWithoutDriverDesc": "This order will continue without a route or driver. The facility must still confirm when the order arrives.",
+    "deliveryWithoutDriver": "Delivery without driver",
+    "deliveryWithoutDriverDesc": "This delivery will be confirmed without creating a route or assigning a driver.",
+    "errorLoadPickup": "The pickup information could not be loaded.",
+    "errorAlreadyConfirmed": "Pickup has already been confirmed for this order.",
+    "errorInvalidBags": "Enter a valid number of bags.",
+    "errorInvalidOrderId": "The order ID could not be identified.",
+    "errorConfirmPickup": "The pickup could not be confirmed.",
+    "errorLoadDelivery": "The delivery information could not be loaded.",
+    "errorInvalidPackages": "Enter a valid number of packages delivered.",
+    "errorRecipientRequired": "Enter the name of the person who received the delivery.",
+    "errorConfirmDelivery": "The delivery could not be confirmed."
   },
   "facility": {
     "processingBoard": "Processing Board",
@@ -552,6 +575,7 @@
     "reassigning": "...",
     "statusCompleted": "Completed",
     "statusInProgress": "In Progress",
-    "statusPlanned": "Planned"
+    "statusPlanned": "Planned",
+    "continueWithoutDriver": "Continue without driver"
   }
 }

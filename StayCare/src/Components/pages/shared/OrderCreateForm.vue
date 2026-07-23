@@ -456,7 +456,7 @@ async function submitOrder() {
       err?.message ||
       err?.error ||
       err?.data?.message ||
-      'Failed to create order. Please try again.'
+      t('admin.errorCreateOrder')
   } finally {
     submitting.value = false
   }

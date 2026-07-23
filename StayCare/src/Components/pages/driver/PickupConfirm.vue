@@ -32,12 +32,11 @@
         class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3"
       >
         <p class="text-sm font-medium text-blue-800">
-          Pickup without driver
+          {{ $t('driver.pickupWithoutDriver') }}
         </p>
 
         <p class="mt-1 text-xs text-blue-700">
-          This order will continue without a route or driver.
-          The facility must still confirm when the order arrives.
+          {{ $t('driver.pickupWithoutDriverDesc') }}
         </p>
       </div>
 
@@ -300,6 +299,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { useNavStore } from '../../../stores/nav.js'
 import AppButton from '../../ui/AppButton.vue'
@@ -315,6 +315,7 @@ import {
   confirmPickup as apiConfirmPickup,
 } from '../../../api/orders'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 const showSuccess = ref(false)
 const errorMsg = ref('')
@@ -699,7 +700,7 @@ onMounted(async () => {
 
     errorMsg.value =
       error?.message ??
-      'The pickup information could not be loaded.'
+      t('driver.errorLoadPickup')
   } finally {
     loading.value = false
   }
@@ -722,7 +723,7 @@ async function confirmPickup() {
 
   if (!isPendingStatus(stop.value.status)) {
     errorMsg.value =
-      'Pickup has already been confirmed for this order.'
+      t('driver.errorAlreadyConfirmed')
 
     showSuccess.value = false
     return
@@ -733,7 +734,7 @@ async function confirmPickup() {
     Number(form.actualBags) < 1
   ) {
     errorMsg.value =
-      'Enter a valid number of bags.'
+      t('driver.errorInvalidBags')
 
     return
   }
@@ -745,7 +746,7 @@ async function confirmPickup() {
 
   if (!orderId) {
     errorMsg.value =
-      'The order ID could not be identified.'
+      t('driver.errorInvalidOrderId')
 
     return
   }
@@ -780,7 +781,7 @@ async function confirmPickup() {
     errorMsg.value =
       error?.message ??
       error?.error ??
-      'The pickup could not be confirmed.'
+      t('driver.errorConfirmPickup')
 
     showSuccess.value = false
   } finally {

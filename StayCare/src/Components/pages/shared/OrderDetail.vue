@@ -27,7 +27,7 @@
         variant="secondary"
         size="sm"
         :disabled="order.isInvoiced"
-        :title="order.isInvoiced ? 'No se puede editar una orden facturada.' : ''"
+        :title="order.isInvoiced ? t('orderDetail.cannotEditInvoicedOrder') : ''"
         @click="openEditModal"
       >
         <svg class="w-3.5 h-3.5 mr-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,7 +38,7 @@
     </div>
 
     <p v-if="order && isAdminOrStaff && order.isInvoiced" class="text-xs text-amber-600">
-      No se puede editar una orden facturada.
+      {{ $t('orderDetail.cannotEditInvoicedOrder') }}
     </p>
 
     <div v-if="order" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -257,7 +257,7 @@ function parseTimeWindow(tw, date) {
 async function openEditModal() {
   if (!order.value) return
   if (order.value.isInvoiced) {
-    editError.value = 'No se puede editar una orden facturada.'
+    editError.value = t('orderDetail.cannotEditInvoicedOrder')
     showEditModal.value = false
     return
   }
@@ -291,7 +291,7 @@ async function openEditModal() {
 async function submitEdit() {
   if (editSubmitting.value) return
   if (order.value?.isInvoiced) {
-    editError.value = 'No se puede editar una orden facturada.'
+    editError.value = t('orderDetail.cannotEditInvoicedOrder')
     return
   }
   editSubmitting.value = true

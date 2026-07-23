@@ -235,10 +235,7 @@
               variant="secondary"
               @click="assignQueue === 'pickup' ? navStore.goToDetail('pickup-confirm', o._id, null) : navStore.goToDetail('delivery-confirm', o._id, null)"
               >
-            
-            
-         Continue without driver
-          
+              {{ $t('routePlanner.continueWithoutDriver') }}
             </AppButton>
           </label>
           <p v-if="!pendingOrders.length" class="text-xs text-gray-400 py-4 px-2">
@@ -507,7 +504,7 @@ onMounted(async () => {
       err?.message ||
       err?.error ||
       err?.data?.message ||
-      'Failed to load drivers or orders.'
+      t('admin.errorLoadDriversOrders')
   } finally {
     await loadRoutes()
     initializingRoutes.value = false
@@ -884,7 +881,7 @@ async function confirmAutoAssign() {
     await loadRoutes()
   } catch (err) {
     autoError.value =
-      err?.message || err?.error || 'Failed to create auto-assigned routes.'
+      err?.message || err?.error || t('admin.errorAutoAssign')
   } finally {
     autoConfirming.value = false
   }
@@ -943,7 +940,7 @@ async function handleCreateRoute() {
       err?.message ||
       err?.error ||
       err?.data?.message ||
-      'Failed to create route. Please try again.'
+      t('admin.errorCreateRoute')
   } finally {
     submitting.value = false
   }
@@ -998,7 +995,7 @@ async function handleDeleteRoute(routeId) {
     const ordersData = await fetchAllOrders().catch(() => [])
     rawOrders.value = ordersData ?? []
   } catch (err) {
-    ui.showError(err?.message || err?.error || 'Failed to delete route')
+    ui.showError(err?.message || err?.error || t('admin.errorDeleteRoute'))
   } finally {
     deleting[routeId] = false
   }
