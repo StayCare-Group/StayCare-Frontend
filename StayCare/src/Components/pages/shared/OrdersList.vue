@@ -49,12 +49,39 @@
         <span class="font-semibold text-gray-800">&euro;{{ value.toFixed(2) }}</span>
       </template>
       <template #cell-actions="{ item }">
-        <button
-          @click.stop="navStore.goToDetail('order-detail', item._id)"
-          class="text-brand-700 hover:underline text-sm font-medium"
-        >{{ $t('common.viewDetails') }}</button>
+        <div class="flex items-center gap-3">
+          <button
+            @click.stop="navStore.goToDetail('order-detail', item._id)"
+            class="text-brand-700 hover:underline text-sm font-medium"
+          >{{ $t('common.viewDetails') }}</button>
+          <button
+            v-if="isAdmin && (item.status === 'Pending Pickup' || item.status === 'Assigned')"
+            @click.stop="promptCancelOrder(item)"
+            class="text-red-600 hover:underline text-sm font-medium"
+          >{{ $t('admin.cancelOrder') }}</button>
+        </div>
       </template>
     </DataTable>
+
+    <!-- Cancellation Confirmation Modal -->
+    <Teleport to="body">
+      <div v-if="orderToCancel" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+          <h3 class="text-base font-semibold text-gray-900">{{ $t('admin.cancelConfirmTitle') }}</h3>
+          <p class="text-sm text-gray-600">
+            {{ $t('admin.cancelConfirmMessage', { id: orderToCancel.id }) }}
+          </p>
+          <div class="flex justify-end gap-3 pt-2">
+            <AppButton variant="secondary" size="sm" :disabled="cancelling" @click="orderToCancel = null">
+              {{ $t('common.cancel') }}
+            </AppButton>
+            <AppButton variant="danger" size="sm" :loading="cancelling" @click="handleCancelOrder">
+              {{ $t('admin.cancelOrder') }}
+            </AppButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -67,13 +94,15 @@ import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
-import { fetchOrders, mapOrderForList } from '../../../api/orders'
+import { useUiStore } from '../../../stores/ui.js'
+import { fetchOrders, deleteOrder, mapOrderForList } from '../../../api/orders'
 import { fetchMe } from '../../../api/users'
 import { isClientProfileCompleteForOrder } from '../../../utils/orderEligibility'
 
 const { t } = useI18n()
 const navStore = useNavStore()
 const auth = useAuthStore()
+const uiStore = useUiStore()
 
 const isAdmin = computed(() => auth.user?.role === 'admin')
 const isClient = computed(() => auth.user?.role === 'client')
@@ -82,8 +111,12 @@ const orders = ref([])
 const loading = ref(true)
 const canCreateOrder = ref(false)
 
-onMounted(async () => {
+const orderToCancel = ref(null)
+const cancelling = ref(false)
+
+const loadOrders = async () => {
   try {
+    loading.value = true
     const params = auth.user?.role === 'client' && auth.user?.id
       ? { client_id: String(auth.user.id) }
       : undefined
@@ -100,16 +133,37 @@ onMounted(async () => {
   } catch { /* stays empty */ } finally {
     loading.value = false
   }
-})
+}
 
-const filters = ['All', 'Pending Pickup', 'In Progress', 'Ready for Delivery', 'Delivered']
+onMounted(loadOrders)
+
+const promptCancelOrder = (item) => {
+  orderToCancel.value = item
+}
+
+const handleCancelOrder = async () => {
+  if (!orderToCancel.value) return
+  try {
+    cancelling.value = true
+    await deleteOrder(orderToCancel.value._id)
+    uiStore.showSuccess(t('admin.cancelSuccess'))
+    orderToCancel.value = null
+    await loadOrders()
+  } catch (err) {
+    uiStore.showError(err?.message || t('admin.cancelError'))
+  } finally {
+    cancelling.value = false
+  }
+}
+
+const filters = ['All', 'Pending Pickup', 'In Progress', 'Ready for Delivery', 'Delivered', 'Cancelled']
 const activeFilter = ref('All')
 
 const filteredOrders = computed(() => {
   if (activeFilter.value === 'All') return orders.value
   if (activeFilter.value === 'In Progress') {
     return orders.value.filter(o =>
-      !['Pending Pickup', 'Ready for Delivery', 'Out for Delivery', 'Delivered'].includes(o.status)
+      !['Pending Pickup', 'Ready for Delivery', 'Out for Delivery', 'Delivered', 'Cancelled'].includes(o.status)
     )
   }
   return orders.value.filter(o => o.status === activeFilter.value)

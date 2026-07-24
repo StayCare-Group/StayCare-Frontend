@@ -27,6 +27,8 @@ const statusColors = {
   'Delivered': 'bg-green-100 text-green-800',
   'Completed': 'bg-green-100 text-green-800',
   'Ready': 'bg-green-100 text-green-800',
+  'Cancelled': 'bg-gray-100 text-gray-700',
+  'Cancelado': 'bg-gray-100 text-gray-700',
   // Invoice statuses
   'Paid': 'bg-green-100 text-green-800',
   'Pending': 'bg-yellow-100 text-yellow-800',

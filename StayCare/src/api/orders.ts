@@ -136,6 +136,12 @@ export async function rescheduleOrder(id: string, payload: { pickup_date: string
   })
 }
 
+export async function deleteOrder(id: string) {
+  return apiFetch(`/api/orders/${id}`, {
+    method: 'DELETE',
+  })
+}
+
 const STATUS_MAP: Record<string, string> = {
   Pending: 'Pending Pickup',
   Assigned: 'Assigned',
@@ -145,6 +151,7 @@ const STATUS_MAP: Record<string, string> = {
   ReadyToDeliver: 'Ready for Delivery',
   Collected: 'Out for Delivery',
   Invoiced: 'Completed',
+  Cancelled: 'Cancelled',
 }
 
 export function mapStatus(backendStatus: string): string {

@@ -35,6 +35,18 @@
         </svg>
         {{ $t('admin.editOrder') }}
       </AppButton>
+      <!-- Cancel order (admin only) -->
+      <AppButton
+        v-if="order && isAdmin && (order.status === 'Pending Pickup' || order.status === 'Assigned')"
+        variant="danger"
+        size="sm"
+        @click="showCancelModal = true"
+      >
+        <svg class="w-3.5 h-3.5 mr-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        {{ $t('admin.cancelOrder') }}
+      </AppButton>
     </div>
 
     <p v-if="order && isAdminOrStaff && order.isInvoiced" class="text-xs text-amber-600">
@@ -190,6 +202,26 @@
       </div>
     </div>
   </Teleport>
+
+  <!-- Cancel Order Modal -->
+  <Teleport to="body">
+    <div v-if="showCancelModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+        <h3 class="text-base font-semibold text-gray-900">{{ $t('admin.cancelConfirmTitle') }}</h3>
+        <p class="text-sm text-gray-600">
+          {{ $t('admin.cancelConfirmMessage', { id: order?.id }) }}
+        </p>
+        <div class="flex justify-end gap-3 pt-2">
+          <AppButton variant="secondary" size="sm" :disabled="cancelling" @click="showCancelModal = false">
+            {{ $t('common.cancel') }}
+          </AppButton>
+          <AppButton variant="danger" size="sm" :loading="cancelling" @click="handleCancelOrder">
+            {{ $t('admin.cancelOrder') }}
+          </AppButton>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -201,7 +233,8 @@ import AppButton from '../../ui/AppButton.vue'
 import DataTable from '../../ui/DataTable.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
-import { fetchOrderById, mapOrderForDetail, updateOrder } from '../../../api/orders'
+import { useUiStore } from '../../../stores/ui.js'
+import { fetchOrderById, mapOrderForDetail, updateOrder, deleteOrder } from '../../../api/orders'
 import { fetchClientById } from '../../../api/clients'
 import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
@@ -209,15 +242,36 @@ import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
 const { t } = useI18n()
 const navStore = useNavStore()
 const authStore = useAuthStore()
+const uiStore = useUiStore()
 
 const order = ref(null)
 const loading = ref(true)
 const generatingPdf = ref(false)
 
+const showCancelModal = ref(false)
+const cancelling = ref(false)
+
+const isAdmin = computed(() => authStore.user?.role === 'admin')
+
 const isAdminOrStaff = computed(() => {
   const role = authStore.user?.role ?? ''
   return role === 'admin' || role === 'staff'
 })
+
+const handleCancelOrder = async () => {
+  if (!order.value) return
+  try {
+    cancelling.value = true
+    await deleteOrder(order.value._id)
+    uiStore.showSuccess(t('admin.cancelSuccess'))
+    showCancelModal.value = false
+    await loadOrder()
+  } catch (err) {
+    uiStore.showError(err?.message || t('admin.cancelError'))
+  } finally {
+    cancelling.value = false
+  }
+}
 
 async function downloadPdf() {
   if (!order.value || generatingPdf.value) return
