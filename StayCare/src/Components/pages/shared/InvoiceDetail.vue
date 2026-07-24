@@ -6,7 +6,7 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <h2 class="text-lg font-semibold text-brand-700">{{ invoice?.id }}</h2>
-      <StatusBadge v-if="invoice" :status="invoice.status" />
+      <StatusBadge v-if="invoice" :status="invoice.status" type="invoice" />
     </div>
 
     <div v-if="invoice" class="space-y-6">

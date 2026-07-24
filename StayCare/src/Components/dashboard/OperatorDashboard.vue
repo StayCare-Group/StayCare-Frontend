@@ -65,7 +65,7 @@ watch(() => navStore.currentPage, (page) => {
   if (page === 'dashboard') loadOrders()
 })
 
-const processingStatuses = ['Received at Facility', 'Washing', 'Drying', 'Ironing', 'Quality Control', 'Ready for Delivery']
+const processingStatuses = ['arrived', 'washing', 'drying', 'ironing', 'quality_check', 'ready_to_delivery']
 
 const processingKPIs = computed(() => {
   const counts = {}
@@ -73,8 +73,8 @@ const processingKPIs = computed(() => {
   for (const o of orders.value) {
     if (counts[o.status] !== undefined) counts[o.status]++
   }
-  const colors = { 'Received at Facility': 'blue', Washing: 'cyan', Drying: 'yellow', Ironing: 'orange', 'Quality Control': 'purple', 'Ready for Delivery': 'green' }
-  const labels = { 'Received at Facility': t('facility.incoming'), Washing: t('facility.washing'), Drying: t('facility.drying'), Ironing: t('facility.ironing'), 'Quality Control': t('facility.qc'), 'Ready for Delivery': t('facility.ready') }
+  const colors = { arrived: 'blue', washing: 'cyan', drying: 'yellow', ironing: 'orange', quality_check: 'purple', ready_to_delivery: 'green' }
+  const labels = { arrived: t('facility.incoming'), washing: t('facility.washing'), drying: t('facility.drying'), ironing: t('facility.ironing'), quality_check: t('facility.qc'), ready_to_delivery: t('facility.ready') }
   return processingStatuses.map(s => ({
     label: labels[s],
     value: counts[s],
@@ -85,12 +85,12 @@ const processingKPIs = computed(() => {
 const kanbanOrders = computed(() => {
   const cols = { Received: [], Washing: [], Drying: [], Ironing: [], QC: [], Ready: [] }
   const statusMap = {
-    'Received at Facility': 'Received',
-    Washing: 'Washing',
-    Drying: 'Drying',
-    Ironing: 'Ironing',
-    'Quality Control': 'QC',
-    'Ready for Delivery': 'Ready',
+    arrived: 'Received',
+    washing: 'Washing',
+    drying: 'Drying',
+    ironing: 'Ironing',
+    quality_check: 'QC',
+    ready_to_delivery: 'Ready',
   }
   for (const o of orders.value) {
     const col = statusMap[o.status]

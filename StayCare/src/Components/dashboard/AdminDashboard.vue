@@ -175,11 +175,12 @@ const maxVal = computed(() => Math.max(...adminChartData.value.values, 1))
 const adminActivity = computed(() => {
   return orders.value.slice(0, 6).map((o, i) => {
     const statusAction = {
-      'Pending Pickup': t('admin.newOrderPlaced'),
-      'Delivered': t('admin.orderCompleted'),
-      'Completed': t('admin.orderCompleted'),
-      'In Transit': t('admin.orderInTransit'),
-      'Ready for Delivery': t('admin.orderReady'),
+      pending: t('admin.newOrderPlaced'),
+      delivered: t('admin.orderCompleted'),
+      completed: t('admin.orderCompleted'),
+      invoiced: t('admin.orderCompleted'),
+      transit: t('admin.orderInTransit'),
+      ready_to_delivery: t('admin.orderReady'),
     }
     return {
       id: i + 1,

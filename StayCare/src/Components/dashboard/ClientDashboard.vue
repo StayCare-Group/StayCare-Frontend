@@ -75,11 +75,15 @@ onMounted(async () => {
 })
 
 const clientKPIs = computed(() => {
-  const active = orders.value.filter(o => !['Delivered', 'Completed'].includes(o.status)).length
-  const inProgress = orders.value.filter(o =>
-    !['Pending Pickup', 'Delivered', 'Completed', 'Ready for Delivery'].includes(o.status)
+  const active = orders.value.filter(o =>
+    !['delivered', 'completed', 'invoiced', 'cancelled'].includes(o.status)
   ).length
-  const ready = orders.value.filter(o => o.status === 'Ready for Delivery').length
+
+  const inProgress = orders.value.filter(o =>
+    !['pending', 'ready_to_delivery', 'collected', 'delivered', 'completed', 'invoiced', 'cancelled'].includes(o.status)
+  ).length
+
+  const ready = orders.value.filter(o => o.status === 'ready_to_delivery').length
   const outstanding = invoices.value
     .filter(i => i.status !== 'Paid')
     .reduce((sum, i) => sum + (i.grandTotal ?? 0), 0)

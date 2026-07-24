@@ -16,11 +16,11 @@
     <!-- Filters -->
     <div class="flex flex-wrap gap-2">
       <button
-        v-for="f in filters" :key="f"
-        @click="activeFilter = f"
+        v-for="f in filters" :key="f.key"
+        @click="activeFilter = f.key"
         class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-        :class="activeFilter === f ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-      >{{ f }}</button>
+        :class="activeFilter === f.key ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >{{ f.label }}</button>
     </div>
 
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
@@ -55,7 +55,7 @@
             class="text-brand-700 hover:underline text-sm font-medium"
           >{{ $t('common.viewDetails') }}</button>
           <button
-            v-if="isAdmin && (item.status === 'Pending Pickup' || item.status === 'Assigned')"
+            v-if="isAdmin && isCancelableStatus(item.status)"
             @click.stop="promptCancelOrder(item)"
             class="text-red-600 hover:underline text-sm font-medium"
           >{{ $t('admin.cancelOrder') }}</button>
@@ -95,9 +95,10 @@ import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
-import { fetchOrders, deleteOrder, mapOrderForList } from '../../../api/orders'
+import { fetchAllOrders, deleteOrder, mapOrderForList } from '../../../api/orders'
 import { fetchMe } from '../../../api/users'
 import { isClientProfileCompleteForOrder } from '../../../utils/orderEligibility'
+import { isCancelableStatus } from '../../../utils/orderFlow'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -121,7 +122,7 @@ const loadOrders = async () => {
       ? { client_id: String(auth.user.id) }
       : undefined
     const [data, meData] = await Promise.all([
-      fetchOrders(params),
+      fetchAllOrders(params),
       isClient.value ? fetchMe().catch(() => null) : Promise.resolve(null),
     ])
     orders.value = (data ?? []).map(mapOrderForList)
@@ -130,7 +131,9 @@ const loadOrders = async () => {
     } else {
       canCreateOrder.value = true
     }
-  } catch { /* stays empty */ } finally {
+  } catch (err) {
+    uiStore.showError(err?.message || t('admin.errorFetchOrders'))
+  } finally {
     loading.value = false
   }
 }
@@ -156,14 +159,21 @@ const handleCancelOrder = async () => {
   }
 }
 
-const filters = ['All', 'Pending Pickup', 'In Progress', 'Ready for Delivery', 'Delivered', 'Cancelled']
-const activeFilter = ref('All')
+const filters = computed(() => [
+  { key: 'all', label: t('orderFilters.all') },
+  { key: 'pending', label: t('orderStatuses.pending') },
+  { key: 'in_progress', label: t('orderFilters.inProgress') },
+  { key: 'ready_to_delivery', label: t('orderStatuses.ready_to_delivery') },
+  { key: 'delivered', label: t('orderStatuses.delivered') },
+  { key: 'cancelled', label: t('orderStatuses.cancelled') },
+])
+const activeFilter = ref('all')
 
 const filteredOrders = computed(() => {
-  if (activeFilter.value === 'All') return orders.value
-  if (activeFilter.value === 'In Progress') {
+  if (activeFilter.value === 'all') return orders.value
+  if (activeFilter.value === 'in_progress') {
     return orders.value.filter(o =>
-      !['Pending Pickup', 'Ready for Delivery', 'Out for Delivery', 'Delivered', 'Cancelled'].includes(o.status)
+      !['pending', 'ready_to_delivery', 'collected', 'delivered', 'completed', 'invoiced', 'cancelled'].includes(o.status)
     )
   }
   return orders.value.filter(o => o.status === activeFilter.value)

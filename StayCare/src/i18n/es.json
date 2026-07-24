@@ -501,7 +501,9 @@
     "cameraAccessError": "No se pudo acceder a la cámara. Verifica los permisos del navegador.",
     "checkInNotEligible": "Este pedido no es elegible para check-in en Recepción.",
     "noValidItemsForReception": "No se encontraron artículos válidos para recepción. Verifica el detalle del pedido y las cantidades.",
-    "checkInFailed": "Falló el check-in. Inténtalo de nuevo."
+    "checkInFailed": "Falló el check-in. Inténtalo de nuevo.",
+    "ordersInTransit": "Pedidos en Tránsito",
+    "pendingCount": "{count} pendientes"
   },
   "inviteRegister": {
     "validatingInvitation": "Validando invitación...",
@@ -583,5 +585,36 @@
     "statusInProgress": "En Progreso",
     "statusPlanned": "Planificada",
     "continueWithoutDriver": "Continuar sin conductor"
+  },
+  "orderStatuses": {
+    "pending": "Pendiente de Recogida",
+    "assigned": "Asignado",
+    "transit": "En Tránsito",
+    "arrived": "Recibido en Planta",
+    "sorting": "Clasificación",
+    "washing": "Lavado",
+    "drying": "Secado",
+    "ironing": "Planchado",
+    "quality_check": "Control de Calidad",
+    "ready_to_delivery": "Listo para Entrega",
+    "collected": "En Camino a Entrega",
+    "delivered": "Entregado",
+    "completed": "Completado",
+    "invoiced": "Completado",
+    "cancelled": "Cancelado",
+    "rescheduled": "Reprogramado",
+    "in_progress": "En Progreso"
+  },
+  "orderFilters": {
+    "all": "Todos",
+    "inProgress": "En Progreso"
+  },
+  "invoiceStatuses": {
+    "pending": "Pendiente de Pago",
+    "paid": "Pagado",
+    "overdue": "Vencido",
+    "open": "Abierta",
+    "cancelled": "Cancelada",
+    "draft": "Borrador"
   }
 }

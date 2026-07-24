@@ -388,6 +388,7 @@ import {
   getRouteTypeFromOrderStatus,
   isDeliveryAssignableStatus,
   isPickupAssignableStatus,
+  normalizeStatus,
 } from '../../../utils/orderFlow'
 import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
@@ -628,7 +629,6 @@ const assignableOrders = computed(() => {
       ...mapped,
       client: clientName,
       _id: o._id ?? mapped._id,
-      rawStatus: o.status,
       address: resolveAddress(o),
       areaOrProperty: resolveAreaOrProperty(o),
       pickupTimeWindow: formatSlot(o),
@@ -638,7 +638,7 @@ const assignableOrders = computed(() => {
 })
 
 const pickupQueueCount = computed(() =>
-  assignableOrders.value.filter(o => o.routeType === 'Pickup' && String(o.rawStatus) === 'Pending').length
+  assignableOrders.value.filter(o => o.routeType === 'Pickup' && normalizeStatus(o.status) === 'pending').length
 )
 const deliveryQueueCount = computed(() => assignableOrders.value.filter(o => o.routeType === 'Delivery').length)
 
@@ -646,7 +646,7 @@ const pendingOrders = computed(() => {
   const targetType = assignQueue.value === 'delivery' ? 'Delivery' : 'Pickup'
   return assignableOrders.value.filter(o => {
     if (o.routeType !== targetType) return false
-    if (targetType === 'Pickup') return String(o.rawStatus) === 'Pending'
+    if (targetType === 'Pickup') return normalizeStatus(o.status) === 'pending'
     return true
   })
 })

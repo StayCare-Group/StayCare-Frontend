@@ -68,7 +68,7 @@ export function generateOrderPdf(order, t) {
 
   // Status badge (simulated as coloured pill)
   const statusRgb = statusColor(order.status)
-  const statusText = String(order.status || '')
+  const statusText = String(order.statusLabel || order.status || '')
   doc.setFillColor(...statusRgb)
   const pillW = doc.getTextWidth(statusText) + 8
   doc.roundedRect(pageW - margin - pillW, 17, pillW, 6, 1.5, 1.5, 'F')

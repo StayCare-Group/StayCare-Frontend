@@ -1,6 +1,6 @@
 import { apiFetch } from './client'
 import {
-  COMPLETED_ORDER_STATUSES,
+  normalizeStatus,
   getRouteStopProgressStatus,
   getRouteTypeFromOrderStatus,
 } from '../utils/orderFlow'
@@ -66,7 +66,10 @@ export function mapRouteForDriver(route: any) {
   const routeId = route._id ?? route.id
   const orders = Array.isArray(route.orders) ? route.orders : []
   const completedCount = orders.filter(
-    (o: any) => COMPLETED_ORDER_STATUSES.includes(o.status)
+    (o: any) => {
+      const s = normalizeStatus(o.status)
+      return s === 'delivered' || s === 'completed' || s === 'invoiced'
+    }
   ).length
   const pickupCount = orders.filter((o: any) => getRouteTypeFromOrderStatus(o.status) === 'Pickup').length
   const deliveryCount = orders.length - pickupCount
@@ -122,7 +125,7 @@ export function mapRouteForDriver(route: any) {
         estimatedBags: o.estimated_bags ?? 0,
         actualBags: o.actual_bags ?? null,
         status: getRouteStopProgressStatus(o.status),
-        originalStatus: o.status,
+        originalStatus: normalizeStatus(o.status),
         notes: o.special_notes ?? '',
         photos: [],
         signature: false,

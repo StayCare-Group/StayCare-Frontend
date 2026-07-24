@@ -37,7 +37,7 @@
       </AppButton>
       <!-- Cancel order (admin only) -->
       <AppButton
-        v-if="order && isAdmin && (order.status === 'Pending Pickup' || order.status === 'Assigned')"
+        v-if="order && isAdmin && isCancelableStatus(order.status)"
         variant="danger"
         size="sm"
         @click="showCancelModal = true"
@@ -238,6 +238,7 @@ import { fetchOrderById, mapOrderForDetail, updateOrder, deleteOrder } from '../
 import { fetchClientById } from '../../../api/clients'
 import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
+import { isCancelableStatus } from '../../../utils/orderFlow'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -420,8 +421,9 @@ async function loadOrder() {
     }
 
     order.value = mapped
-  } catch {
+  } catch (err) {
     order.value = null
+    uiStore.showError(err?.message || t('orderDetail.orderNotFound'))
   } finally {
     loading.value = false
   }

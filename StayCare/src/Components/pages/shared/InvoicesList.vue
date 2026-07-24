@@ -35,7 +35,7 @@
         <span class="text-gray-500">{{ value }}</span>
       </template>
       <template #cell-status="{ value }">
-        <StatusBadge :status="value" />
+        <StatusBadge :status="value" type="invoice" />
       </template>
       <template #cell-grandTotal="{ value }">
         <span class="font-semibold text-gray-800">&euro;{{ value.toFixed(2) }}</span>

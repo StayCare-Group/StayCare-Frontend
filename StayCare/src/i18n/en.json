@@ -501,7 +501,9 @@
     "cameraAccessError": "Unable to access camera. Check browser permissions.",
     "checkInNotEligible": "This order is not eligible for check-in in Reception.",
     "noValidItemsForReception": "No valid order items found for reception. Please verify the order detail and quantities.",
-    "checkInFailed": "Check-in failed. Please try again."
+    "checkInFailed": "Check-in failed. Please try again.",
+    "ordersInTransit": "Orders in Transit",
+    "pendingCount": "{count} pending"
   },
   "inviteRegister": {
     "validatingInvitation": "Validating invitation...",
@@ -583,5 +585,36 @@
     "statusInProgress": "In Progress",
     "statusPlanned": "Planned",
     "continueWithoutDriver": "Continue without driver"
+  },
+  "orderStatuses": {
+    "pending": "Pending Pickup",
+    "assigned": "Assigned",
+    "transit": "In Transit",
+    "arrived": "Received at Facility",
+    "sorting": "Sorting",
+    "washing": "Washing",
+    "drying": "Drying",
+    "ironing": "Ironing",
+    "quality_check": "Quality Control",
+    "ready_to_delivery": "Ready for Delivery",
+    "collected": "Out for Delivery",
+    "delivered": "Delivered",
+    "completed": "Completed",
+    "invoiced": "Completed",
+    "cancelled": "Cancelled",
+    "rescheduled": "Rescheduled",
+    "in_progress": "In Progress"
+  },
+  "orderFilters": {
+    "all": "All",
+    "inProgress": "In Progress"
+  },
+  "invoiceStatuses": {
+    "pending": "Pending Payment",
+    "paid": "Paid",
+    "overdue": "Overdue",
+    "open": "Open",
+    "cancelled": "Cancelled",
+    "draft": "Draft"
   }
 }

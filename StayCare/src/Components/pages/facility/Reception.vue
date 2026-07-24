@@ -54,8 +54,8 @@
     <!-- Orders ready to receive -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
-        <h3 class="text-sm font-semibold text-gray-700">Orders in Transit</h3>
-        <span class="text-xs text-gray-500">{{ receivableOrders.length }} pending</span>
+        <h3 class="text-sm font-semibold text-gray-700">{{ $t('facility.ordersInTransit') }}</h3>
+        <span class="text-xs text-gray-500">{{ $t('facility.pendingCount', { count: receivableOrders.length }) }}</span>
       </div>
       <div v-if="receivableOrders.length" class="divide-y divide-gray-100">
         <div v-for="order in receivableOrders" :key="order._id" class="px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -190,7 +190,7 @@ import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
-import { fetchOrderById, fetchOrders, mapOrderForDetail, mapStatus } from '../../../api/orders'
+import { fetchOrderById, fetchOrders, mapOrderForDetail } from '../../../api/orders'
 import { receiveAtFacility } from '../../../api/orders'
 import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { useUiStore } from '../../../stores/ui.js'
@@ -235,11 +235,11 @@ onBeforeUnmount(() => {
 
 const recentCheckins = computed(() =>
   allOrders.value
-    .filter(o => ['Arrived', 'Washing', 'Drying', 'Ironing', 'QualityCheck'].includes(o.status))
+    .filter(o => ['arrived', 'washing', 'drying', 'ironing', 'quality_check'].includes(o.status))
     .map(o => ({
       id: o.order_number ?? o._id,
       client: o.client?.name ?? o.client ?? '',
-      status: mapStatus(o.status),
+      status: o.status,
     }))
 )
 

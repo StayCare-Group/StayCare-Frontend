@@ -1,5 +1,6 @@
 import { apiFetch } from './client'
 import { getClientAddress, getClientDisplayName, getClientId } from '../utils/client'
+import { normalizeStatus } from '../utils/orderFlow'
 
 export async function fetchOrders(params?: Record<string, string>) {
   const query = params ? '?' + new URLSearchParams(params).toString() : ''
@@ -142,23 +143,28 @@ export async function deleteOrder(id: string) {
   })
 }
 
-const STATUS_MAP: Record<string, string> = {
-  Pending: 'Pending Pickup',
-  Assigned: 'Assigned',
-  Transit: 'In Transit',
-  Arrived: 'Received at Facility',
-  QualityCheck: 'Quality Control',
-  ReadyToDeliver: 'Ready for Delivery',
-  Collected: 'Out for Delivery',
-  Invoiced: 'Completed',
-  Cancelled: 'Cancelled',
-}
-
-export function mapStatus(backendStatus: string): string {
-  if (!backendStatus) return ''
-  const normalized = String(backendStatus)
-  const key = normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase()
-  return STATUS_MAP[normalized] ?? STATUS_MAP[key] ?? normalized
+/**
+ * English display labels for order statuses.
+ * Used exclusively for non-i18n contexts such as PDF generation.
+ * All UI components must use StatusBadge + i18n for display.
+ */
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending Pickup',
+  assigned: 'Assigned',
+  transit: 'In Transit',
+  arrived: 'Received at Facility',
+  sorting: 'Sorting',
+  washing: 'Washing',
+  drying: 'Drying',
+  ironing: 'Ironing',
+  quality_check: 'Quality Control',
+  ready_to_delivery: 'Ready for Delivery',
+  collected: 'Out for Delivery',
+  delivered: 'Delivered',
+  completed: 'Completed',
+  invoiced: 'Completed',
+  cancelled: 'Cancelled',
+  rescheduled: 'Rescheduled',
 }
 
 function formatDate(dateStr: string): string {
@@ -201,6 +207,7 @@ function formatDateTime(dateStr: string): string {
 
 export function mapOrderForList(o: any) {
   const clientObj = typeof o.client === 'object' && o.client ? o.client : null
+  const canonicalStatus = normalizeStatus(o.status)
   return {
     id: o.order_number ?? o._id ?? o.id,
     _id: o._id ?? o.id,
@@ -210,7 +217,7 @@ export function mapOrderForList(o: any) {
     serviceType: o.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)',
     estimatedBags: o.estimated_bags ?? 0,
     actualBags: o.actual_bags ?? null,
-    status: mapStatus(o.status),
+    status: canonicalStatus,
     total: Number(o.total ?? o.pricing_snapshot?.total ?? 0),
     specialNotes: o.special_notes ?? '',
     propertyName: o.property_name ?? '',
@@ -257,6 +264,8 @@ export function mapOrderForDetail(o: any) {
   const propertyContactPerson = property?.contact_person ?? property?.contact_name ?? ''
   const propertyPhone = property?.phone ?? property?.contact_phone ?? ''
 
+  const canonicalStatus = normalizeStatus(o.status)
+
   return {
     id: o.order_number ?? o._id ?? o.id,
     _id: o._id ?? o.id,
@@ -269,7 +278,10 @@ export function mapOrderForDetail(o: any) {
     pickupAddress: address,
     deliveryAddress: address,
     serviceType: o.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)',
-    status: mapStatus(o.status),
+    status: canonicalStatus,
+    // statusLabel: English display label used only for PDF generation.
+    // All UI components use StatusBadge + i18n for translated display.
+    statusLabel: STATUS_LABELS[canonicalStatus] ?? canonicalStatus,
     createdAt: o.created_at ?? '',
     pickupDate: formatDate(o.pickup_date),
     pickupTimeWindow: pickupWindowStart && pickupWindowEnd
@@ -288,7 +300,7 @@ export function mapOrderForDetail(o: any) {
       unitPrice: Number(i.unit_price ?? 0),
     })),
     timeline: (o.status_history ?? []).map((h: any) => ({
-      status: mapStatus(h.status),
+      status: STATUS_LABELS[h.status] ?? h.status,
       date: formatDateTime(h.timestamp ?? h.changed_at),
       note: formatTimelineNote(h.note ?? '', driverObj?.name ?? o.driver_name ?? ''),
     })),
