@@ -169,11 +169,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
-  const s = String(dateStr)
-  // Plain YYYY-MM-DD with no time component – return as-is
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
-  // ISO datetime (e.g. "2026-03-09T23:00:00.000Z") – parse and use LOCAL date parts
-  // so the browser's timezone (Malta UTC+1) resolves to the correct calendar day
+  const s = String(dateStr).trim()
+  const match = s.match(/^(\d{4}-\d{2}-\d{2})/)
+  if (match) return match[1]
   const d = new Date(s)
   if (isNaN(d.getTime())) return ''
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`

@@ -9,7 +9,7 @@
       <h2 class="text-lg font-semibold text-brand-700">{{ title }}</h2>
     </div>
 
-    <form @submit.prevent="submitOrder" class="space-y-6">
+    <form @submit.prevent="submitOrder" novalidate class="space-y-6">
       <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
         <h3 v-if="isAdmin" class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{
           t('admin.selectClient') }}</h3>
@@ -59,24 +59,12 @@
           <p v-if="loadingClient" class="text-xs text-gray-400 mt-1">{{ t('common.loading') }}</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">{{ t('admin.pickupDate') }}</label>
-            <input v-model="form.pickupDate" type="date" required :min="today"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">{{ t('admin.timeWindow') }}</label>
-            <select v-model="form.pickupTimeWindow" required
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none">
-              <option value="">{{ t('admin.selectTimeWindow') }}</option>
-              <option v-for="tw in timeWindows" :key="tw" :value="tw">{{ tw }}</option>
-            </select>
-            <p v-if="!timeWindows.length && !isAdmin" class="text-xs text-amber-500 mt-1">
-              {{ t('admin.noTimeWindows') }}
-            </p>
-          </div>
-        </div>
+        <PickupWindowFields
+          v-model:pickup-date="form.pickupDate"
+          v-model:pickup-time-window="form.pickupTimeWindow"
+          :is-admin-or-staff="isAdminOrStaff"
+          :min-date="todayStr"
+        />
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -208,6 +196,9 @@ import { createOrder } from '../../../api/orders'
 import { getUsers, fetchMe } from '../../../api/users'
 import { getPropertiesByUserId } from '../../../api/properties'
 
+import PickupWindowFields from '../../forms/PickupWindowFields.vue'
+import { getTodayDateString, isPastDate } from '../../../utils/date'
+
 const props = defineProps({
   mode: {
     type: String,
@@ -221,13 +212,12 @@ const navStore = useNavStore()
 const authStore = useAuthStore()
 
 const isAdmin = computed(() => props.mode === 'admin')
+const isAdminOrStaff = computed(() => isAdmin.value || authStore.user?.role === 'staff' || authStore.user?.role === 'admin')
 const title = computed(() => isAdmin.value ? t('admin.createOrderTitle') : t('client.createOrderTitle'))
 
 const VAT_RATE = 0.18
 const SERVICE_TYPES = ['Standard (48h)']
-const _now = new Date()
-const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
-const ALL_TIME_WINDOWS = ['08:00 - 10:00', '09:00 - 11:00', '10:00 - 12:00', '13:00 - 15:00', '14:00 - 16:00', '15:00 - 17:00']
+const todayStr = computed(() => getTodayDateString())
 
 const form = reactive({
   clientId: '',
@@ -237,24 +227,6 @@ const form = reactive({
   serviceType: 'Standard (48h)',
   estimatedBags: 1,
   specialNotes: '',
-})
-
-const timeWindows = computed(() => {
-  if (isAdmin.value) return ALL_TIME_WINDOWS
-  if (form.pickupDate && form.pickupDate !== today) return ALL_TIME_WINDOWS
-  const now = new Date()
-  const nowMinutes = now.getHours() * 60 + now.getMinutes()
-  return ALL_TIME_WINDOWS.filter(tw => {
-    const [startStr] = tw.split(' - ')
-    const [h, m] = startStr.split(':').map(Number)
-    return (h * 60 + m + 30) > nowMinutes
-  })
-})
-
-watch(() => form.pickupDate, () => {
-  if (form.pickupTimeWindow && !timeWindows.value.includes(form.pickupTimeWindow)) {
-    form.pickupTimeWindow = ''
-  }
 })
 
 const clients = ref([])
@@ -417,6 +389,11 @@ async function submitOrder() {
     errorMessage.value = `${t('admin.noClients')} ${t('admin.noClientsCreateHint')}`
     return
   }
+  if (isPastDate(form.pickupDate)) {
+    errorMessage.value = t('admin.pickupDateInPast')
+    return
+  }
+
   submitting.value = true
 
   try {

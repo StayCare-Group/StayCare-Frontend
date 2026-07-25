@@ -117,15 +117,12 @@
       <form class="bg-white rounded-xl shadow-sm p-5 space-y-4" @submit.prevent="handleCreateRoute">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('routePlanner.manualRouteTitle') }}</h3>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('routePlanner.date') }}</label>
-          <input
-            v-model="form.date"
-            type="date"
-            required
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-          />
-        </div>
+        <PickupWindowFields
+          v-model:pickup-date="form.date"
+          :show-time-window="false"
+          :label="$t('routePlanner.date')"
+          :min-date="todayStr"
+        />
 
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.driver') }}</label>
@@ -393,6 +390,8 @@ import {
 import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
+import PickupWindowFields from '../../forms/PickupWindowFields.vue'
+import { getTodayDateString, normalizeDateString, isPastDate } from '../../../utils/date'
 
 
 const navStore = useNavStore()
@@ -467,9 +466,11 @@ watch(bgAutoAssignEnabled, (v) => {
   else stopPolling()
 })
 
+const todayStr = computed(() => getTodayDateString())
+
 /* ── Manual form state ── */
 const form = reactive({
-  date: localDateStr(),
+  date: getTodayDateString(),
   driverId: '',
   area: '',
 })
@@ -693,18 +694,6 @@ function getOrderAddress(o) {
   return resolveAddress(o)
 }
 
-function normalizeDate(dateVal) {
-  if (!dateVal) return ''
-  const s = String(dateVal)
-  // If plain YYYY-MM-DD (no time component), return as-is
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
-  // For ISO datetime strings (e.g. "2026-03-09T23:00:00.000Z"),
-  // parse and use LOCAL date parts so UTC+1 server dates resolve correctly
-  const d = new Date(s)
-  if (isNaN(d.getTime())) return ''
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-}
-
 function buildAutoPreview(targetDate) {
   const targetStr = targetDate // YYYY-MM-DD
   const assigned = assignedOrderIds.value
@@ -712,7 +701,7 @@ function buildAutoPreview(targetDate) {
   const ordersForDate = rawOrders.value.filter(o => {
     if (!['Pending', 'Assigned'].includes(o.status)) return false
     if (assigned.has(o._id ?? o.id)) return false
-    const pDate = normalizeDate(o.pickup_date)
+    const pDate = normalizeDateString(o.pickup_date)
     return pDate === targetStr
   })
 
@@ -890,6 +879,10 @@ async function confirmAutoAssign() {
 /* ── Manual route creation ── */
 async function handleCreateRoute() {
   if (!form.driverId || !form.date || !form.area || !selectedOrderIds.value.length) return
+  if (isPastDate(form.date)) {
+    errorMessage.value = t('admin.pickupDateInPast')
+    return
+  }
   submitting.value = true
   errorMessage.value = ''
   successMessage.value = ''

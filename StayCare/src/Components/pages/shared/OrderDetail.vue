@@ -134,23 +134,14 @@
     :loading="editSubmitting"
     @close="showEditModal = false"
   >
-    <form id="editOrderForm" @submit.prevent="submitEdit" class="space-y-5">
+    <form id="editOrderForm" @submit.prevent="submitEdit" novalidate class="space-y-5">
       <!-- Pickup date & time window -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.pickupDate') }}</label>
-          <input v-model="editForm.pickupDate" type="date" required
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.timeWindow') }}</label>
-          <select v-model="editForm.pickupTimeWindow" required
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none">
-            <option value="">{{ $t('admin.selectTimeWindow') }}</option>
-            <option v-for="tw in ALL_TIME_WINDOWS" :key="tw" :value="tw">{{ tw }}</option>
-          </select>
-        </div>
-      </div>
+      <PickupWindowFields
+        v-model:pickup-date="editForm.pickupDate"
+        v-model:pickup-time-window="editForm.pickupTimeWindow"
+        :is-admin-or-staff="isAdminOrStaff"
+        :min-date="todayStr"
+      />
 
       <!-- Estimated bags & special notes -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -225,6 +216,8 @@ import { fetchClientById } from '../../../api/clients'
 import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
 import { isCancelableStatus } from '../../../utils/orderFlow'
+import PickupWindowFields from '../../forms/PickupWindowFields.vue'
+import { getTodayDateString, normalizeDateString, isPastDate } from '../../../utils/date'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -313,12 +306,22 @@ async function openEditModal() {
   }
 }
 
+const todayStr = computed(() => getTodayDateString())
+
 async function submitEdit() {
   if (editSubmitting.value) return
   if (order.value?.isInvoiced) {
     editError.value = t('orderDetail.cannotEditInvoicedOrder')
     return
   }
+
+  const origDate = normalizeDateString(order.value?.pickupDate)
+  const newDate = normalizeDateString(editForm.pickupDate)
+  if (newDate !== origDate && isPastDate(newDate)) {
+    editError.value = t('admin.pickupDateInPast')
+    return
+  }
+
   editSubmitting.value = true
   editError.value = ''
   try {

@@ -197,6 +197,7 @@
     "timeWindow": "Time Window",
     "selectTimeWindow": "Select time window",
     "noTimeWindows": "No time windows available for today — please choose a later date.",
+    "pickupDateInPast": "The pickup date cannot be in the past.",
     "serviceType": "Service Type",
     "estimatedBags": "Estimated Bags",
     "estimatedItems": "Estimated Items",

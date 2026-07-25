@@ -197,6 +197,7 @@
     "timeWindow": "Ventana de Tiempo",
     "selectTimeWindow": "Seleccionar ventana de tiempo",
     "noTimeWindows": "No hay ventanas disponibles para hoy — elija una fecha posterior.",
+    "pickupDateInPast": "La fecha de recogida no puede ser anterior a hoy.",
     "serviceType": "Tipo de Servicio",
     "estimatedBags": "Bolsas Estimadas",
     "estimatedItems": "Artículos Estimados",
