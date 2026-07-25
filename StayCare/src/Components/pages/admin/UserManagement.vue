@@ -8,53 +8,56 @@
     </div>
 
     <!-- Invite Modal -->
-    <div v-if="showInviteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      @click.self="closeInviteModal">
-      <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ $t('admin.inviteNewUser') }}</h3>
+    <AppModal
+      :show="showInviteModal"
+      :title="$t('admin.inviteNewUser')"
+      size="md"
+      :close-on-backdrop="false"
+      :loading="inviteSending"
+      @close="closeInviteModal"
+    >
+      <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.email') }}</label>
+      <input type="email" v-model="inviteEmail" placeholder="user@example.com"
+        class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40" />
 
-        <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.email') }}</label>
-        <input type="email" v-model="inviteEmail" placeholder="user@example.com"
+      <label class="block text-sm font-medium text-gray-600 mt-4 mb-1">{{ $t('common.role') }}</label>
+      <div class="flex gap-2 flex-wrap">
+        <button v-for="r in roleOptions" :key="r.value" @click="inviteRole = r.value"
+          class="flex-1 min-w-[92px] py-2 rounded-lg text-sm font-medium border-2 transition-colors" :class="inviteRole === r.value
+            ? 'border-brand-700 bg-brand-150 text-brand-700'
+            : 'border-gray-200 text-gray-500 hover:border-gray-300'">{{ r.label }}</button>
+      </div>
+
+      <div v-if="isClientInvite" class="mt-4 space-y-3">
+        <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.name') }}</label>
+        <input type="text" v-model="inviteClientName"
           class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40" />
 
-        <label class="block text-sm font-medium text-gray-600 mt-4 mb-1">{{ $t('common.role') }}</label>
-        <div class="flex gap-2 flex-wrap">
-          <button v-for="r in roleOptions" :key="r.value" @click="inviteRole = r.value"
-            class="flex-1 min-w-[92px] py-2 rounded-lg text-sm font-medium border-2 transition-colors" :class="inviteRole === r.value
-              ? 'border-brand-700 bg-brand-150 text-brand-700'
-              : 'border-gray-200 text-gray-500 hover:border-gray-300'">{{ r.label }}</button>
-        </div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.phone') }}</label>
+        <input type="tel" v-model="inviteClientPhone"
+          class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40" />
 
-        <div v-if="isClientInvite" class="mt-4 space-y-3">
-          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.name') }}</label>
-          <input type="text" v-model="inviteClientName"
-            class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40" />
-
-          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('settings.phone') }}</label>
-          <input type="tel" v-model="inviteClientPhone"
-            class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40" />
-
-          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('auth.password') }}</label>
-          <input type="password" v-model="inviteClientPassword"
-            class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40" />
-        </div>
-
-        <p v-if="inviteError" class="text-red-500 text-sm mt-3">{{ inviteError }}</p>
-        <p v-if="inviteSuccess" class="text-green-600 text-sm mt-3">{{ inviteSuccess }}</p>
-        <p v-if="inviteLink" class="text-xs text-gray-500 mt-2 break-all bg-gray-50 p-2 rounded">
-          <span class="font-medium text-gray-700">{{ $t('admin.backupLink') }}</span> {{ inviteLink }}
-        </p>
-
-        <div class="flex flex-col sm:flex-row gap-3 mt-6">
-          <button @click="closeInviteModal"
-            class="flex-1 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">{{
-              $t('common.cancel') }}</button>
-          <AppButton class="flex-1" @click="handleInvite" :loading="inviteSending">
-            {{ isClientInvite ? $t('admin.createClientAccount') : $t('admin.sendInvitation') }}
-          </AppButton>
-        </div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('auth.password') }}</label>
+        <input type="password" v-model="inviteClientPassword"
+          class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40" />
       </div>
-    </div>
+
+      <p v-if="inviteError" class="text-red-500 text-sm mt-3">{{ inviteError }}</p>
+      <p v-if="inviteSuccess" class="text-green-600 text-sm mt-3">{{ inviteSuccess }}</p>
+      <p v-if="inviteLink" class="text-xs text-gray-500 mt-2 break-all bg-gray-50 p-2 rounded">
+        <span class="font-medium text-gray-700">{{ $t('admin.backupLink') }}</span> {{ inviteLink }}
+      </p>
+
+      <template #footer>
+        <button @click="closeInviteModal" :disabled="inviteSending"
+          class="flex-1 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-50">
+          {{ $t('common.cancel') }}
+        </button>
+        <AppButton class="flex-1" @click="handleInvite" :loading="inviteSending">
+          {{ isClientInvite ? $t('admin.createClientAccount') : $t('admin.sendInvitation') }}
+        </AppButton>
+      </template>
+    </AppModal>
 
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
 
@@ -171,6 +174,7 @@ import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
+import AppModal from '../../ui/AppModal.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { getUsers } from '../../../api/users'
 import { createInvitation } from '../../../api/invitations'

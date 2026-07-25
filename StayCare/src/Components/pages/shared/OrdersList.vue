@@ -64,24 +64,12 @@
     </DataTable>
 
     <!-- Cancellation Confirmation Modal -->
-    <Teleport to="body">
-      <div v-if="orderToCancel" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
-          <h3 class="text-base font-semibold text-gray-900">{{ $t('admin.cancelConfirmTitle') }}</h3>
-          <p class="text-sm text-gray-600">
-            {{ $t('admin.cancelConfirmMessage', { id: orderToCancel.id }) }}
-          </p>
-          <div class="flex justify-end gap-3 pt-2">
-            <AppButton variant="secondary" size="sm" :disabled="cancelling" @click="orderToCancel = null">
-              {{ $t('common.cancel') }}
-            </AppButton>
-            <AppButton variant="danger" size="sm" :loading="cancelling" @click="handleCancelOrder">
-              {{ $t('admin.cancelOrder') }}
-            </AppButton>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <CancelOrderModal
+      :show="Boolean(orderToCancel)"
+      :order="orderToCancel"
+      @close="orderToCancel = null"
+      @success="loadOrders"
+    />
   </div>
 </template>
 
@@ -92,10 +80,11 @@ import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
+import CancelOrderModal from '../../ui/CancelOrderModal.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
-import { fetchAllOrders, deleteOrder, mapOrderForList } from '../../../api/orders'
+import { fetchAllOrders, mapOrderForList } from '../../../api/orders'
 import { fetchMe } from '../../../api/users'
 import { isClientProfileCompleteForOrder } from '../../../utils/orderEligibility'
 import { isCancelableStatus } from '../../../utils/orderFlow'
@@ -113,7 +102,6 @@ const loading = ref(true)
 const canCreateOrder = ref(false)
 
 const orderToCancel = ref(null)
-const cancelling = ref(false)
 
 const loadOrders = async () => {
   try {
@@ -142,21 +130,6 @@ onMounted(loadOrders)
 
 const promptCancelOrder = (item) => {
   orderToCancel.value = item
-}
-
-const handleCancelOrder = async () => {
-  if (!orderToCancel.value) return
-  try {
-    cancelling.value = true
-    await deleteOrder(orderToCancel.value._id)
-    uiStore.showSuccess(t('admin.cancelSuccess'))
-    orderToCancel.value = null
-    await loadOrders()
-  } catch (err) {
-    uiStore.showError(err?.message || t('admin.cancelError'))
-  } finally {
-    cancelling.value = false
-  }
 }
 
 const filters = computed(() => [

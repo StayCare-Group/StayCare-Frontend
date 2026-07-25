@@ -126,115 +126,101 @@
   </div>
 
   <!-- Edit Order Modal -->
-  <Teleport to="body">
-    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 class="text-base font-semibold text-brand-700">{{ $t('admin.editOrder') }}</h3>
-          <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+  <AppModal
+    :show="showEditModal"
+    :title="$t('admin.editOrder')"
+    size="xl"
+    :close-on-backdrop="false"
+    :loading="editSubmitting"
+    @close="showEditModal = false"
+  >
+    <form id="editOrderForm" @submit.prevent="submitEdit" class="space-y-5">
+      <!-- Pickup date & time window -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.pickupDate') }}</label>
+          <input v-model="editForm.pickupDate" type="date" required
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
         </div>
-
-        <form @submit.prevent="submitEdit" class="px-6 py-5 space-y-5">
-          <!-- Pickup date & time window -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.pickupDate') }}</label>
-              <input v-model="editForm.pickupDate" type="date" required
-                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.timeWindow') }}</label>
-              <select v-model="editForm.pickupTimeWindow" required
-                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none">
-                <option value="">{{ $t('admin.selectTimeWindow') }}</option>
-                <option v-for="tw in ALL_TIME_WINDOWS" :key="tw" :value="tw">{{ tw }}</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Estimated bags & special notes -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.estimatedBags') }}</label>
-              <input v-model.number="editForm.estimatedBags" type="number" min="1" required
-                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.specialNotes') }}</label>
-            <textarea v-model="editForm.specialNotes" rows="3"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
-              :placeholder="$t('admin.specialNotesPlaceholder')"></textarea>
-          </div>
-
-          <!-- Items -->
-          <div>
-            <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">{{ $t('admin.estimatedItems') }}</h4>
-            <div v-if="editLoadingItems" class="text-sm text-gray-400">{{ $t('common.loading') }}</div>
-            <div v-else class="divide-y divide-gray-100">
-              <div v-for="item in editItems" :key="item.code" class="flex items-center justify-between py-3 gap-4">
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-800">{{ item.name }} <span class="text-xs text-gray-400">({{ item.code }})</span></p>
-                  <p class="text-xs text-gray-400">&euro;{{ item.unitPrice.toFixed(2) }} / unit</p>
-                </div>
-                <input v-model.number="editItemQtys[item.code]" type="number" min="0"
-                  class="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-                  placeholder="0" />
-              </div>
-            </div>
-          </div>
-
-          <p v-if="editError" class="text-sm text-red-500">{{ editError }}</p>
-
-          <div class="flex gap-3 pt-2">
-            <AppButton type="submit" size="md" :loading="editSubmitting">
-              {{ $t('admin.saveChanges') }}
-            </AppButton>
-            <button type="button" @click="showEditModal = false"
-              class="bg-gray-100 text-gray-600 font-medium py-2 px-5 rounded-lg hover:bg-gray-200 transition text-sm">
-              {{ $t('common.cancel') }}
-            </button>
-          </div>
-        </form>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.timeWindow') }}</label>
+          <select v-model="editForm.pickupTimeWindow" required
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none">
+            <option value="">{{ $t('admin.selectTimeWindow') }}</option>
+            <option v-for="tw in ALL_TIME_WINDOWS" :key="tw" :value="tw">{{ tw }}</option>
+          </select>
+        </div>
       </div>
-    </div>
-  </Teleport>
+
+      <!-- Estimated bags & special notes -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.estimatedBags') }}</label>
+          <input v-model.number="editForm.estimatedBags" type="number" min="1" required
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.specialNotes') }}</label>
+        <textarea v-model="editForm.specialNotes" rows="3"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
+          :placeholder="$t('admin.specialNotesPlaceholder')"></textarea>
+      </div>
+
+      <!-- Items -->
+      <div>
+        <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">{{ $t('admin.estimatedItems') }}</h4>
+        <div v-if="editLoadingItems" class="text-sm text-gray-400">{{ $t('common.loading') }}</div>
+        <div v-else class="divide-y divide-gray-100">
+          <div v-for="item in editItems" :key="item.code" class="flex items-center justify-between py-3 gap-4">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800">{{ item.name }} <span class="text-xs text-gray-400">({{ item.code }})</span></p>
+              <p class="text-xs text-gray-400">&euro;{{ item.unitPrice.toFixed(2) }} / unit</p>
+            </div>
+            <input v-model.number="editItemQtys[item.code]" type="number" min="0"
+              class="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
+              placeholder="0" />
+          </div>
+        </div>
+      </div>
+
+      <p v-if="editError" class="text-sm text-red-500">{{ editError }}</p>
+    </form>
+
+    <template #footer>
+      <AppButton form="editOrderForm" type="submit" size="md" :loading="editSubmitting">
+        {{ $t('admin.saveChanges') }}
+      </AppButton>
+      <button type="button" @click="showEditModal = false" :disabled="editSubmitting"
+        class="bg-gray-100 text-gray-600 font-medium py-2 px-5 rounded-lg hover:bg-gray-200 transition text-sm disabled:opacity-50">
+        {{ $t('common.cancel') }}
+      </button>
+    </template>
+  </AppModal>
 
   <!-- Cancel Order Modal -->
-  <Teleport to="body">
-    <div v-if="showCancelModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
-        <h3 class="text-base font-semibold text-gray-900">{{ $t('admin.cancelConfirmTitle') }}</h3>
-        <p class="text-sm text-gray-600">
-          {{ $t('admin.cancelConfirmMessage', { id: order?.id }) }}
-        </p>
-        <div class="flex justify-end gap-3 pt-2">
-          <AppButton variant="secondary" size="sm" :disabled="cancelling" @click="showCancelModal = false">
-            {{ $t('common.cancel') }}
-          </AppButton>
-          <AppButton variant="danger" size="sm" :loading="cancelling" @click="handleCancelOrder">
-            {{ $t('admin.cancelOrder') }}
-          </AppButton>
-        </div>
-      </div>
-    </div>
-  </Teleport>
+  <CancelOrderModal
+    :show="showCancelModal"
+    :order="order"
+    @close="showCancelModal = false"
+    @success="loadOrder"
+  />
 </template>
 
 <script setup>
 import { ref, computed, reactive, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AppModal from '../../ui/AppModal.vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import OrderTimeline from '../../ui/OrderTimeline.vue'
 import AppButton from '../../ui/AppButton.vue'
 import DataTable from '../../ui/DataTable.vue'
+import CancelOrderModal from '../../ui/CancelOrderModal.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
-import { fetchOrderById, mapOrderForDetail, updateOrder, deleteOrder } from '../../../api/orders'
+import { fetchOrderById, mapOrderForDetail, updateOrder } from '../../../api/orders'
 import { fetchClientById } from '../../../api/clients'
 import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
@@ -250,7 +236,6 @@ const loading = ref(true)
 const generatingPdf = ref(false)
 
 const showCancelModal = ref(false)
-const cancelling = ref(false)
 
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
@@ -258,21 +243,6 @@ const isAdminOrStaff = computed(() => {
   const role = authStore.user?.role ?? ''
   return role === 'admin' || role === 'staff'
 })
-
-const handleCancelOrder = async () => {
-  if (!order.value) return
-  try {
-    cancelling.value = true
-    await deleteOrder(order.value._id)
-    uiStore.showSuccess(t('admin.cancelSuccess'))
-    showCancelModal.value = false
-    await loadOrder()
-  } catch (err) {
-    uiStore.showError(err?.message || t('admin.cancelError'))
-  } finally {
-    cancelling.value = false
-  }
-}
 
 async function downloadPdf() {
   if (!order.value || generatingPdf.value) return
