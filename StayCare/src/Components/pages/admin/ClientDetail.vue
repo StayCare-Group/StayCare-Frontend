@@ -144,7 +144,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchUserById, updateUserById } from '../../../api/users'
-import { fetchOrders, mapOrderForList } from '../../../api/orders'
+import { fetchAllOrders, mapOrderForList } from '../../../api/orders'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import ClientPropertiesManager from '../shared/ClientPropertiesManager.vue'
@@ -241,7 +241,7 @@ onMounted(async () => {
 
     const [clientData, ordersData] = await Promise.all([
       fetchUserById(id),
-      fetchOrders({ client: id }).catch(() => []),
+      fetchAllOrders({ client_id: id }).catch(() => []),
     ])
 
     client.value = normalizeClientDetailResponse(clientData)
