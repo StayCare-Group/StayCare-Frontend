@@ -87,6 +87,21 @@
             <template #cell-qty="{ value }">
               <span class="text-gray-700">{{ value }}</span>
             </template>
+            <template #cell-qtyGood="{ value }">
+              <span :class="value != null ? 'text-green-600 font-medium' : 'text-gray-300'">
+                {{ value ?? '—' }}
+              </span>
+            </template>
+            <template #cell-qtyBad="{ value }">
+              <span :class="value != null && value > 0 ? 'text-red-500 font-medium' : value != null ? 'text-gray-400' : 'text-gray-300'">
+                {{ value ?? '—' }}
+              </span>
+            </template>
+            <template #cell-qtyStained="{ value }">
+              <span :class="value != null && value > 0 ? 'text-orange-500 font-medium' : value != null ? 'text-gray-400' : 'text-gray-300'">
+                {{ value ?? '—' }}
+              </span>
+            </template>
             <template #cell-unitPrice="{ value }">
               <span class="text-gray-500">&euro;{{ value.toFixed(2) }}</span>
             </template>
@@ -234,7 +249,7 @@ const isAdmin = computed(() => authStore.user?.role === 'admin')
 
 const isAdminOrStaff = computed(() => {
   const role = authStore.user?.role ?? ''
-  return role === 'admin' || role === 'staff'
+  return role === 'admin' || role === 'staff' || role === 'operator'
 })
 
 async function downloadPdf() {
@@ -355,13 +370,24 @@ async function submitEdit() {
   }
 }
 
-const itemHeaders = computed(() => [
-  { key: 'code', label: t('orderDetail.itemCode') },
-  { key: 'name', label: t('orderDetail.itemName') },
-  { key: 'qty', label: t('orderDetail.quantity'), tdClass: 'text-right', thClass: 'text-right' },
-  { key: 'unitPrice', label: t('orderDetail.unitPrice'), tdClass: 'text-right', thClass: 'text-right' },
-  { key: 'lineTotal', label: t('orderDetail.lineTotal'), tdClass: 'text-right', thClass: 'text-right' },
-])
+const itemHeaders = computed(() => {
+  const base = [
+    { key: 'code', label: t('orderDetail.itemCode') },
+    { key: 'name', label: t('orderDetail.itemName') },
+    { key: 'qty', label: t('orderDetail.quantity'), tdClass: 'text-right', thClass: 'text-right' },
+    { key: 'unitPrice', label: t('orderDetail.unitPrice'), tdClass: 'text-right', thClass: 'text-right' },
+    { key: 'lineTotal', label: t('orderDetail.lineTotal'), tdClass: 'text-right', thClass: 'text-right' },
+  ]
+  // Condition breakdown only for internal roles (staff, admin, operator)
+  if (isAdminOrStaff.value) {
+    base.splice(3, 0,
+      { key: 'qtyGood',    label: t('orderDetail.qtyGood'),    tdClass: 'text-center', thClass: 'text-center' },
+      { key: 'qtyBad',     label: t('orderDetail.qtyBad'),     tdClass: 'text-center', thClass: 'text-center' },
+      { key: 'qtyStained', label: t('orderDetail.qtyStained'), tdClass: 'text-center', thClass: 'text-center' },
+    )
+  }
+  return base
+})
 
 const orderItemRows = computed(() =>
   (order.value?.items ?? []).map(item => ({

@@ -375,7 +375,17 @@
     "unknownError": "Error desconocido",
     "seedFailed": "No se pudieron cargar máquinas. Puede requerir permisos de administrador.",
     "addMachineFailed": "No se pudo agregar la máquina.",
-    "deleteFailed": "No se pudo eliminar la máquina."
+    "deleteFailed": "No se pudo eliminar la máquina.",
+    "qualityCheckModalTitle": "Control de Calidad — Revisión Final",
+    "qualityCheckConfirm": "Confirmar y Liberar para Entrega",
+    "qualityCheckSuccess": "Control de calidad completado. La orden está lista para entrega.",
+    "qualityCheckInstructions": "Revisa la condición de cada prenda. Ajusta los contadores si se eliminaron manchas o se identificaron daños durante el proceso.",
+    "qualityCheckQuantityMismatch": "La suma no coincide con la cantidad total.",
+    "qualityCheckConditionChanged": "Condición actualizada.",
+    "qualityCheckNoteLabel": "Nota interna (opcional)",
+    "qualityCheckNotePlaceholder": "ej: 2 prendas desmanchadas exitosamente",
+    "qualityCheckContinueWithoutChanges": "Continuar sin editar",
+    "qualityCheckSaveAndContinue": "Guardar cambios y continuar"
   },
   "orderDetail": {
     "orderInformation": "Información del Pedido",
@@ -400,7 +410,11 @@
     "selectDateAndWindow": "Seleccione una fecha y una ventana horaria.",
     "rescheduleFailed": "No se pudo reprogramar el pedido.",
     "noItems": "Sin artículos registrados.",
-    "title": "Resumen del Pedido"
+    "title": "Resumen del Pedido",
+    "conditionBreakdown": "Condición",
+    "qtyGood": "Buenas",
+    "qtyBad": "Dañadas",
+    "qtyStained": "Manchadas"
   },
   "orderPdf": {
     "download": "Descargar PDF",

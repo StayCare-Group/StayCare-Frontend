@@ -154,6 +154,14 @@
       </DataTable>
     </div>
   </div>
+
+  <!-- Quality-check modal: opened when advancing from quality_check → ready_to_delivery -->
+  <QualityCheckModal
+    :show="showQualityCheckModal"
+    :order="qualityCheckOrder"
+    @close="showQualityCheckModal = false"
+    @success="onQualityCheckSuccess"
+  />
 </template>
 
 <script setup>
@@ -162,6 +170,7 @@ import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
+import QualityCheckModal from '../../ui/QualityCheckModal.vue'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
 import { fetchOrders, updateOrderStatus } from '../../../api/orders'
@@ -180,6 +189,10 @@ const loading = ref(true)
 const advancing = ref(null)
 const assigning = ref(null)
 const machineSelections = reactive({})
+
+// Quality-check modal state
+const showQualityCheckModal = ref(false)
+const qualityCheckOrder = ref(null)
 
 const showAddMachine = ref(false)
 const addingMachine = ref(false)
@@ -253,9 +266,13 @@ async function loadData() {
       status: normalizeProcessingStatus(raw.status),
       serviceType: raw.service_type === 'express' ? 'Express' : 'Standard',
       items: (raw.items ?? []).map(i => ({
-        code: i.item_code,
-        name: i.name,
-        qty: i.quantity ?? 0,
+        itemId:     i.item_id ?? null,
+        code:       i.item_code ?? i.item_code_snapshot ?? '',
+        name:       i.name ?? i.name_snapshot ?? '',
+        qty:        i.quantity ?? 0,
+        qtyGood:    i.qty_good    ?? null,
+        qtyBad:     i.qty_bad     ?? null,
+        qtyStained: i.qty_stained ?? null,
       })),
     }))
 
@@ -343,6 +360,18 @@ async function advanceOrder(orderId, nextStatus) {
     return
   }
 
+  // When advancing from quality_check to ready_to_delivery, open the
+  // quality-check modal instead of advancing directly.
+  const normalizedNext = normalizeProcessingStatus(nextStatus)
+  if (normalizedNext === 'ready_to_delivery') {
+    const order = allOrders.value.find(o => getOrderId(o) === orderId)
+    if (order) {
+      qualityCheckOrder.value = order
+      showQualityCheckModal.value = true
+      return
+    }
+  }
+
   advancing.value = orderId
   try {
     const assignedMachine = getAssignedMachine(orderId)
@@ -375,6 +404,12 @@ async function advanceOrder(orderId, nextStatus) {
   } finally {
     advancing.value = null
   }
+}
+
+async function onQualityCheckSuccess() {
+  showQualityCheckModal.value = false
+  qualityCheckOrder.value = null
+  await loadData()
 }
 
 async function handleAddMachine() {

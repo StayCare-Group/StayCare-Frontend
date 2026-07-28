@@ -68,7 +68,14 @@ export async function updateOrder(id: string, payload: any) {
   })
 }
 
-export async function updateOrderStatus(id: string, status: string) {
+export async function updateOrderStatus(
+  id: string,
+  status: string,
+  payload?: {
+    items?: { item_id: string; qty_good: number; qty_bad: number; qty_stained: number }[];
+    note?: string;
+  }
+) {
   const raw = String(status ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')
   const normalizedStatus =
     raw === 'qualitycheck' ? 'quality_check' :
@@ -77,7 +84,7 @@ export async function updateOrderStatus(id: string, status: string) {
 
   return apiFetch(`/api/orders/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify({ status: normalizedStatus }),
+    body: JSON.stringify({ status: normalizedStatus, ...payload }),
   })
 }
 
@@ -296,6 +303,10 @@ export function mapOrderForDetail(o: any) {
       name: i.name ?? i.name_snapshot ?? '',
       qty: i.quantity ?? 0,
       unitPrice: Number(i.unit_price ?? 0),
+      // Condition breakdown — only populated after reception; null means not yet validated
+      qtyGood: i.qty_good ?? null,
+      qtyBad: i.qty_bad ?? null,
+      qtyStained: i.qty_stained ?? null,
     })),
     timeline: (o.status_history ?? []).map((h: any) => ({
       status: STATUS_LABELS[h.status] ?? h.status,

@@ -375,7 +375,17 @@
     "unknownError": "Unknown error",
     "seedFailed": "Failed to seed machines. You may need admin permissions.",
     "addMachineFailed": "Failed to add machine.",
-    "deleteFailed": "Failed to delete machine."
+    "deleteFailed": "Failed to delete machine.",
+    "qualityCheckModalTitle": "Quality Control — Final Check",
+    "qualityCheckConfirm": "Confirm & Release for Delivery",
+    "qualityCheckSuccess": "Quality check completed. Order is ready for delivery.",
+    "qualityCheckInstructions": "Review the condition of each item. Adjust counts if any stains were removed or damage was identified during processing.",
+    "qualityCheckQuantityMismatch": "Sum does not match total quantity.",
+    "qualityCheckConditionChanged": "Condition updated.",
+    "qualityCheckNoteLabel": "Internal note (optional)",
+    "qualityCheckNotePlaceholder": "e.g. 2 items successfully de-stained",
+    "qualityCheckContinueWithoutChanges": "Release without changes",
+    "qualityCheckSaveAndContinue": "Save changes & release"
   },
   "orderDetail": {
     "orderInformation": "Order Information",
@@ -400,7 +410,11 @@
     "selectDateAndWindow": "Please select a date and time window.",
     "rescheduleFailed": "Failed to reschedule order.",
     "noItems": "No items recorded.",
-    "title": "Order Summary"
+    "title": "Order Summary",
+    "conditionBreakdown": "Condition",
+    "qtyGood": "Good",
+    "qtyBad": "Damaged",
+    "qtyStained": "Stained"
   },
   "orderPdf": {
     "download": "Download PDF",
