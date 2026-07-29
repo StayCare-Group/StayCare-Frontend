@@ -28,7 +28,7 @@ const props = defineProps({
   },
   logoAlt: {
     type: String,
-    default: 'StayCare logo',
+    default: 'StayCare Group - Malta Laundry & Airbnb Cleaners',
   },
 })
 

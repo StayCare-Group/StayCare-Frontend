@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /logorcreate
+Allow: /login
+Allow: /createaccount
+
+Sitemap: https://app.staycaregroup.com/sitemap.xml

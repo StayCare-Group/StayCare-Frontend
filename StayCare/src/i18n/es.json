@@ -637,5 +637,17 @@
     "open": "Abierta",
     "cancelled": "Cancelada",
     "draft": "Borrador"
+  },
+  "seo": {
+    "defaultTitle": "StayFresh | Malta Lavandería, Servicios de Limpieza Airbnb y Cleaners",
+    "defaultDescription": "StayFresh por StayCare Group ofrece servicios de lavandería comercial y limpieza en Malta. Especialistas en lavandería en Malta, limpieza de entregas Airbnb, tintorería y cleaners profesionales.",
+    "homeTitle": "StayFresh | Lavandería Malta & Limpieza Airbnb Cleaners (StayCare Group)",
+    "homeDescription": "Gestión profesional StayFresh de lavandería, limpieza comercial y servicio de limpieza Airbnb clean en Malta.",
+    "loginTitle": "Iniciar Sesión - StayFresh Malta Lavandería & Limpieza",
+    "loginDescription": "Accede a tu cuenta de StayFresh para gestionar lavandería, pedidos de limpieza comercial y servicios de Airbnb en Malta.",
+    "createAccountTitle": "Crear Cuenta - StayFresh Malta Lavandería & Cleaners",
+    "createAccountDescription": "Registra tu cuenta en StayFresh por StayCare Group para servicios de lavandería comercial, tintorería y limpieza de Airbnb en Malta.",
+    "forgotPasswordTitle": "Recuperar Contraseña - StayFresh Malta Cleaners & Lavandería",
+    "laundryAndCleanersTagline": "StayFresh Lavandería en Malta, Cleaners Comerciales y Servicios Airbnb Clean"
   }
 }

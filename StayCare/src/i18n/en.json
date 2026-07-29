@@ -637,5 +637,17 @@
     "open": "Open",
     "cancelled": "Cancelled",
     "draft": "Draft"
+  },
+  "seo": {
+    "defaultTitle": "StayFresh | StayCare | Malta Laundry, Airbnb Cleaning Services & Commercial Cleaners",
+    "defaultDescription": "Leading commercial laundry management and cleaning services in Malta by StayCare Group. Specializing in Malta lavanderia, Airbnb turnover cleaning, holiday home turnaround, linen hire, dry cleaning, and professional cleaners across Malta.",
+    "homeTitle": "StayFresh | StayCare | Malta Laundry & Airbnb Cleaners",
+    "homeDescription": "Professional laundry management, commercial cleaning and Airbnb turnover clean services in Malta.",
+    "loginTitle": "Login - StayFresh Malta Laundry & Cleaning Services",
+    "loginDescription": "Sign in to your StayFresh account for laundry management, commercial cleaners, and Airbnb cleaning orders in Malta.",
+    "createAccountTitle": "Create Account - StayFresh Malta Laundry & Cleaners",
+    "createAccountDescription": "Register your StayFresh account for commercial laundry, dry cleaning, and Airbnb cleaning services in Malta.",
+    "forgotPasswordTitle": "Reset Password - StayFresh Malta Cleaners & Laundry",
+    "laundryAndCleanersTagline": "Malta Laundry, Commercial Cleaners & Airbnb Clean Services"
   }
 }
