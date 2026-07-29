@@ -43,10 +43,23 @@
       </div>
 
       <p v-if="inviteError" class="text-red-500 text-sm mt-3">{{ inviteError }}</p>
-      <p v-if="inviteSuccess" class="text-green-600 text-sm mt-3">{{ inviteSuccess }}</p>
-      <p v-if="inviteLink" class="text-xs text-gray-500 mt-2 break-all bg-gray-50 p-2 rounded">
-        <span class="font-medium text-gray-700">{{ $t('admin.backupLink') }}</span> {{ inviteLink }}
-      </p>
+      <p v-if="inviteSuccess" class="text-green-600 text-sm mt-3 font-medium">{{ inviteSuccess }}</p>
+
+      <div v-if="inviteLink" class="mt-3 bg-brand-150/40 border border-brand-300 p-3 rounded-lg space-y-2">
+        <p class="text-xs font-medium text-brand-900">{{ $t('admin.backupLinkNotice') }}</p>
+        <div class="flex items-center gap-2">
+          <input type="text" readonly :value="inviteLink" class="w-full text-xs font-mono bg-white border border-gray-300 rounded px-2.5 py-1.5 text-gray-800 select-all focus:outline-none" />
+          <button @click="copyLink" type="button" class="shrink-0 px-3 py-1.5 bg-brand-700 hover:bg-brand-800 text-white text-xs font-medium rounded-md transition-colors shadow-sm flex items-center gap-1">
+            {{ copied ? $t('admin.linkCopied') : $t('admin.copyLink') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Option 1 Background Email Notice -->
+      <div v-if="inviteLink" class="mt-3 p-3 bg-blue-50/80 border border-blue-200 rounded-lg text-xs text-blue-800 flex items-start gap-2">
+        <span class="shrink-0 text-blue-600 font-bold">ℹ️</span>
+        <p>{{ $t('admin.emailProcessingNotice') }}</p>
+      </div>
 
       <template #footer>
         <button @click="closeInviteModal" :disabled="inviteSending"
@@ -177,8 +190,8 @@ import LoadingPanel from '../../ui/LoadingPanel.vue'
 import AppModal from '../../ui/AppModal.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { getUsers } from '../../../api/users'
-import { createInvitation } from '../../../api/invitations'
 import { registerUser } from '../../../api/auth'
+import { createInvitation } from '../../../api/invitations'
 import { getInviteRoleOptions } from '../../../constants/roles'
 
 const { t, locale } = useI18n()
@@ -202,9 +215,21 @@ const inviteError = ref('')
 const inviteSuccess = ref('')
 const inviteLink = ref('')
 const inviteSending = ref(false)
+const copied = ref(false)
 
 const roleOptions = computed(() => getInviteRoleOptions(t))
 const isClientInvite = computed(() => inviteRole.value === 'client')
+
+async function copyLink() {
+  if (!inviteLink.value) return
+  try {
+    await navigator.clipboard.writeText(inviteLink.value)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2500)
+  } catch (err) {
+    console.error('Failed to copy link:', err)
+  }
+}
 
 function resetInviteForm() {
   inviteEmail.value = ''
@@ -215,6 +240,7 @@ function resetInviteForm() {
   inviteError.value = ''
   inviteSuccess.value = ''
   inviteLink.value = ''
+  copied.value = false
 }
 
 function closeInviteModal() {
@@ -319,12 +345,21 @@ async function handleInvite() {
       role: inviteRole.value,
     })
 
-    inviteSuccess.value = t('admin.invitationSentSuccess')
+    if (data?.isRenewal) {
+      inviteSuccess.value = t('admin.invitationRenewedSuccess')
+    } else {
+      inviteSuccess.value = t('admin.invitationSentSuccess')
+    }
     if (data?.invitation?.invite_url) {
       inviteLink.value = data.invitation.invite_url
     }
   } catch (err) {
-    inviteError.value = err?.message || t('admin.invitationSentError')
+    const msg = err?.message || ''
+    if (msg.includes('already registered') || msg.includes('ya está registrado')) {
+      inviteError.value = t('admin.emailAlreadyRegisteredError')
+    } else {
+      inviteError.value = msg || t('admin.invitationSentError')
+    }
   } finally {
     inviteSending.value = false
   }
