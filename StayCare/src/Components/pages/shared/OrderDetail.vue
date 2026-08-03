@@ -70,7 +70,7 @@
             <div v-if="order.driverDelivery"><span class="text-gray-400">{{ $t('orderDetail.deliveryDriver') }}</span><p class="font-medium text-gray-800">{{ order.driverDelivery }}</p></div>
           </div>
           <div v-if="order.specialNotes" class="pt-2 border-t border-gray-100">
-            <span class="text-xs text-gray-400">{{ $t('client.specialNotes') }}</span>
+            <span class="text-xs text-gray-400">{{ $t('common.specialNotes') }}</span>
             <p class="text-sm text-gray-700 mt-0.5">{{ order.specialNotes }}</p>
           </div>
         </div>
@@ -168,7 +168,7 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.specialNotes') }}</label>
+        <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.specialNotes') }}</label>
         <textarea v-model="editForm.specialNotes" rows="3"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
           :placeholder="$t('admin.specialNotesPlaceholder')"></textarea>

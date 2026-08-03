@@ -138,8 +138,8 @@
           <p v-if="!checkinItems.length" class="text-xs text-gray-400">{{ $t('facility.noCheckInItems') }}</p>
 
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('facility.damageNotes') }}</label>
-            <textarea v-model="damageNotes" rows="2"
+            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.specialNotes') }}</label>
+            <textarea v-model="specialNotes" rows="2"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
               :placeholder="$t('facility.damageNotesPlaceholder')"></textarea>
           </div>
@@ -201,7 +201,7 @@ const { t } = useI18n()
 
 const manualOrderId = ref('')
 const foundOrder = ref(null)
-const damageNotes = ref('')
+const specialNotes = ref('')
 const showSuccess = ref(false)
 const checkinItems = ref([])
 const itemCatalog = ref([])
@@ -466,6 +466,7 @@ async function checkIn() {
 
     await receiveAtFacility(foundOrder.value._id ?? rawOrder._id, {
       staff_confirmed_bags: staffConfirmedBags,
+      special_notes: specialNotes.value.trim() || undefined,
       items,
     })
     showSuccess.value = true
@@ -475,6 +476,7 @@ async function checkIn() {
       showSuccess.value = false
       foundOrder.value = null
       manualOrderId.value = ''
+      specialNotes.value = ''
       checkinItems.value = []
     }, 1500)
   } catch (err) {

@@ -37,6 +37,7 @@
     "order": "Pedido",
     "signature": "Firma",
     "photo": "Foto",
+    "specialNotes": "Notas especiales",
     "dayMon": "Lun",
     "dayTue": "Mar",
     "dayWed": "Mié",
@@ -211,7 +212,6 @@
     "estimatedBags": "Bolsas Estimadas",
     "estimatedItems": "Artículos Estimados",
     "itemQuantityHint": "Agregue cantidades para cada tipo de artículo para obtener un presupuesto.",
-    "specialNotes": "Notas Especiales",
     "specialNotesPlaceholder": "ej. Manchas de vino en sábanas, lavado a baja temperatura...",
     "priceEstimate": "Presupuesto",
     "subtotal": "Subtotal",
@@ -296,8 +296,7 @@
     "markAsPaid": "Marcar como pagado",
     "createOrderProfileRequired": "Para crear una orden debes actualizar tu perfil.",
     "goToProfileCta": "Haz clic aqui",
-    "goToProfileSuffix": "para ir a Perfil.",
-    "specialNotes": "Notas Especiales"
+    "goToProfileSuffix": "para ir a Perfil."
   },
   "invoices": {
     "filterAll": "Todas",
@@ -451,8 +450,6 @@
     "deliveryConfirmation": "Confirmación de entrega",
     "actualBagCount": "Cantidad real de bolsas",
     "bagsPickedUpPlaceholder": "Número de bolsas recogidas",
-    "pickupNotes": "Notas de recogida",
-    "deliveryNotes": "Notas de entrega",
     "notesPlaceholder": "Cualquier problema u observación...",
     "photoOptional": "Foto (opcional)",
     "pickupPhotoHint": "Capture o suba una foto de las bolsas en la recogida.",
@@ -517,7 +514,6 @@
     "addItemToCheckIn": "Agregar artículo al check-in",
     "selectItem": "Selecciona un artículo",
     "addItem": "Agregar artículo",
-    "damageNotes": "Notas de daño",
     "damageNotesPlaceholder": "Anota cualquier artículo dañado...",
     "checkInNotAllowed": "Este pedido no puede registrarse en Recepción en su estado actual.",
     "checkInSuccess": "¡Pedido registrado correctamente!",

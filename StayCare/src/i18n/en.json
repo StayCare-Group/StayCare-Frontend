@@ -37,6 +37,7 @@
     "order": "Order",
     "signature": "Signature",
     "photo": "Photo",
+    "specialNotes": "Special notes",
     "dayMon": "Mon",
     "dayTue": "Tue",
     "dayWed": "Wed",
@@ -211,7 +212,6 @@
     "estimatedBags": "Estimated Bags",
     "estimatedItems": "Estimated Items",
     "itemQuantityHint": "Add quantities for each item type to get a price estimate.",
-    "specialNotes": "Special Notes",
     "specialNotesPlaceholder": "e.g. Wine stains on sheets, low-temperature wash needed...",
     "priceEstimate": "Price Estimate",
     "subtotal": "Subtotal",
@@ -296,8 +296,7 @@
     "markAsPaid": "Mark as Paid",
     "createOrderProfileRequired": "To create an order, you need to update your profile.",
     "goToProfileCta": "Click here",
-    "goToProfileSuffix": "to go to Profile.",
-    "specialNotes": "Special Notes"
+    "goToProfileSuffix": "to go to Profile."
   },
   "invoices": {
     "filterAll": "All",
@@ -451,8 +450,6 @@
     "deliveryConfirmation": "Delivery Confirmation",
     "actualBagCount": "Actual Bag Count",
     "bagsPickedUpPlaceholder": "Number of bags picked up",
-    "pickupNotes": "Pickup Notes",
-    "deliveryNotes": "Delivery Notes",
     "notesPlaceholder": "Any issues or observations...",
     "photoOptional": "Photo (optional)",
     "pickupPhotoHint": "Capture or upload a photo of the bags at pickup.",
@@ -517,7 +514,6 @@
     "addItemToCheckIn": "Add item to check-in",
     "selectItem": "Select item",
     "addItem": "Add item",
-    "damageNotes": "Damage Notes",
     "damageNotesPlaceholder": "Note any damaged items...",
     "checkInNotAllowed": "This order cannot be checked in at Reception in its current status.",
     "checkInSuccess": "Order checked in successfully!",

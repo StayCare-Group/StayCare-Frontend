@@ -147,7 +147,7 @@
       </div>
 
       <div class="bg-white rounded-xl shadow-sm p-5 space-y-3">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ t('admin.specialNotes') }}</h3>
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ t('common.specialNotes') }}</h3>
         <textarea v-model="form.specialNotes" rows="3"
           class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
           :placeholder="t('admin.specialNotesPlaceholder')"></textarea>

@@ -156,11 +156,11 @@
               <label
                 class="block text-sm font-medium text-gray-600 mb-1"
               >
-                {{ $t('driver.pickupNotes') }}
+                {{ $t('common.specialNotes') }}
               </label>
 
               <textarea
-                v-model.trim="form.notes"
+                v-model.trim="form.specialNotes"
                 rows="2"
                 class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
                 :placeholder="$t('driver.notesPlaceholder')"
@@ -361,7 +361,7 @@ onMounted(async () => {
 
 const form = reactive({
   actualBags: null,
-  notes: '',
+  specialNotes: '',
 })
 
 function onPhotoChange(event) {
@@ -588,7 +588,7 @@ function mapOrderToConfirmation(order) {
 
     status: normalizeStatus(order?.status),
     originalStatus: order?.status,
-    notes: order?.notes ?? '',
+    specialNotes: order?.special_notes ?? order?.specialNotes ?? '',
   }
 }
 
@@ -758,7 +758,7 @@ async function confirmPickup() {
   try {
     const payload = {
       actual_bags: Number(form.actualBags),
-      notes: form.notes || undefined,
+      special_notes: form.specialNotes || undefined,
     }
 
     await apiConfirmPickup(

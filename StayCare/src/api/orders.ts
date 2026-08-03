@@ -93,7 +93,7 @@ export async function confirmPickup(id: string, payload: any) {
     status: 'transit',
     actual_bags: payload?.actual_bags,
     photos: payload?.photos,
-    notes: payload?.notes,
+    special_notes: payload?.special_notes || payload?.notes,
   }
 
   return apiFetch(`/api/orders/${id}/status`, {
@@ -113,7 +113,9 @@ export async function confirmDelivery(id: string, payload: any) {
   const body = {
     status: 'delivered',
     photos: payload?.photos,
-    notes: payload?.notes,
+    special_notes: payload?.special_notes || payload?.notes,
+    packages_delivered: payload?.packages_delivered,
+    received_by: payload?.received_by,
   }
 
   return apiFetch(`/api/orders/${id}/status`, {

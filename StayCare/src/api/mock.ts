@@ -523,7 +523,17 @@ export async function mockApiFetch(path: string, options: RequestInit = {}) {
     if (action === 'deliver') found.status = 'Invoiced'
 
     if (typeof body.actual_bags === 'number') found.actual_bags = body.actual_bags
-    if (body.notes) found.special_notes = body.notes
+
+    const incomingNote = body.special_notes
+    if (incomingNote && incomingNote.trim()) {
+      const stageStatus = action === 'receive' ? 'arrived' : action === 'deliver' ? 'delivered' : 'transit'
+      const formatted = incomingNote.trim().startsWith('[') ? incomingNote.trim() : `[${stageStatus}]: ${incomingNote.trim()}`
+      if (!found.special_notes) {
+        found.special_notes = formatted
+      } else if (!found.special_notes.includes(formatted)) {
+        found.special_notes = `${found.special_notes}\n${formatted}`
+      }
+    }
     return clone(found)
   }
 

@@ -149,11 +149,11 @@
               <label
                 class="block text-sm font-medium text-gray-600 mb-1"
               >
-                {{ $t('driver.deliveryNotes') }}
+                {{ $t('common.specialNotes') }}
               </label>
 
               <textarea
-                v-model.trim="form.notes"
+                v-model.trim="form.specialNotes"
                 rows="2"
                 class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
                 :placeholder="$t('driver.notesPlaceholder')"
@@ -371,7 +371,7 @@ const errorMsg = ref('')
 const form = reactive({
   packagesDelivered: null,
   receivedBy: '',
-  notes: '',
+  specialNotes: '',
   confirmationMethod: 'manual',
 })
 
@@ -730,8 +730,8 @@ async function confirmDelivery() {
       received_by:
         form.receivedBy.trim(),
 
-      notes:
-        form.notes.trim() || undefined,
+      special_notes:
+        form.specialNotes.trim() || undefined,
 
       confirmation_method:
         isManualFlow.value

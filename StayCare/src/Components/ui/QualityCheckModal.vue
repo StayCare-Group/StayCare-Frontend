@@ -270,7 +270,7 @@ async function confirmWithoutChanges() {
   try {
     const orderId = props.order._id ?? props.order.id
     await updateOrderStatus(orderId, 'ready_to_delivery', {
-      note: internalNote.value || undefined,
+      special_notes: internalNote.value?.trim() || undefined,
     })
 
     uiStore.showSuccess(t('facilityProcessing.qualityCheckSuccess'))
@@ -305,7 +305,7 @@ async function confirmWithChanges() {
 
     // 2. Advance status via PATCH /api/orders/:id/status
     await updateOrderStatus(orderId, 'ready_to_delivery', {
-      note: internalNote.value || undefined,
+      special_notes: internalNote.value?.trim() || undefined,
     })
 
     uiStore.showSuccess(t('facilityProcessing.qualityCheckSuccess'))
