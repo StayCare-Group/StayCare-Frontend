@@ -18,19 +18,6 @@
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <KpiCard v-for="kpi in facilityKPIs" :key="kpi.label" :label="kpi.label" :value="kpi.value" :color="kpi.color" />
       </div>
-
-      <!-- Kanban Board -->
-      <div class="bg-white rounded-xl shadow-sm p-3 sm:p-4">
-        <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-4">{{ $t('facility.processingBoard') }}</h3>
-        <div class="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1">
-          <KanbanColumn
-            v-for="(cards, column) in kanbanOrders"
-            :key="column"
-            :title="column"
-            :cards="cards"
-          />
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -39,7 +26,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
-import KanbanColumn from '../ui/KanbanColumn.vue'
 import OrdersList from '../pages/shared/OrdersList.vue'
 import OrderDetail from '../pages/shared/OrderDetail.vue'
 import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
@@ -50,18 +36,19 @@ import Settings from '../pages/shared/Settings.vue'
 import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { fetchOrders, mapOrderForList } from '../../api/orders'
+import { fetchAllOrders, mapOrderForList } from '../../api/orders'
 
 const { t } = useI18n()
 const navStore = useNavStore()
 
 const orders = ref([])
 const loading = ref(true)
+const facilityStatuses = ['arrived', 'washing', 'drying', 'ironing', 'quality_check', 'ready_to_delivery']
 
 async function loadOrders() {
   try {
     loading.value = true
-    const data = await fetchOrders()
+    const data = await fetchAllOrders({ status: facilityStatuses.join(',') })
     orders.value = (data ?? []).map(mapOrderForList)
   } catch { /* stays empty */ } finally {
     loading.value = false
@@ -74,8 +61,6 @@ onMounted(loadOrders)
 watch(() => navStore.currentPage, (page) => {
   if (page === 'dashboard') loadOrders()
 })
-
-const facilityStatuses = ['arrived', 'washing', 'drying', 'ironing', 'quality_check', 'ready_to_delivery']
 
 const facilityKPIs = computed(() => {
   const counts = {}
@@ -90,29 +75,5 @@ const facilityKPIs = computed(() => {
     value: counts[s],
     color: colors[s],
   }))
-})
-
-const kanbanOrders = computed(() => {
-  const cols = { Received: [], Washing: [], Drying: [], Ironing: [], QC: [], Ready: [] }
-  const statusMap = {
-    arrived: 'Received',
-    washing: 'Washing',
-    drying: 'Drying',
-    ironing: 'Ironing',
-    quality_check: 'QC',
-    ready_to_delivery: 'Ready',
-  }
-  for (const o of orders.value) {
-    const col = statusMap[o.status]
-    if (col) {
-      cols[col].push({
-        id: o.id,
-        client: o.client,
-        bags: o.actualBags ?? o.estimatedBags,
-        priority: o.serviceType?.includes('Express') ? 'High' : 'Normal',
-      })
-    }
-  }
-  return cols
 })
 </script>
