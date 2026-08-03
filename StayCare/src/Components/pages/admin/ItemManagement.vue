@@ -32,53 +32,14 @@
     </DataTable>
 
     <!-- Pagination -->
-    <div
-      v-if="!loading && totalPages > 1"
-      class="flex flex-col sm:flex-row items-center justify-between gap-3"
-    >
-      <p class="text-sm text-gray-500">
-        {{ totalItems }} items
-      </p>
-
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          :disabled="currentPage === 1"
-          class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium
-                text-gray-600 hover:bg-gray-50 disabled:opacity-40
-                disabled:cursor-not-allowed"
-          @click="goToPage(currentPage - 1)"
-        >
-          Previous
-        </button>
-
-        <button
-          v-for="page in totalPages"
-          :key="page"
-          type="button"
-          class="min-w-10 px-3 py-2 border rounded-lg text-sm font-medium transition"
-          :class="
-            page === currentPage
-              ? 'bg-brand-700 border-brand-700 text-white'
-              : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-          "
-          @click="goToPage(page)"
-        >
-          {{ page }}
-        </button>
-
-        <button
-          type="button"
-          :disabled="currentPage === totalPages"
-          class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium
-                text-gray-600 hover:bg-gray-50 disabled:opacity-40
-                disabled:cursor-not-allowed"
-          @click="goToPage(currentPage + 1)"
-        >
-          Next
-        </button>
-      </div>
-    </div>
+    <AppPagination
+      v-if="!loading"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      :total-items="totalItems"
+      :disabled="loading"
+      @page-change="goToPage"
+    />
 
     <!-- Add/Edit Modal -->
     <AppModal
@@ -167,6 +128,7 @@ import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import AppModal from '../../ui/AppModal.vue'
+import AppPagination from '../../ui/AppPagination.vue'
 import { getItems, createItem, updateItem, deleteItem, mapItemForManagement } from '../../../api/items'
 
 const { t } = useI18n()
@@ -225,17 +187,8 @@ async function loadItems(page = currentPage.value) {
 }
 
 async function goToPage(page) {
-  if (
-    page < 1 ||
-    page > totalPages.value ||
-    page === currentPage.value ||
-    loading.value
-  ) {
-    return
-  }
-
+  if (loading.value) return
   await loadItems(page)
-
   if (items.value.length === 0 && currentPage.value > 1) {
     await loadItems(currentPage.value - 1)
   }

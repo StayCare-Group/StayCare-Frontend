@@ -84,17 +84,31 @@
       </div>
     </div>
 
-    <!-- Clients -->
-    <DataTable v-if="activeTab === 'clients'" :headers="clientHeaders" :items="clientsList" min-width="600px" clickable
-      :click-title="$t('common.viewDetailsTitle')" @row-click="row => navStore.goToDetail('client-detail', row.id)">
+    <!-- Dynamic Users DataTable -->
+    <DataTable
+      v-if="!loading"
+      :headers="activeHeaders"
+      :items="activeItems"
+      :min-width="activeMinWidth"
+      :clickable="activeTab === 'clients'"
+      :click-title="$t('common.viewDetailsTitle')"
+      @row-click="handleRowClick"
+    >
+      <template #cell-id="{ value }">
+        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
+      </template>
       <template #cell-name="{ value }">
         <span class="font-medium text-gray-800">{{ value }}</span>
       </template>
       <template #cell-type="{ value }">
         <span class="text-gray-500 text-xs capitalize">{{ value }}</span>
       </template>
-      <template #cell-contact="{ value }">
-        <span class="text-gray-700 text-xs">{{ value }}</span>
+      <template #cell-contact="{ item, value }">
+        <div v-if="item && item.email">
+          <p class="text-gray-700 text-xs">{{ item.email }}</p>
+          <p v-if="item.phone" class="text-gray-400 text-xs">{{ item.phone }}</p>
+        </div>
+        <span v-else class="text-gray-700 text-xs">{{ value }}</span>
       </template>
       <template #cell-phone="{ value }">
         <span class="text-gray-500 text-xs">{{ value || '—' }}</span>
@@ -102,92 +116,35 @@
       <template #cell-status="{ value }">
         <StatusBadge :status="value" />
       </template>
-    </DataTable>
-
-    <!-- Drivers -->
-    <DataTable v-if="activeTab === 'drivers'" :headers="driverHeaders" :items="driversList" min-width="700px">
-      <template #cell-id="{ value }">
-        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
-      </template>
-      <template #cell-name="{ value }">
-        <span class="font-medium text-gray-800">{{ value }}</span>
-      </template>
-      <template #cell-contact="{ item }">
-        <p class="text-gray-700 text-xs">{{ item.email }}</p>
-        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
-      </template>
-      <template #cell-status="{ value }">
-        <StatusBadge :status="value" />
-      </template>
       <template #cell-todayStops="{ item }">
         {{ item.completedStops }}/{{ item.todayStops }}
-      </template>
-    </DataTable>
-
-    <!-- Facility Staff -->
-    <DataTable v-if="activeTab === 'staff'" :headers="staffHeaders" :items="staffList" min-width="600px">
-      <template #cell-id="{ value }">
-        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
-      </template>
-      <template #cell-name="{ value }">
-        <span class="font-medium text-gray-800">{{ value }}</span>
-      </template>
-      <template #cell-contact="{ item }">
-        <p class="text-gray-700 text-xs">{{ item.email }}</p>
-        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
-      </template>
-      <template #cell-status="{ value }">
-        <StatusBadge :status="value" />
       </template>
       <template #cell-shift="{ value }">
         <span class="text-xs">{{ value || '—' }}</span>
       </template>
     </DataTable>
 
-    <!-- Operators -->
-    <DataTable v-if="activeTab === 'operators'" :headers="operatorsHeaders" :items="operatorsList" min-width="600px">
-      <template #cell-id="{ value }">
-        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
-      </template>
-      <template #cell-name="{ value }">
-        <span class="font-medium text-gray-800">{{ value }}</span>
-      </template>
-      <template #cell-contact="{ item }">
-        <p class="text-gray-700 text-xs">{{ item.email }}</p>
-        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
-      </template>
-      <template #cell-status="{ value }">
-        <StatusBadge :status="value" />
-      </template>
-    </DataTable>
-
-    <!-- Admins -->
-    <DataTable v-if="activeTab === 'admins'" :headers="adminsHeaders" :items="adminsList" min-width="600px">
-      <template #cell-id="{ value }">
-        <span class="font-mono text-xs text-gray-500">{{ value }}</span>
-      </template>
-      <template #cell-name="{ value }">
-        <span class="font-medium text-gray-800">{{ value }}</span>
-      </template>
-      <template #cell-contact="{ item }">
-        <p class="text-gray-700 text-xs">{{ item.email }}</p>
-        <p class="text-gray-400 text-xs">{{ item.phone }}</p>
-      </template>
-      <template #cell-status="{ value }">
-        <StatusBadge :status="value" />
-      </template>
-    </DataTable>
+    <!-- Pagination -->
+    <AppPagination
+      v-if="!loading"
+      :current-page="currentPage"
+      :total-pages="currentTotalPages"
+      :total-items="currentTotalItems"
+      :disabled="tabLoading"
+      @page-change="onPageChange"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import AppModal from '../../ui/AppModal.vue'
+import AppPagination from '../../ui/AppPagination.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { getUsers } from '../../../api/users'
 import { registerUser } from '../../../api/auth'
@@ -199,11 +156,46 @@ const navStore = useNavStore()
 
 const activeTab = ref('clients')
 const loading = ref(true)
+const tabLoading = ref(false)
+const currentPage = ref(1)
+
 const clientsList = ref([])
 const driversList = ref([])
 const staffList = ref([])
 const operatorsList = ref([])
 const adminsList = ref([])
+
+const tabMeta = ref({
+  clients: { total: 0, pages: 1 },
+  drivers: { total: 0, pages: 1 },
+  staff: { total: 0, pages: 1 },
+  operators: { total: 0, pages: 1 },
+  admins: { total: 0, pages: 1 },
+})
+
+const usersCache = ref({
+  clients: {},
+  drivers: {},
+  staff: {},
+  operators: {},
+  admins: {},
+})
+
+const tabToRoleMap = {
+  clients: 'client',
+  drivers: 'driver',
+  staff: 'staff',
+  operators: 'operator',
+  admins: 'admin',
+}
+
+const roleToTabMap = {
+  client: 'clients',
+  driver: 'drivers',
+  staff: 'staff',
+  operator: 'operators',
+  admin: 'admins',
+}
 
 const showInviteModal = ref(false)
 const inviteEmail = ref('')
@@ -219,6 +211,103 @@ const copied = ref(false)
 
 const roleOptions = computed(() => getInviteRoleOptions(t))
 const isClientInvite = computed(() => inviteRole.value === 'client')
+
+function mapUserRow(u, role) {
+  const id = u._id ?? u.id ?? u.user_id
+  const status = u.is_active !== false && u.is_active !== 0 ? 'Active' : 'Inactive'
+  if (role === 'client') {
+    return {
+      id,
+      name: u.name,
+      type: u.client_type ?? u.type ?? 'client',
+      contact: u.email,
+      phone: u.phone ?? '',
+      status,
+    }
+  }
+  if (role === 'driver') {
+    return {
+      id,
+      name: u.name,
+      phone: u.phone ?? '',
+      email: u.email,
+      plate: '',
+      zone: '',
+      status,
+      todayStops: 0,
+      completedStops: 0,
+    }
+  }
+  if (role === 'staff') {
+    return {
+      id,
+      name: u.name,
+      phone: u.phone ?? '',
+      email: u.email,
+      shift: '',
+      status,
+    }
+  }
+  return {
+    id,
+    name: u.name,
+    phone: u.phone ?? '',
+    email: u.email,
+    status,
+  }
+}
+
+function setTabListData(tabKey, items) {
+  if (tabKey === 'clients') clientsList.value = items
+  else if (tabKey === 'drivers') driversList.value = items
+  else if (tabKey === 'staff') staffList.value = items
+  else if (tabKey === 'operators') operatorsList.value = items
+  else if (tabKey === 'admins') adminsList.value = items
+}
+
+async function loadTabUsers(tabKey, page = 1) {
+  const role = tabToRoleMap[tabKey]
+  if (!role) return
+
+  // Check in-memory cache first
+  const cached = usersCache.value[tabKey]?.[page]
+  if (cached) {
+    setTabListData(tabKey, cached.items)
+    tabMeta.value[tabKey] = { total: cached.total, pages: cached.pages }
+    return
+  }
+
+  tabLoading.value = true
+  try {
+    const res = await getUsers({ role, page: String(page), limit: '10' }).catch(() => [])
+    const rawUsers = Array.isArray(res) ? res : []
+    const pagination = res?._pagination ?? {}
+
+    const mappedItems = rawUsers.map(u => mapUserRow(u, role))
+    const total = pagination.total ?? mappedItems.length
+    const pages = pagination.pages ?? Math.max(1, Math.ceil(total / 10))
+
+    if (!usersCache.value[tabKey]) {
+      usersCache.value[tabKey] = {}
+    }
+    usersCache.value[tabKey][page] = { items: mappedItems, total, pages }
+    tabMeta.value[tabKey] = { total, pages }
+
+    setTabListData(tabKey, mappedItems)
+  } finally {
+    tabLoading.value = false
+  }
+}
+
+watch(activeTab, (newTab) => {
+  currentPage.value = 1
+  loadTabUsers(newTab, 1)
+})
+
+function onPageChange(newPage) {
+  currentPage.value = newPage
+  loadTabUsers(activeTab.value, newPage)
+}
 
 async function copyLink() {
   if (!inviteLink.value) return
@@ -248,56 +337,6 @@ function closeInviteModal() {
   resetInviteForm()
 }
 
-async function loadUsers() {
-  const users = await getUsers().catch(() => [])
-
-  clientsList.value = (users ?? []).filter(u => u.role === 'client').map(u => ({
-    id: u._id ?? u.id ?? u.user_id,
-    name: u.name,
-    type: u.client_type ?? u.type ?? 'client',
-    contact: u.email,
-    phone: u.phone ?? '',
-    status: u.is_active !== false && u.is_active !== 0 ? 'Active' : 'Inactive',
-  }))
-
-  driversList.value = users.filter(u => u.role === 'driver').map(u => ({
-    id: u._id ?? u.id,
-    name: u.name,
-    phone: u.phone ?? '',
-    email: u.email,
-    plate: '',
-    zone: '',
-    status: u.is_active !== false ? 'Active' : 'Inactive',
-    todayStops: 0,
-    completedStops: 0,
-  }))
-
-  staffList.value = users.filter(u => u.role === 'staff').map(u => ({
-    id: u._id ?? u.id,
-    name: u.name,
-    phone: u.phone ?? '',
-    email: u.email,
-    shift: '',
-    status: u.is_active !== false ? 'Active' : 'Inactive',
-  }))
-
-  operatorsList.value = users.filter(u => u.role === 'operator').map(u => ({
-    id: u._id ?? u.id,
-    name: u.name,
-    phone: u.phone ?? '',
-    email: u.email,
-    status: u.is_active !== false ? 'Active' : 'Inactive',
-  }))
-
-  adminsList.value = users.filter(u => u.role === 'admin').map(u => ({
-    id: u._id ?? u.id,
-    name: u.name,
-    phone: u.phone ?? '',
-    email: u.email,
-    status: u.is_active !== false ? 'Active' : 'Inactive',
-  }))
-}
-
 async function handleInvite() {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const phonePattern = /^\d{8}$/
@@ -324,6 +363,11 @@ async function handleInvite() {
     inviteLink.value = ''
     inviteSending.value = true
 
+    const targetTab = roleToTabMap[inviteRole.value] || 'clients'
+    if (usersCache.value[targetTab]) {
+      usersCache.value[targetTab] = {}
+    }
+
     if (isClientInvite.value) {
       await registerUser({
         name: inviteClientName.value,
@@ -334,8 +378,9 @@ async function handleInvite() {
         role: 'client',
       })
       inviteSuccess.value = t('admin.clientCreatedSuccess')
-      await loadUsers()
       activeTab.value = 'clients'
+      currentPage.value = 1
+      await loadTabUsers('clients', 1)
       closeInviteModal()
       return
     }
@@ -353,6 +398,9 @@ async function handleInvite() {
     if (data?.invitation?.invite_url) {
       inviteLink.value = data.invitation.invite_url
     }
+
+    // Refresh affected tab data
+    await loadTabUsers(targetTab, 1)
   } catch (err) {
     const msg = err?.message || ''
     if (msg.includes('already registered') || msg.includes('ya está registrado')) {
@@ -367,19 +415,30 @@ async function handleInvite() {
 
 onMounted(async () => {
   try {
-    await loadUsers()
+    loading.value = true
+    // Load initial page 1 for all tabs in parallel to populate exact counts and page 1 data
+    await Promise.all([
+      loadTabUsers('clients', 1),
+      loadTabUsers('drivers', 1),
+      loadTabUsers('staff', 1),
+      loadTabUsers('operators', 1),
+      loadTabUsers('admins', 1),
+    ])
   } finally {
     loading.value = false
   }
 })
 
 const tabs = computed(() => [
-  { key: 'clients', label: t('admin.clients'), count: clientsList.value.length },
-  { key: 'drivers', label: t('admin.drivers'), count: driversList.value.length },
-  { key: 'staff', label: t('admin.facilityStaff'), count: staffList.value.length },
-  { key: 'operators', label: t('admin.operators'), count: operatorsList.value.length },
-  { key: 'admins', label: t('admin.admins'), count: adminsList.value.length },
+  { key: 'clients', label: t('admin.clients'), count: tabMeta.value.clients.total },
+  { key: 'drivers', label: t('admin.drivers'), count: tabMeta.value.drivers.total },
+  { key: 'staff', label: t('admin.facilityStaff'), count: tabMeta.value.staff.total },
+  { key: 'operators', label: t('admin.operators'), count: tabMeta.value.operators.total },
+  { key: 'admins', label: t('admin.admins'), count: tabMeta.value.admins.total },
 ])
+
+const currentTotalPages = computed(() => tabMeta.value[activeTab.value]?.pages || 1)
+const currentTotalItems = computed(() => tabMeta.value[activeTab.value]?.total || 0)
 
 const clientHeaders = computed(() => [
   { key: 'name', label: t('common.name') },
@@ -420,4 +479,28 @@ const adminsHeaders = computed(() => [
   { key: 'contact', label: t('common.contact') },
   { key: 'status', label: t('common.status') },
 ])
+
+const activeHeaders = computed(() => {
+  if (activeTab.value === 'clients') return clientHeaders.value
+  if (activeTab.value === 'drivers') return driverHeaders.value
+  if (activeTab.value === 'staff') return staffHeaders.value
+  if (activeTab.value === 'operators') return operatorsHeaders.value
+  return adminsHeaders.value
+})
+
+const activeItems = computed(() => {
+  if (activeTab.value === 'clients') return clientsList.value
+  if (activeTab.value === 'drivers') return driversList.value
+  if (activeTab.value === 'staff') return staffList.value
+  if (activeTab.value === 'operators') return operatorsList.value
+  return adminsList.value
+})
+
+const activeMinWidth = computed(() => (activeTab.value === 'drivers' ? '700px' : '600px'))
+
+function handleRowClick(row) {
+  if (activeTab.value === 'clients' && row?.id) {
+    navStore.goToDetail('client-detail', row.id)
+  }
+}
 </script>
