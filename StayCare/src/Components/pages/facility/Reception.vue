@@ -165,22 +165,6 @@
         {{ $t('facility.checkInSuccess') }}
       </div>
     </div>
-
-    <!-- Recent check-ins -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div class="px-5 py-4 border-b border-gray-100">
-        <h3 class="text-sm font-semibold text-gray-700">{{ $t('facility.recentCheckIns') }}</h3>
-      </div>
-      <div class="divide-y divide-gray-100">
-        <div v-for="order in recentCheckins" :key="order.id" class="px-5 py-3 flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-800">{{ order.id }}</p>
-            <p class="text-xs text-gray-500">{{ order.client }}</p>
-          </div>
-          <StatusBadge :status="order.status" />
-        </div>
-      </div>
-    </div>
     </template>
   </div>
 </template>
@@ -188,7 +172,6 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import StatusBadge from '../../ui/StatusBadge.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { fetchOrderById, fetchAllOrders, mapOrderForDetail } from '../../../api/orders'
@@ -234,16 +217,6 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   stopScanner()
 })
-
-const recentCheckins = computed(() =>
-  allOrders.value
-    .filter(o => normalizeStatus(o.status) === 'arrived')
-    .map(o => ({
-      id: o.order_number ?? o._id,
-      client: o.client?.name ?? o.client ?? '',
-      status: o.status,
-    }))
-)
 
 const expectedQtyMap = computed(() => {
   const map = {}
