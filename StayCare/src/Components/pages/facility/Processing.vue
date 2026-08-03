@@ -173,7 +173,7 @@ import AppButton from '../../ui/AppButton.vue'
 import QualityCheckModal from '../../ui/QualityCheckModal.vue'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
-import { fetchOrders, updateOrderStatus } from '../../../api/orders'
+import { fetchAllOrders, updateOrderStatus } from '../../../api/orders'
 import { fetchMachineStatus, assignMachine, releaseMachine } from '../../../api/facility'
 import { apiFetch } from '../../../api/client'
 
@@ -255,7 +255,7 @@ function normalizeProcessingStatus(status) {
 async function loadData() {
   try {
     const [ordersData, machinesData] = await Promise.all([
-      fetchOrders().catch(() => []),
+      fetchAllOrders().catch(() => []),
       fetchMachineStatus().catch(() => []),
     ])
 
