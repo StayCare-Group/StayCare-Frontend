@@ -5,11 +5,11 @@
       <AppButton v-if="isAdmin" @click="navStore.setPage('create-invoice')">{{ $t('admin.createInvoice') }}</AppButton>
     </div>
 
-    <!-- Filters -->
+    <!-- Status filters -->
     <div class="flex flex-wrap gap-2">
       <button
         v-for="f in filters" :key="f.key"
-        @click="activeFilter = f.key"
+        @click="onFilterChange(f.key)"
         class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
         :class="activeFilter === f.key ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
       >{{ f.label }}</button>
@@ -18,7 +18,7 @@
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
 
     <!-- Invoices table -->
-    <DataTable v-else :headers="invoiceHeaders" :items="filteredInvoices" min-width="650px">
+    <DataTable v-else :headers="invoiceHeaders" :items="invoices" min-width="650px">
       <template #cell-id="{ value }">
         <span class="font-medium text-gray-800">{{ value }}</span>
       </template>
@@ -47,6 +47,16 @@
         >{{ $t('common.viewDetails') }}</button>
       </template>
     </DataTable>
+
+    <!-- Pagination -->
+    <AppPagination
+      v-if="!loading"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      :total-items="totalItems"
+      :disabled="filterLoading"
+      @page-change="onPageChange"
+    />
   </div>
 </template>
 
@@ -57,6 +67,7 @@ import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
+import AppPagination from '../../ui/AppPagination.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { fetchInvoices, mapInvoiceForList } from '../../../api/invoices'
@@ -67,39 +78,77 @@ const authStore = useAuthStore()
 
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
+const PAGE_SIZE = 10
+
 const invoices = ref([])
 const loading = ref(true)
+const filterLoading = ref(false)
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalItems = ref(0)
+
+// Filter keys match backend status values (lowercase)
+const activeFilter = ref('all')
+
+const filters = computed(() => [
+  { key: 'all',     label: t('invoices.filterAll') },
+  { key: 'pending', label: t('invoices.filterPending') },
+  { key: 'overdue', label: t('invoices.filterOverdue') },
+  { key: 'paid',    label: t('invoices.filterPaid') },
+])
+
+async function loadInvoices(status, page) {
+  filterLoading.value = true
+  try {
+    const params = { page: String(page), limit: String(PAGE_SIZE) }
+    if (status && status !== 'all') {
+      params.status = status
+    }
+
+    const data = await fetchInvoices(params)
+    const rawItems = Array.isArray(data) ? data : []
+    const pagination = data?._pagination ?? {}
+
+    invoices.value = rawItems.map(mapInvoiceForList)
+    totalItems.value = pagination.total ?? rawItems.length
+    totalPages.value = pagination.pages ?? Math.max(1, Math.ceil(totalItems.value / PAGE_SIZE))
+  } catch {
+    invoices.value = []
+    totalItems.value = 0
+    totalPages.value = 1
+  } finally {
+    filterLoading.value = false
+  }
+}
+
+function onFilterChange(filterKey) {
+  if (activeFilter.value === filterKey) return
+  activeFilter.value = filterKey
+  currentPage.value = 1
+  loadInvoices(filterKey, 1)
+}
+
+function onPageChange(newPage) {
+  currentPage.value = newPage
+  loadInvoices(activeFilter.value, newPage)
+}
 
 onMounted(async () => {
   try {
-    const data = await fetchInvoices()
-    invoices.value = (data ?? []).map(mapInvoiceForList)
-  } catch { /* stays empty */ } finally {
+    await loadInvoices('all', 1)
+  } finally {
     loading.value = false
   }
 })
 
-const filters = computed(() => [
-  { key: 'All', label: t('invoices.filterAll') },
-  { key: 'Pending', label: t('invoices.filterPending') },
-  { key: 'Overdue', label: t('invoices.filterOverdue') },
-  { key: 'Paid', label: t('invoices.filterPaid') },
-])
-const activeFilter = ref('All')
-
-const filteredInvoices = computed(() => {
-  if (activeFilter.value === 'All') return invoices.value
-  return invoices.value.filter(i => i.status === activeFilter.value)
-})
-
 const invoiceHeaders = computed(() => [
-  { key: 'id', label: t('client.invoiceId') },
-  { key: 'orderId', label: t('common.order') },
-  { key: 'client', label: t('common.client') },
-  { key: 'issueDate', label: t('client.issueDate') },
-  { key: 'dueDate', label: t('client.dueDate') },
-  { key: 'status', label: t('common.status') },
+  { key: 'id',         label: t('client.invoiceId') },
+  { key: 'orderId',    label: t('common.order') },
+  { key: 'client',     label: t('common.client') },
+  { key: 'issueDate',  label: t('client.issueDate') },
+  { key: 'dueDate',    label: t('client.dueDate') },
+  { key: 'status',     label: t('common.status') },
   { key: 'grandTotal', label: t('client.total') },
-  { key: 'actions', label: t('admin.actions') },
+  { key: 'actions',    label: t('admin.actions') },
 ])
 </script>
