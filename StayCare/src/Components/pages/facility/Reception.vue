@@ -42,6 +42,7 @@
         <!-- <label class="block text-sm font-medium text-gray-600 mb-1">Or enter Order ID manually</label> -->
         <div class="flex gap-2">
           <input v-model="manualOrderId" type="text"
+            @keydown.enter.prevent="lookupOrder"
             class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
             :placeholder="$t('facility.orderIdPlaceholder')" />
           <AppButton @click="lookupOrder">
@@ -190,7 +191,7 @@ import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
-import { fetchOrderById, fetchOrders, mapOrderForDetail } from '../../../api/orders'
+import { fetchOrderById, fetchAllOrders, mapOrderForDetail } from '../../../api/orders'
 import { receiveAtFacility } from '../../../api/orders'
 import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { useUiStore } from '../../../stores/ui.js'
@@ -215,11 +216,12 @@ let codeReader = null
 
 const allOrders = ref([])
 const loading = ref(true)
+const RECEPTION_STATUSES = 'transit,in_transit,arrived'
 
 onMounted(async () => {
   try {
     const [data, catalogData] = await Promise.all([
-      fetchOrders(),
+      fetchAllOrders({ status: RECEPTION_STATUSES }).catch(() => []),
       fetchAllItems().catch(() => []),
     ])
     allOrders.value = data ?? []
@@ -235,7 +237,7 @@ onBeforeUnmount(() => {
 
 const recentCheckins = computed(() =>
   allOrders.value
-    .filter(o => ['arrived', 'washing', 'drying', 'ironing', 'quality_check'].includes(o.status))
+    .filter(o => normalizeStatus(o.status) === 'arrived')
     .map(o => ({
       id: o.order_number ?? o._id,
       client: o.client?.name ?? o.client ?? '',
@@ -273,8 +275,9 @@ const foundOrderRawStatus = computed(() => {
 
 const canConfirmCheckIn = computed(() => isReceivableStatus(foundOrderRawStatus.value))
 
-const receivableOrders = computed(() =>
-  allOrders.value
+const receivableOrders = computed(() => {
+  const term = manualOrderId.value.trim().toLowerCase()
+  return allOrders.value
     .filter(o => isReceivableStatus(o.status))
     .map((o) => {
       const mapped = mapOrderForDetail(o)
@@ -286,7 +289,15 @@ const receivableOrders = computed(() =>
         pickupDate: mapped.pickupDate,
       }
     })
-)
+    .filter((order) => {
+      if (!term) return true
+      return (
+        String(order.id ?? '').toLowerCase().includes(term) ||
+        String(order.client ?? '').toLowerCase().includes(term) ||
+        String(order._id ?? '').toLowerCase().includes(term)
+      )
+    })
+})
 
 function normalizeQty(value) {
   const parsed = Number(value)
@@ -321,8 +332,32 @@ function seedCheckinItems(mappedOrder) {
 }
 
 async function lookupOrder() {
-  const term = manualOrderId.value.trim()
-  const raw = allOrders.value.find(o => o.order_number === term || o._id === term)
+  const term = manualOrderId.value.trim().toLowerCase()
+  if (!term) return
+
+  // 1. Exact match in memory first
+  let raw = allOrders.value.find(o =>
+    String(o.order_number ?? '').toLowerCase() === term ||
+    String(o._id ?? o.id ?? '').toLowerCase() === term
+  )
+
+  // 2. Partial match in memory (order number, ID, or client name)
+  if (!raw) {
+    raw = allOrders.value.find(o =>
+      String(o.order_number ?? '').toLowerCase().includes(term) ||
+      String(o._id ?? o.id ?? '').toLowerCase().includes(term) ||
+      String(o.client?.name ?? o.client ?? '').toLowerCase().includes(term)
+    )
+  }
+
+  // 3. Fallback to API direct fetch with URL parameter sanitization
+  if (!raw) {
+    try {
+      const sanitizedTerm = encodeURIComponent(manualOrderId.value.trim())
+      raw = await fetchOrderById(sanitizedTerm)
+    } catch {}
+  }
+
   if (!raw) return
 
   await openRawOrder(raw)
@@ -470,7 +505,7 @@ async function checkIn() {
       items,
     })
     showSuccess.value = true
-    const refreshed = await fetchOrders()
+    const refreshed = await fetchAllOrders({ status: RECEPTION_STATUSES }).catch(() => [])
     allOrders.value = refreshed ?? []
     setTimeout(() => {
       showSuccess.value = false
