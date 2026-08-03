@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import OrdersList from '../pages/shared/OrdersList.vue'
@@ -93,7 +93,7 @@ import LoadingPanel from '../ui/LoadingPanel.vue'
 import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { fetchOrders, mapOrderForList } from '../../api/orders'
+import { fetchAllOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
 
 const { t } = useI18n()
@@ -103,32 +103,48 @@ const orders = ref([])
 const invoices = ref([])
 const loading = ref(true)
 
-onMounted(async () => {
+async function loadDashboardData() {
   try {
+    loading.value = true
     const [ordersData, invoicesData] = await Promise.all([
-      fetchOrders(),
-      fetchInvoices(),
+      fetchAllOrders().catch(() => []),
+      fetchInvoices().catch(() => []),
     ])
     orders.value = (ordersData ?? []).map(mapOrderForList)
     invoices.value = (invoicesData ?? []).map(mapInvoiceForList)
-  } catch { /* stays empty */ } finally {
+  } catch {
+    /* stays empty */
+  } finally {
     loading.value = false
+  }
+}
+
+onMounted(loadDashboardData)
+
+watch(() => navStore.currentPage, (page) => {
+  if (page === 'dashboard') {
+    loadDashboardData()
   }
 })
 
 const adminKPIs = computed(() => {
   const d = new Date()
   const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-  const todayOrders = orders.value.filter(o => o.pickupDate === today).length
-  const monthRevenue = invoices.value
-    .filter(i => i.status === 'Paid')
-    .reduce((sum, i) => sum + (i.grandTotal ?? 0), 0)
-  const vatCollected = invoices.value
-    .filter(i => i.status === 'Paid')
-    .reduce((sum, i) => sum + ((i.grandTotal ?? 0) * 0.18 / 1.18), 0)
+  const currentMonthPrefix = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+
+  const todayOrders = orders.value.filter(o => o.pickupDate === today || o.createdAt === today).length
+
+  const paidInvoices = invoices.value.filter(i => String(i.status).toLowerCase() === 'paid')
+  const thisMonthPaid = paidInvoices.filter(i => i.issueDate && i.issueDate.startsWith(currentMonthPrefix))
+  const relevantInvoices = thisMonthPaid.length > 0 ? thisMonthPaid : paidInvoices
+
+  const monthRevenue = relevantInvoices.reduce((sum, i) => sum + (i.grandTotal ?? 0), 0)
+  const vatCollected = relevantInvoices.reduce((sum, i) => sum + ((i.grandTotal ?? 0) * 0.18 / 1.18), 0)
+
   const totalOrders = orders.value.length
-  const delivered = orders.value.filter(o => ['Delivered', 'Completed'].includes(o.status)).length
+  const delivered = orders.value.filter(o => ['delivered', 'completed', 'invoiced'].includes(String(o.status).toLowerCase())).length
   const sla = totalOrders > 0 ? Math.round((delivered / totalOrders) * 100) : 0
+
   return [
     { label: t('admin.ordersToday'), value: todayOrders, color: 'blue' },
     { label: t('admin.revenueThisMonth'), value: `€${monthRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'green' },
@@ -155,12 +171,16 @@ const adminChartData = computed(() => {
   sunday.setHours(23, 59, 59, 999)
 
   for (const o of orders.value) {
-    if (o.pickupDate) {
-      const d = new Date(o.pickupDate)
-      if (d >= monday && d <= sunday) {
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-        const dayName = dayNames[d.getDay()]
-        if (dayMap[dayName] !== undefined) dayMap[dayName]++
+    const dateStr = o.pickupDate || o.createdAt
+    if (dateStr) {
+      const parts = dateStr.split('-').map(Number)
+      if (parts.length === 3 && !parts.some(isNaN)) {
+        const d = new Date(parts[0], parts[1] - 1, parts[2])
+        if (d >= monday && d <= sunday) {
+          const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+          const dayName = dayNames[d.getDay()]
+          if (dayMap[dayName] !== undefined) dayMap[dayName]++
+        }
       }
     }
   }

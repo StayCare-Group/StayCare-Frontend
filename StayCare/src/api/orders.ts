@@ -220,6 +220,7 @@ export function mapOrderForList(o: any) {
     _id: o._id ?? o.id,
     client: clientObj ? getClientDisplayName(clientObj) : (o.client_name ?? o.client ?? ''),
     clientId: clientObj ? getClientId(clientObj) : String(o.client_id ?? ''),
+    createdAt: formatDate(o.created_at),
     pickupDate: formatDate(o.pickup_date),
     serviceType: o.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)',
     estimatedBags: o.estimated_bags ?? 0,
