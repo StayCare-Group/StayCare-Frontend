@@ -457,7 +457,11 @@ async function handleAddMachine() {
     editingMachineId.value = null
     await loadData()
   } catch (err) {
-    addMachineError.value = err?.message || t('facilityProcessing.addMachineFailed')
+    if (err?.status === 403 || err?.message === 'Forbidden') {
+      addMachineError.value = t('common.accessDenied')
+    } else {
+      addMachineError.value = err?.message || t('facilityProcessing.addMachineFailed')
+    }
     ui.showError(addMachineError.value)
   } finally {
     addingMachine.value = false

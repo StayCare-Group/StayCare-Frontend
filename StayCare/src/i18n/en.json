@@ -49,7 +49,8 @@
     "reschedule": "Reschedule",
     "contactPerson": "Contact Person",
     "area": "Area",
-    "phone": "Phone"
+    "phone": "Phone",
+    "accessDenied": "You do not have permission to perform this action. Please contact an administrator."
   },
   "auth": {
     "loginHeading": "Login for {brand} laundry management",

@@ -49,7 +49,8 @@
     "reschedule": "Reprogramar",
     "contactPerson": "Persona de Contacto",
     "area": "Área",
-    "phone": "Teléfono"
+    "phone": "Teléfono",
+    "accessDenied": "No tienes permiso para realizar esta acción. Por favor solicita ayuda al administrador."
   },
   "auth": {
     "loginHeading": "Iniciar sesión en {brand} gestión de lavandería",
