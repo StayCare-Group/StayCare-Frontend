@@ -37,7 +37,9 @@ export async function fetchAllItems(activeOnly = false, search = '') {
       ? data
       : Array.isArray((data as any)?.items)
         ? (data as any).items
-        : []
+        : Array.isArray((data as any)?.data)
+          ? (data as any).data
+          : []
 
     if (!items.length) break
 

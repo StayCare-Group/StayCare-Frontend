@@ -92,12 +92,21 @@
       </div>
 
       <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ t('admin.estimatedItems') }}</h3>
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ t('admin.estimatedItems') }}</h3>
+          <span v-if="!loadingItems && laundryItems.length" class="text-xs text-gray-400 font-medium">
+            {{ laundryItems.length }} {{ t('common.items') }}
+          </span>
+        </div>
         <p class="text-xs text-gray-400">{{ t('admin.itemQuantityHint') }}</p>
 
         <div v-if="loadingItems" class="text-sm text-gray-400 py-2">{{ t('common.loading') }}</div>
 
-        <div v-else class="divide-y divide-gray-100">
+        <div v-else-if="!laundryItems.length" class="text-sm text-gray-400 py-2">
+          {{ t('common.noData') }}
+        </div>
+
+        <div v-else class="max-h-[600px] overflow-y-auto divide-y divide-gray-100 pr-2">
           <div v-for="item in laundryItems" :key="item.code" class="flex items-center justify-between py-3 gap-4">
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-gray-800">{{ item.name }} <span class="text-xs text-gray-400">({{
@@ -107,41 +116,6 @@
             <input v-model.number="itemQtys[item.code]" type="number" min="0"
               class="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
               placeholder="0" />
-          </div>
-        </div>
-
-        <div v-if="!loadingItems && itemsTotalPages > 1" class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-          <p class="text-sm text-gray-500">{{ itemsTotal }} items</p>
-
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              :disabled="itemsCurrentPage === 1"
-              class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-              @click="goToItemsPage(itemsCurrentPage - 1)"
-            >
-              Previous
-            </button>
-
-            <button
-              v-for="page in itemsTotalPages"
-              :key="page"
-              type="button"
-              class="min-w-10 px-3 py-2 border rounded-lg text-sm font-medium transition"
-              :class="page === itemsCurrentPage ? 'bg-brand-700 border-brand-700 text-white' : 'border-gray-200 text-gray-600 hover:bg-gray-50'"
-              @click="goToItemsPage(page)"
-            >
-              {{ page }}
-            </button>
-
-            <button
-              type="button"
-              :disabled="itemsCurrentPage === itemsTotalPages"
-              class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-              @click="goToItemsPage(itemsCurrentPage + 1)"
-            >
-              Next
-            </button>
           </div>
         </div>
       </div>
@@ -191,7 +165,7 @@ import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
-import { getItems, mapItemForCatalog } from '../../../api/items'
+import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { createOrder } from '../../../api/orders'
 import { getUsers, fetchMe } from '../../../api/users'
 import { getPropertiesByUserId } from '../../../api/properties'
@@ -236,10 +210,6 @@ const itemCatalogByCode = reactive({})
 const loading = ref(true)
 const loadingClient = ref(false)
 const loadingItems = ref(false)
-const itemsCurrentPage = ref(1)
-const itemsTotal = ref(0)
-const itemsTotalPages = ref(1)
-const itemsPageSize = 10
 
 const noClientsAvailable = computed(() =>
   isAdmin.value && !loading.value && clients.value.length === 0
@@ -299,53 +269,20 @@ const selectedProperty = computed(() =>
 
 const itemQtys = reactive({})
 
-async function loadLaundryItems(page = itemsCurrentPage.value) {
+async function loadLaundryItems() {
   loadingItems.value = true
   try {
-    const response = await getItems(false, { page, limit: itemsPageSize }).catch(() => [])
-    const data = Array.isArray(response)
-      ? response
-      : Array.isArray(response?.items)
-        ? response.items
-        : Array.isArray(response?.data)
-          ? response.data
-          : []
-
-    laundryItems.value = data.map(mapItemForCatalog)
+    const rawItems = await fetchAllItems().catch(() => [])
+    laundryItems.value = (rawItems ?? []).map(mapItemForCatalog)
     laundryItems.value.forEach((item) => {
       itemCatalogByCode[item.code] = item
       if (itemQtys[item.code] === undefined) {
         itemQtys[item.code] = 0
       }
     })
-
-    const pagination = response?._pagination
-    if (pagination) {
-      itemsCurrentPage.value = pagination.page ?? page
-      itemsTotal.value = pagination.total ?? data.length
-      itemsTotalPages.value = pagination.pages ?? 1
-      return
-    }
-
-    itemsCurrentPage.value = page
-    itemsTotal.value = data.length
-    itemsTotalPages.value = 1
   } finally {
     loadingItems.value = false
   }
-}
-
-async function goToItemsPage(page) {
-  if (
-    page < 1 ||
-    page > itemsTotalPages.value ||
-    page === itemsCurrentPage.value ||
-    loadingItems.value
-  ) {
-    return
-  }
-
-  await loadLaundryItems(page)
 }
 
 const subtotal = computed(() =>

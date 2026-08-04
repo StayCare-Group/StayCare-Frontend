@@ -20,6 +20,7 @@
     "previous": "Previous",
     "next": "Next",
     "totalItems": "{count} items",
+    "items": "items",
     "viewDetails": "View details",
     "viewDetailsTitle": "Click to view details",
     "id": "ID",
