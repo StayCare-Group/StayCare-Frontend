@@ -91,34 +91,7 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ t('admin.estimatedItems') }}</h3>
-          <span v-if="!loadingItems && laundryItems.length" class="text-xs text-gray-400 font-medium">
-            {{ laundryItems.length }} {{ t('common.items') }}
-          </span>
-        </div>
-        <p class="text-xs text-gray-400">{{ t('admin.itemQuantityHint') }}</p>
-
-        <div v-if="loadingItems" class="text-sm text-gray-400 py-2">{{ t('common.loading') }}</div>
-
-        <div v-else-if="!laundryItems.length" class="text-sm text-gray-400 py-2">
-          {{ t('common.noData') }}
-        </div>
-
-        <div v-else class="max-h-[600px] overflow-y-auto divide-y divide-gray-100 pr-2">
-          <div v-for="item in laundryItems" :key="item.code" class="flex items-center justify-between py-3 gap-4">
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-800">{{ item.name }} <span class="text-xs text-gray-400">({{
-                  item.code }})</span></p>
-              <p class="text-xs text-gray-400">&euro;{{ item.unitPrice.toFixed(2) }} / unit</p>
-            </div>
-            <input v-model.number="itemQtys[item.code]" type="number" min="0"
-              class="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-              placeholder="0" />
-          </div>
-        </div>
-      </div>
+      <OrderItemsPicker v-model="itemQtys" @catalog-loaded="onCatalogLoaded" />
 
       <div class="bg-white rounded-xl shadow-sm p-5 space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ t('common.specialNotes') }}</h3>
@@ -165,12 +138,12 @@ import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
-import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { createOrder } from '../../../api/orders'
 import { getUsers, fetchMe } from '../../../api/users'
 import { getPropertiesByUserId } from '../../../api/properties'
 
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
+import OrderItemsPicker from '../../forms/OrderItemsPicker.vue'
 import { getTodayDateString, isPastDate } from '../../../utils/date'
 
 const props = defineProps({
@@ -205,11 +178,14 @@ const form = reactive({
 
 const clients = ref([])
 const properties = ref([])
-const laundryItems = ref([])
-const itemCatalogByCode = reactive({})
+const itemQtys = ref({})
+const itemCatalogByCode = ref({})
 const loading = ref(true)
 const loadingClient = ref(false)
-const loadingItems = ref(false)
+
+function onCatalogLoaded(catalog) {
+  itemCatalogByCode.value = catalog
+}
 
 const noClientsAvailable = computed(() =>
   isAdmin.value && !loading.value && clients.value.length === 0
@@ -217,8 +193,6 @@ const noClientsAvailable = computed(() =>
 
 onMounted(async () => {
   try {
-    await loadLaundryItems()
-
     if (isAdmin.value) {
       const users = await getUsers().catch(() => [])
       clients.value = (users ?? []).filter(u => u.role === 'client').map(u => ({
@@ -267,29 +241,11 @@ const selectedProperty = computed(() =>
   properties.value.find(p => (p.id ?? p._id) === form.propertyId) ?? null
 )
 
-const itemQtys = reactive({})
-
-async function loadLaundryItems() {
-  loadingItems.value = true
-  try {
-    const rawItems = await fetchAllItems().catch(() => [])
-    laundryItems.value = (rawItems ?? []).map(mapItemForCatalog)
-    laundryItems.value.forEach((item) => {
-      itemCatalogByCode[item.code] = item
-      if (itemQtys[item.code] === undefined) {
-        itemQtys[item.code] = 0
-      }
-    })
-  } finally {
-    loadingItems.value = false
-  }
-}
-
 const subtotal = computed(() =>
-  Object.keys(itemQtys).reduce((sum, code) => {
-    const qty = Number(itemQtys[code] || 0)
+  Object.keys(itemQtys.value).reduce((sum, code) => {
+    const qty = Number(itemQtys.value[code] || 0)
     if (qty <= 0) return sum
-    const unitPrice = Number(itemCatalogByCode[code]?.unitPrice ?? 0)
+    const unitPrice = Number(itemCatalogByCode.value[code]?.unitPrice ?? 0)
     return sum + qty * unitPrice
   }, 0)
 )
@@ -335,10 +291,10 @@ async function submitOrder() {
 
   try {
     errorMessage.value = ''
-    const items = Object.keys(itemQtys)
+    const items = Object.keys(itemQtys.value)
       .map((code) => {
-        const qty = Number(itemQtys[code] || 0)
-        const item = itemCatalogByCode[code]
+        const qty = Number(itemQtys.value[code] || 0)
+        const item = itemCatalogByCode.value[code]
         if (qty <= 0 || !item) return null
         return {
           item_id: item._id ?? item.id,

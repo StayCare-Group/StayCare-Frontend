@@ -50,7 +50,12 @@
     "contactPerson": "Contact Person",
     "area": "Area",
     "phone": "Phone",
-    "accessDenied": "You do not have permission to perform this action. Please contact an administrator."
+    "accessDenied": "You do not have permission to perform this action. Please contact an administrator.",
+    "sortBy": "Sort by",
+    "categoryAsc": "Category (A-Z)",
+    "categoryDesc": "Category (Z-A)",
+    "nameAsc": "Name (A-Z)",
+    "nameDesc": "Name (Z-A)"
   },
   "auth": {
     "loginHeading": "Login for {brand} laundry management",

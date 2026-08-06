@@ -50,7 +50,12 @@
     "contactPerson": "Persona de Contacto",
     "area": "Área",
     "phone": "Teléfono",
-    "accessDenied": "No tienes permiso para realizar esta acción. Por favor solicita ayuda al administrador."
+    "accessDenied": "No tienes permiso para realizar esta acción. Por favor solicita ayuda al administrador.",
+    "sortBy": "Ordenar por",
+    "categoryAsc": "Categoría (A-Z)",
+    "categoryDesc": "Categoría (Z-A)",
+    "nameAsc": "Nombre (A-Z)",
+    "nameDesc": "Nombre (Z-A)"
   },
   "auth": {
     "loginHeading": "Iniciar sesión en {brand} gestión de lavandería",

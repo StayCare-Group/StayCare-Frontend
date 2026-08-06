@@ -175,21 +175,7 @@
       </div>
 
       <!-- Items -->
-      <div>
-        <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">{{ $t('admin.estimatedItems') }}</h4>
-        <div v-if="editLoadingItems" class="text-sm text-gray-400">{{ $t('common.loading') }}</div>
-        <div v-else class="divide-y divide-gray-100">
-          <div v-for="item in editItems" :key="item.code" class="flex items-center justify-between py-3 gap-4">
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-800">{{ item.name }} <span class="text-xs text-gray-400">({{ item.code }})</span></p>
-              <p class="text-xs text-gray-400">&euro;{{ item.unitPrice.toFixed(2) }} / unit</p>
-            </div>
-            <input v-model.number="editItemQtys[item.code]" type="number" min="0"
-              class="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-              placeholder="0" />
-          </div>
-        </div>
-      </div>
+      <OrderItemsPicker v-model="editItemQtys" @catalog-loaded="onEditCatalogLoaded" />
 
       <p v-if="editError" class="text-sm text-red-500">{{ editError }}</p>
     </form>
@@ -228,10 +214,10 @@ import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
 import { fetchOrderById, mapOrderForDetail, updateOrder } from '../../../api/orders'
 import { fetchClientById } from '../../../api/clients'
-import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
 import { isCancelableStatus } from '../../../utils/orderFlow'
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
+import OrderItemsPicker from '../../forms/OrderItemsPicker.vue'
 import { getTodayDateString, normalizeDateString, isPastDate } from '../../../utils/date'
 
 const { t } = useI18n()
@@ -268,9 +254,8 @@ const ALL_TIME_WINDOWS = ['08:00 - 10:00', '09:00 - 11:00', '10:00 - 12:00', '13
 const showEditModal = ref(false)
 const editSubmitting = ref(false)
 const editError = ref('')
-const editLoadingItems = ref(false)
-const editItems = ref([])
-const editItemQtys = reactive({})
+const editItemQtys = ref({})
+const editItemCatalogByCode = ref({})
 
 const editForm = reactive({
   pickupDate: '',
@@ -278,6 +263,22 @@ const editForm = reactive({
   estimatedBags: 1,
   specialNotes: '',
 })
+
+function syncOrderItemsToEditQtys() {
+  if (!order.value?.items) return
+  const currentQtys = { ...editItemQtys.value }
+  order.value.items.forEach(oi => {
+    if (oi.code !== undefined) {
+      currentQtys[oi.code] = oi.qty ?? 0
+    }
+  })
+  editItemQtys.value = currentQtys
+}
+
+function onEditCatalogLoaded(catalog) {
+  editItemCatalogByCode.value = catalog
+  syncOrderItemsToEditQtys()
+}
 
 function parseTimeWindow(tw, date) {
   const [start, end] = tw.split(' - ')
@@ -287,7 +288,7 @@ function parseTimeWindow(tw, date) {
   }
 }
 
-async function openEditModal() {
+function openEditModal() {
   if (!order.value) return
   if (order.value.isInvoiced) {
     editError.value = t('orderDetail.cannotEditInvoicedOrder')
@@ -302,23 +303,8 @@ async function openEditModal() {
   editForm.estimatedBags = order.value.estimatedBags ?? 1
   editForm.specialNotes = order.value.specialNotes ?? ''
 
-  // Load full item catalog
-  editLoadingItems.value = true
+  syncOrderItemsToEditQtys()
   showEditModal.value = true
-  try {
-    const rawItems = await fetchAllItems().catch(() => [])
-    editItems.value = (rawItems ?? []).map(mapItemForCatalog)
-
-    // Reset quantities, then pre-fill from current order items
-    editItems.value.forEach(item => { editItemQtys[item.code] = 0 })
-    ;(order.value.items ?? []).forEach(oi => {
-      if (editItemQtys[oi.code] !== undefined) {
-        editItemQtys[oi.code] = oi.qty
-      }
-    })
-  } finally {
-    editLoadingItems.value = false
-  }
 }
 
 const todayStr = computed(() => getTodayDateString())
@@ -340,12 +326,13 @@ async function submitEdit() {
   editSubmitting.value = true
   editError.value = ''
   try {
-    const items = editItems.value
-      .filter(i => (editItemQtys[i.code] || 0) > 0)
+    const catalogList = Object.values(editItemCatalogByCode.value || {})
+    const items = catalogList
+      .filter(i => (editItemQtys.value[i.code] || 0) > 0)
       .map(i => ({
         item_id: i._id ?? i.id,
-        quantity: editItemQtys[i.code],
-        qty_good: editItemQtys[i.code],
+        quantity: editItemQtys.value[i.code],
+        qty_good: editItemQtys.value[i.code],
         qty_bad: 0,
         qty_stained: 0,
       }))
