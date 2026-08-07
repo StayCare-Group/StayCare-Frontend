@@ -58,7 +58,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { fetchRoutes, mapRouteForDriver } from '../../../api/routes'
+import { fetchAllRoutes, mapRouteForDriver } from '../../../api/routes'
 
 function localDateStr(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
@@ -75,7 +75,7 @@ async function loadHistory() {
     if (dateFilter.value) {
       params.date = dateFilter.value
     }
-    const data = await fetchRoutes(params)
+    const data = await fetchAllRoutes(params).catch(() => [])
     const all = (data ?? []).map(mapRouteForDriver)
     if (dateFilter.value) {
       pastRoutes.value = all

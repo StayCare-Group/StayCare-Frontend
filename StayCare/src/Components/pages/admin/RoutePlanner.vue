@@ -376,7 +376,7 @@
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchOrders, fetchAllOrders, mapOrderForList, reassignOrder, confirmPickup as apiConfirmPickup } from '@/api/orders'
-import { fetchRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
+import { fetchRoutes, fetchAllRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
 import { getUsers } from '../../../api/users'
 import { fetchClients } from '../../../api/clients'
 import { apiFetch } from '../../../api/client'
@@ -424,6 +424,7 @@ function canReassignStop(stop) {
 
 /* ── Constants ── */
 const MAX_PICKUPS_PER_HOUR = 4
+const ROUTE_ORDER_STATUSES = 'pending,assigned,transit,ready_to_delivery,collected'
 
 /** Returns a Date as YYYY-MM-DD in local timezone (no UTC shift) */
 function localDateStr(d = new Date()) {
@@ -483,7 +484,7 @@ const successMessage = ref('')
 onMounted(async () => {
   try {
     const [ordersData, usersData, clientsData] = await Promise.all([
-      fetchAllOrders().catch(() => []),
+      fetchAllOrders({ status: ROUTE_ORDER_STATUSES }).catch(() => []),
       getUsers().catch(() => []),
       fetchClients().catch(() => []),
     ])
@@ -522,7 +523,7 @@ onMounted(async () => {
 async function loadRoutes() {
   routesLoading.value = true
   try {
-    const data = await fetchRoutes()
+    const data = await fetchAllRoutes().catch(() => [])
     existingRoutes.value = (data ?? []).map(mapRouteForDriver)
   } catch {
     existingRoutes.value = []
@@ -793,7 +794,7 @@ async function handleAutoAssign() {
     }
     // Re-fetch ALL orders so we always have the latest data
     // Merge with existing to avoid losing any already-loaded orders
-    const freshOrders = await fetchAllOrders()
+    const freshOrders = await fetchAllOrders({ status: ROUTE_ORDER_STATUSES }).catch(() => [])
     const merged = new Map()
     for (const o of rawOrders.value) merged.set(o._id ?? o.id, o)
     for (const o of (freshOrders ?? [])) merged.set(o._id ?? o.id, o)
@@ -866,7 +867,7 @@ async function confirmAutoAssign() {
     autoSuccess.value = t('routePlanner.routesCreated', { count: created, date: autoPreview.value.date })
     autoPreview.value = null
     // Refresh data
-    const ordersData = await fetchAllOrders().catch(() => [])
+    const ordersData = await fetchAllOrders({ status: ROUTE_ORDER_STATUSES }).catch(() => [])
     rawOrders.value = ordersData ?? []
     await loadRoutes()
   } catch (err) {
@@ -926,7 +927,7 @@ async function handleCreateRoute() {
 
     successMessage.value = t('routePlanner.routeCreatedSuccess')
     selectedOrderIds.value = []
-    const ordersData = await fetchAllOrders().catch(() => [])
+    const ordersData = await fetchAllOrders({ status: ROUTE_ORDER_STATUSES }).catch(() => [])
     rawOrders.value = ordersData ?? []
     await loadRoutes()
   } catch (err) {
@@ -986,7 +987,7 @@ async function handleDeleteRoute(routeId) {
     await deleteRoute(routeId)
     await loadRoutes()
     // Refresh orders so they reappear in pending list
-    const ordersData = await fetchAllOrders().catch(() => [])
+    const ordersData = await fetchAllOrders({ status: ROUTE_ORDER_STATUSES }).catch(() => [])
     rawOrders.value = ordersData ?? []
   } catch (err) {
     ui.showError(err?.message || err?.error || t('admin.errorDeleteRoute'))
@@ -1027,7 +1028,7 @@ async function runBackgroundAutoAssign() {
   bgAutoAssigning.value = true
   try {
     // Refresh orders & routes
-    const freshOrders = await fetchAllOrders().catch(() => [])
+    const freshOrders = await fetchAllOrders({ status: ROUTE_ORDER_STATUSES }).catch(() => [])
     const merged = new Map()
     for (const o of rawOrders.value) merged.set(o._id ?? o.id, o)
     for (const o of (freshOrders ?? [])) merged.set(o._id ?? o.id, o)
@@ -1113,7 +1114,7 @@ async function runBackgroundAutoAssign() {
     }
 
     // Refresh after creating routes
-    const updatedOrders = await fetchAllOrders().catch(() => [])
+    const updatedOrders = await fetchAllOrders({ status: ROUTE_ORDER_STATUSES }).catch(() => [])
     rawOrders.value = updatedOrders ?? []
     await loadRoutes()
   } catch (err) {

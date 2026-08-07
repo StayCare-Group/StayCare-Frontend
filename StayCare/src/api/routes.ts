@@ -22,8 +22,47 @@ export async function fetchRoutes(params?: Record<string, string>) {
   return apiFetch(`/api/routes${query}`)
 }
 
+export async function fetchAllRoutes(params?: Record<string, string>) {
+  const allRoutes: any[] = []
+  let page = 1
+  const maxPages = 50
+
+  while (page <= maxPages) {
+    const merged: Record<string, string> = {
+      ...params,
+      page: String(page),
+      limit: '200',
+      per_page: '200',
+      pageSize: '200',
+    }
+    const query = '?' + new URLSearchParams(merged).toString()
+    const data = await apiFetch(`/api/routes${query}`)
+    const items = Array.isArray(data) ? data : []
+
+    if (items.length === 0) break
+
+    if (page > 1) {
+      const firstId = items[0]?._id ?? items[0]?.id
+      if (allRoutes.some(r => (r._id ?? r.id) === firstId)) break
+    }
+
+    allRoutes.push(...items)
+
+    const pagination = (data as any)?._pagination
+    if (pagination) {
+      const totalPages = pagination.totalPages ?? pagination.pages ?? pagination.total_pages ?? pagination.lastPage ?? 0
+      if (totalPages && page >= totalPages) break
+    }
+
+    if (items.length < 200) break
+    page++
+  }
+
+  return allRoutes
+}
+
 export async function fetchRoutesByDriver(driverId: string | number) {
-  return fetchRoutes({ driver: String(driverId) })
+  return fetchAllRoutes({ driver: String(driverId) })
 }
 
 export async function fetchRouteById(id: string) {
