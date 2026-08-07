@@ -109,6 +109,7 @@ import {
 import MapPicker from '../../ui/MapPicker.vue'
 import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
+import { formatApiErrorMessage } from '../../../utils/errors'
 
 const { t } = useI18n()
 const ui = useUiStore()
@@ -209,6 +210,10 @@ function startEdit(property) {
 
 async function saveProperty() {
   if (addingProp.value || !props.clientId) return
+  if (!newProp.value.property_name || !newProp.value.property_name.trim()) {
+    propError.value = t('validation.fillRequiredFields')
+    return
+  }
   addingProp.value = true
   propError.value = ''
   try {
@@ -220,7 +225,7 @@ async function saveProperty() {
     await loadClientProperties()
     cancelForm()
   } catch (err) {
-    propError.value = err?.message || t('properties.addFailed')
+    propError.value = formatApiErrorMessage(err, t('properties.addFailed'), t)
   } finally {
     addingProp.value = false
   }

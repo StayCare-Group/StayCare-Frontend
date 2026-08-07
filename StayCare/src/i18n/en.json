@@ -655,5 +655,14 @@
     "createAccountDescription": "Register your StayFresh account for commercial laundry, dry cleaning, and Airbnb cleaning services in Malta.",
     "forgotPasswordTitle": "Reset Password - StayFresh Malta Cleaners & Laundry",
     "laundryAndCleanersTagline": "Malta Laundry, Commercial Cleaners & Airbnb Clean Services"
+  },
+  "validation": {
+    "fillRequiredFields": "Please complete all required fields in the form.",
+    "selectClientRequired": "Please select a client.",
+    "selectPropertyRequired": "Please select a property.",
+    "selectPickupDateRequired": "Please select a pickup date.",
+    "selectPickupTimeWindowRequired": "Please select a pickup time window.",
+    "estimatedBagsRequired": "Please enter a valid estimated bag count.",
+    "fieldRequired": "This field is required."
   }
 }

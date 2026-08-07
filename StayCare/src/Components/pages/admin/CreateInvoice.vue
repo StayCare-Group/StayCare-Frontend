@@ -143,6 +143,7 @@ import { fetchClients } from '../../../api/clients'
 import { fetchOrders } from '../../../api/orders'
 import { createInvoice, fetchInvoices } from '../../../api/invoices'
 import { getClientDisplayName, getClientId } from '../../../utils/client'
+import { formatApiErrorMessage } from '../../../utils/errors'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -289,6 +290,19 @@ const grandTotal = computed(() => subtotal.value + vatAmount.value)
 
 async function submitInvoice() {
   if (submitting.value) return
+  if (!form.clientId) {
+    errorMessage.value = t('validation.selectClientRequired')
+    return
+  }
+  if (!form.dueDate) {
+    errorMessage.value = t('validation.fillRequiredFields')
+    return
+  }
+  if (!form.lineItems || form.lineItems.length === 0 || form.lineItems.some(li => !li.description || !li.description.trim())) {
+    errorMessage.value = t('validation.fillRequiredFields')
+    return
+  }
+
   submitting.value = true
   errorMessage.value = ''
   try {
@@ -317,8 +331,11 @@ async function submitInvoice() {
       navStore.goBack('invoices')
     }, 1500)
   } catch (err) {
-    const message = err?.message || err?.error || t('createInvoice.createFailed')
-    errorMessage.value = message
+    errorMessage.value = formatApiErrorMessage(
+      err,
+      t('createInvoice.createFailed'),
+      t
+    )
   } finally {
     submitting.value = false
   }

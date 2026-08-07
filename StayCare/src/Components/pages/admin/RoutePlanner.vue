@@ -392,6 +392,7 @@ import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
 import { getTodayDateString, normalizeDateString, isPastDate } from '../../../utils/date'
+import { formatApiErrorMessage } from '../../../utils/errors'
 
 
 const navStore = useNavStore()
@@ -929,11 +930,11 @@ async function handleCreateRoute() {
     rawOrders.value = ordersData ?? []
     await loadRoutes()
   } catch (err) {
-    errorMessage.value =
-      err?.message ||
-      err?.error ||
-      err?.data?.message ||
-      t('admin.errorCreateRoute')
+    errorMessage.value = formatApiErrorMessage(
+      err,
+      t('admin.errorCreateRoute'),
+      t
+    )
   } finally {
     submitting.value = false
   }

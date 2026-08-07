@@ -655,5 +655,14 @@
     "createAccountDescription": "Registra tu cuenta en StayFresh por StayCare Group para servicios de lavandería comercial, tintorería y limpieza de Airbnb en Malta.",
     "forgotPasswordTitle": "Recuperar Contraseña - StayFresh Malta Cleaners & Lavandería",
     "laundryAndCleanersTagline": "StayFresh Lavandería en Malta, Cleaners Comerciales y Servicios Airbnb Clean"
+  },
+  "validation": {
+    "fillRequiredFields": "Por favor completa todos los campos requeridos del formulario.",
+    "selectClientRequired": "Por favor selecciona un cliente.",
+    "selectPropertyRequired": "Por favor selecciona una propiedad.",
+    "selectPickupDateRequired": "Por favor selecciona la fecha de recogida.",
+    "selectPickupTimeWindowRequired": "Por favor selecciona el horario de recogida.",
+    "estimatedBagsRequired": "Por favor ingresa una cantidad válida de bolsas estimadas.",
+    "fieldRequired": "Este campo es requerido."
   }
 }

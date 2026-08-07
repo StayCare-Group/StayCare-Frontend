@@ -145,6 +145,7 @@ import { getPropertiesByUserId } from '../../../api/properties'
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
 import OrderItemsPicker from '../../forms/OrderItemsPicker.vue'
 import { getTodayDateString, isPastDate } from '../../../utils/date'
+import { formatApiErrorMessage } from '../../../utils/errors'
 
 const props = defineProps({
   mode: {
@@ -282,6 +283,26 @@ async function submitOrder() {
     errorMessage.value = `${t('admin.noClients')} ${t('admin.noClientsCreateHint')}`
     return
   }
+  if (isAdmin.value && !form.clientId) {
+    errorMessage.value = t('validation.selectClientRequired')
+    return
+  }
+  if (!form.propertyId) {
+    errorMessage.value = t('validation.selectPropertyRequired')
+    return
+  }
+  if (!form.pickupDate) {
+    errorMessage.value = t('validation.selectPickupDateRequired')
+    return
+  }
+  if (!form.pickupTimeWindow) {
+    errorMessage.value = t('validation.selectPickupTimeWindowRequired')
+    return
+  }
+  if (!form.estimatedBags || form.estimatedBags < 1) {
+    errorMessage.value = t('validation.estimatedBagsRequired')
+    return
+  }
   if (isPastDate(form.pickupDate)) {
     errorMessage.value = t('admin.pickupDateInPast')
     return
@@ -322,11 +343,11 @@ async function submitOrder() {
     }, 1500)
   } catch (err) {
     showSuccess.value = false
-    errorMessage.value =
-      err?.message ||
-      err?.error ||
-      err?.data?.message ||
-      t('admin.errorCreateOrder')
+    errorMessage.value = formatApiErrorMessage(
+      err,
+      t('admin.errorCreateOrder'),
+      t
+    )
   } finally {
     submitting.value = false
   }
