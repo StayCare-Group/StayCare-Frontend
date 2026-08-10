@@ -94,24 +94,28 @@ import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { fetchAllOrders, mapOrderForList } from '../../api/orders'
-import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
+import { fetchDashboardStats } from '../../api/reports'
 
 const { t } = useI18n()
 const navStore = useNavStore()
 
 const orders = ref([])
-const invoices = ref([])
+const dashboardStats = ref(null)
 const loading = ref(true)
 
 async function loadDashboardData() {
   try {
     loading.value = true
-    const [ordersData, invoicesData] = await Promise.all([
-      fetchAllOrders().catch(() => []),
-      fetchInvoices().catch(() => []),
+    const now = new Date()
+    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+    const fromStr = twoMonthsAgo.toISOString()
+
+    const [ordersData, statsData] = await Promise.all([
+      fetchAllOrders({ from: fromStr, limit: '200' }).catch(() => []),
+      fetchDashboardStats().catch(() => null),
     ])
     orders.value = (ordersData ?? []).map(mapOrderForList)
-    invoices.value = (invoicesData ?? []).map(mapInvoiceForList)
+    dashboardStats.value = statsData
   } catch {
     /* stays empty */
   } finally {
@@ -128,21 +132,14 @@ watch(() => navStore.currentPage, (page) => {
 })
 
 const adminKPIs = computed(() => {
-  const d = new Date()
-  const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-  const currentMonthPrefix = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
-
-  const todayOrders = orders.value.filter(o => o.pickupDate === today || o.createdAt === today).length
-
-  const paidInvoices = invoices.value.filter(i => String(i.status).toLowerCase() === 'paid')
-  const thisMonthPaid = paidInvoices.filter(i => i.issueDate && i.issueDate.startsWith(currentMonthPrefix))
-  const relevantInvoices = thisMonthPaid.length > 0 ? thisMonthPaid : paidInvoices
-
-  const monthRevenue = relevantInvoices.reduce((sum, i) => sum + (i.grandTotal ?? 0), 0)
-  const vatCollected = relevantInvoices.reduce((sum, i) => sum + ((i.grandTotal ?? 0) * 0.18 / 1.18), 0)
-
-  const totalOrders = orders.value.length
-  const delivered = orders.value.filter(o => ['delivered', 'completed', 'invoiced'].includes(String(o.status).toLowerCase())).length
+  const stats = dashboardStats.value || {}
+  const todayOrders = stats.todayOrders || 0
+  const monthRevenue = stats.monthlyRevenue || 0
+  const vatCollected = stats.monthlyVat || 0
+  
+  const totalOrders = stats.totalOrders || 0
+  const activeOrders = stats.activeOrders || 0
+  const delivered = Math.max(0, totalOrders - activeOrders)
   const sla = totalOrders > 0 ? Math.round((delivered / totalOrders) * 100) : 0
 
   return [

@@ -2,7 +2,7 @@ import { apiFetch } from './client'
 import { normalizeClient, normalizeClients } from '../utils/client'
 
 export async function fetchClients() {
-  const data = await apiFetch('/api/clients')
+  const data = await apiFetch('/api/clients?limit=200')
   return normalizeClients(data)
 }
 

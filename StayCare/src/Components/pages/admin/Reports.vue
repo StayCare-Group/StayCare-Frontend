@@ -182,6 +182,7 @@ const { exportToExcel } = useReportExport(t, {
   monthOptions,
   orders,
   invoices,
+  ordersByClient,
   clientsList,
   driversList,
   slaReport,

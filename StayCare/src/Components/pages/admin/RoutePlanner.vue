@@ -485,7 +485,7 @@ onMounted(async () => {
   try {
     const [ordersData, usersData, clientsData] = await Promise.all([
       fetchAllOrders({ status: ROUTE_ORDER_STATUSES }).catch(() => []),
-      getUsers().catch(() => []),
+      getUsers({ role: 'driver', limit: '200' }).catch(() => []),
       fetchClients().catch(() => []),
     ])
 

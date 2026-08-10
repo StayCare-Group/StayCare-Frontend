@@ -194,7 +194,7 @@ onMounted(async () => {
   try {
     const [clientsData, ordersData, invoicesData] = await Promise.all([
       fetchClients().catch(() => []),
-      fetchOrders().catch(() => []),
+      fetchOrders({ status: 'delivered,collected,ready_to_delivery', limit: '200' }).catch(() => []),
       fetchInvoices().catch(() => []),
     ])
     clients.value = clientsData ?? []
@@ -213,7 +213,7 @@ onMounted(async () => {
   }
 })
 
-const UNINVOICED_STATUSES = new Set(['delivered', 'ready_to_deliver', 'readytodeliver', 'collected'])
+const UNINVOICED_STATUSES = new Set(['delivered', 'ready_to_delivery', 'collected'])
 
 const selectedClientMatchIds = computed(() => {
   const selectedId = String(form.clientId ?? '')

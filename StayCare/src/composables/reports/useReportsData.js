@@ -1,8 +1,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchAllOrders, mapOrderForList } from '../../api/orders'
-import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
-import { fetchClients } from '../../api/clients'
+import { fetchDashboardStats } from '../../api/reports'
 import { getUsers } from '../../api/users'
+import { apiFetch } from '../../api/client'
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -40,11 +39,11 @@ function yearRange(year) {
 }
 
 export function useReportsData(t) {
-  const orders = ref([])
-  const rawOrders = ref([])
-  const invoices = ref([])
-  const clientsList = ref([])
+  const revenueData = ref([])
+  const clientsData = ref([])
+  const slaData = ref(null)
   const driversList = ref([])
+  const dashboardStats = ref(null)
   const loading = ref(true)
 
   const monthOptions = buildMonthOptions()
@@ -53,29 +52,38 @@ export function useReportsData(t) {
   const selectedYear = ref(yearOptions[0])
   const reportPeriodType = ref('month')
 
-  function getDateParams() {
-    return reportPeriodType.value === 'month'
-      ? monthRange(selectedMonth.value)
-      : yearRange(selectedYear.value)
+  // Calculate how many months back to pass to /api/reports/revenue
+  function getMonthsParam() {
+    if (reportPeriodType.value === 'year') {
+      const currentYear = new Date().getFullYear()
+      const diff = currentYear - Number(selectedYear.value)
+      // Return all 12 months of the selected year relative to today
+      return diff === 0 ? 12 : (diff + 1) * 12
+    }
+    // For month mode: calculate offset from current month
+    const now = new Date()
+    const [y, m] = selectedMonth.value.split('-').map(Number)
+    const diffMonths = (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - m)
+    return Math.max(diffMonths + 1, 1)
   }
 
   async function loadData() {
     loading.value = true
     try {
-      const { from, to } = getDateParams()
-      const dateParams = { from, to }
+      const months = getMonthsParam()
 
-      const [ordersData, invoicesData, clientsData, usersData] = await Promise.all([
-        fetchAllOrders(dateParams).catch(() => []),
-        fetchInvoices({ ...dateParams, limit: '200' }).catch(() => []),
-        fetchClients().catch(() => []),
-        getUsers().catch(() => []),
+      const [revenueRes, clientsRes, slaRes, statsRes, usersData] = await Promise.all([
+        apiFetch(`/api/reports/revenue?months=${months}`).catch(() => []),
+        apiFetch('/api/reports/orders-by-client').catch(() => []),
+        apiFetch('/api/reports/sla').catch(() => null),
+        fetchDashboardStats().catch(() => null),
+        getUsers({ role: 'driver', limit: '200' }).catch(() => []),
       ])
 
-      rawOrders.value = ordersData ?? []
-      orders.value = (ordersData ?? []).map(mapOrderForList)
-      invoices.value = (invoicesData ?? []).map(mapInvoiceForList)
-      clientsList.value = clientsData ?? []
+      revenueData.value = revenueRes
+      clientsData.value = clientsRes
+      slaData.value = slaRes
+      dashboardStats.value = statsRes
       driversList.value = (usersData ?? []).filter(u => u.role === 'driver').map(u => ({
         ...u,
         status: u.is_active ? 'Active' : 'Inactive',
@@ -92,96 +100,80 @@ export function useReportsData(t) {
   watch(selectedYear, loadData)
   watch(reportPeriodType, loadData)
 
-  const hasOrdersInPeriod = computed(() => (orders.value ?? []).length > 0)
+  const hasOrdersInPeriod = computed(() => clientsData.value.length > 0 || revenueData.value.length > 0)
 
+  // Transform backend { year, month, revenue } into { labels, values } for the bar chart
   const revenueByMonth = computed(() => {
-    const months = {}
-    for (const inv of invoices.value) {
-      if (inv.status === 'Paid' && inv.issueDate) {
-        const d = new Date(inv.issueDate)
-        const label = `${MONTH_NAMES[d.getMonth()].slice(0, 3)}`
-        months[label] = (months[label] || 0) + (inv.grandTotal ?? 0)
+    const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const revMap = new Map()
+    for (const r of revenueData.value) {
+      revMap.set(`${r.year}-${r.month}`, r.revenue ?? 0)
+    }
+
+    const labels = []
+    const values = []
+
+    if (reportPeriodType.value === 'year') {
+      const yr = Number(selectedYear.value)
+      for (let m = 1; m <= 12; m++) {
+        labels.push(MONTH_SHORT[m - 1])
+        values.push(revMap.get(`${yr}-${m}`) ?? 0)
+      }
+    } else {
+      // Month mode: show last 6 months ending at selectedMonth
+      const [selYear, selMonth] = selectedMonth.value.split('-').map(Number)
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(selYear, selMonth - 1 - i, 1)
+        const yr = d.getFullYear()
+        const mo = d.getMonth() + 1
+        labels.push(MONTH_SHORT[mo - 1])
+        values.push(revMap.get(`${yr}-${mo}`) ?? 0)
       }
     }
-    const shortNames = MONTH_NAMES.map(n => n.slice(0, 3))
-    const labels = Object.keys(months).length ? Object.keys(months) : shortNames.slice(-6)
-    const values = labels.map(l => months[l] || 0)
+
     return { labels, values }
   })
 
-  const ordersByClient = computed(() => {
-    const map = {}
-    for (const o of orders.value) {
-      const name = o.client || t('reports.unknown')
-      if (!map[name]) map[name] = { client: name, orders: 0, revenue: 0 }
-      map[name].orders++
-      map[name].revenue += o.total ?? 0
+  // Transform backend ClientStats into the shape the template expects
+  const ordersByClient = computed(() =>
+    clientsData.value.map(c => ({
+      client: c.clientName,
+      orders: c.totalOrders,
+      revenue: c.totalRevenue,
+    })).slice(0, 10)
+  )
+
+  // Normalize backend SLA field names to match template usage
+  const slaReport = computed(() => {
+    const s = slaData.value || {}
+    return {
+      onTime:             s.onTimePercent  ?? 0,
+      late:               s.latePercent    ?? 0,
+      critical:           s.criticalPercent ?? 0,
+      avgProcessingHours: s.avgProcessingHours ?? 0,
+      avgDeliveryHours:   s.avgDeliveryHours   ?? 0,
     }
-    return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 10)
   })
 
-  const slaReport = computed(() => {
-    const MS_PER_HOUR = 1000 * 60 * 60
-    const processingDurations = []
-    const deliveryDurations = []
-
-    let onTimeCount = 0
-    let lateCount = 0
-    let criticalCount = 0
-
-    for (const o of rawOrders.value) {
-      const history = Array.isArray(o.status_history) ? o.status_history : []
-      if (!history.length) continue
-
-      const getFirstTimestamp = (statuses) => {
-        const entry = history.find(h => statuses.includes(h.status))
-        return entry?.timestamp ? new Date(entry.timestamp).getTime() : null
-      }
-
-      const arrivedAt = getFirstTimestamp(['Arrived'])
-      const processingDoneAt = getFirstTimestamp(['ReadyToDeliver', 'Completed', 'Delivered'])
-      if (arrivedAt && processingDoneAt && processingDoneAt > arrivedAt) {
-        processingDurations.push((processingDoneAt - arrivedAt) / MS_PER_HOUR)
-      }
-
-      const deliveryStart = getFirstTimestamp(['ReadyToDeliver', 'Collected'])
-      const deliveredAt = getFirstTimestamp(['Delivered', 'Completed'])
-      if (deliveryStart && deliveredAt && deliveredAt > deliveryStart) {
-        deliveryDurations.push((deliveredAt - deliveryStart) / MS_PER_HOUR)
-      }
-
-      if (deliveredAt && o.created_at) {
-        const createdAt = new Date(o.created_at).getTime()
-        if (!Number.isNaN(createdAt) && deliveredAt > createdAt) {
-          const totalHours = (deliveredAt - createdAt) / MS_PER_HOUR
-          const targetHours = o.service_type === 'express' ? 24 : 48
-
-          if (totalHours <= targetHours) onTimeCount++
-          else if (totalHours <= targetHours * 2) lateCount++
-          else criticalCount++
-        }
-      }
-    }
-
-    const totalClassified = onTimeCount + lateCount + criticalCount
-    const onTime = totalClassified ? Math.round((onTimeCount / totalClassified) * 100) : 0
-    const late = totalClassified ? Math.round((lateCount / totalClassified) * 100) : 0
-    const critical = Math.max(0, 100 - onTime - late)
-
-    const avg = (arr) => arr.length ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1)) : 0
-
-    return {
-      onTime,
-      late,
-      critical,
-      avgProcessingHours: avg(processingDurations),
-      avgDeliveryHours: avg(deliveryDurations),
-    }
+  // clientsList as array-like for backward compat with useReportExport (.length)
+  // Uses dashboardStats.totalClients as the authoritative count.
+  const clientsList = computed(() => {
+    const stats = dashboardStats.value || {}
+    const total = stats.totalClients ?? 0
+    // Return an array of 'total' length so .length works in the export
+    return Array.from({ length: total })
   })
 
   const maxRevenue = computed(() => Math.max(...revenueByMonth.value.values, 1))
   const maxClientRevenue = computed(() => Math.max(...ordersByClient.value.map(r => r.revenue), 1))
   const totalRevenue = computed(() => revenueByMonth.value.values.reduce((a, b) => a + b, 0))
+
+  // Empty shims kept for useReportExport backward compatibility.
+  // The Excel export will show 0 rows for orders/invoices (raw lists are
+  // no longer downloaded for performance reasons). The dashboard charts
+  // are now driven by the dedicated report endpoints above.
+  const orders = { value: [] }
+  const invoices = { value: [] }
 
   return {
     orders,

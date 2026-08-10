@@ -42,7 +42,7 @@ import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import { useNavStore } from '../../stores/nav.js'
 import AppButton from '../ui/AppButton.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
-import { fetchOrders, mapOrderForList } from '../../api/orders'
+import { fetchOrders, fetchAllOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
 import { fetchMe } from '../../api/users'
 import { useAuthStore } from '../../stores/auth.js'
@@ -52,8 +52,10 @@ const { t } = useI18n()
 const navStore = useNavStore()
 const authStore = useAuthStore()
 
-const orders = ref([])
-const invoices = ref([])
+const activeOrdersList = ref([])
+const recentOrdersList = ref([])
+const unpaidInvoicesList = ref([])
+const recentInvoicesList = ref([])
 const loading = ref(true)
 const canCreateOrder = ref(true)
 
@@ -61,13 +63,21 @@ onMounted(async () => {
   try {
     const clientId = authStore.user?.id
     const orderParams = clientId ? { client_id: String(clientId) } : undefined
-    const [ordersData, invoicesData, meData] = await Promise.all([
-      fetchOrders(orderParams),
-      fetchInvoices(),
+    const activeStatuses = 'pending,assigned,transit,arrived,washing,drying,ironing,quality_check,ready_to_delivery,collected,rescheduled'
+
+    const [activeOrdersData, recentOrdersData, unpaidInvoicesData, recentInvoicesData, meData] = await Promise.all([
+      fetchAllOrders({ ...orderParams, status: activeStatuses }).catch(() => []),
+      fetchOrders({ ...orderParams, limit: '5' }).catch(() => []),
+      fetchInvoices({ status: 'pending,overdue', limit: '200' }).catch(() => []),
+      fetchInvoices({ limit: '5' }).catch(() => []),
       fetchMe().catch(() => null),
     ])
-    orders.value = (ordersData ?? []).map(mapOrderForList)
-    invoices.value = (invoicesData ?? []).map(mapInvoiceForList)
+
+    activeOrdersList.value = (activeOrdersData ?? []).map(mapOrderForList)
+    recentOrdersList.value = (recentOrdersData ?? []).map(mapOrderForList)
+    unpaidInvoicesList.value = (unpaidInvoicesData ?? []).map(mapInvoiceForList)
+    recentInvoicesList.value = (recentInvoicesData ?? []).map(mapInvoiceForList)
+    
     canCreateOrder.value = isClientProfileCompleteForOrder(meData)
   } catch { /* data stays empty */ } finally {
     loading.value = false
@@ -75,18 +85,16 @@ onMounted(async () => {
 })
 
 const clientKPIs = computed(() => {
-  const active = orders.value.filter(o =>
-    !['delivered', 'completed', 'invoiced', 'cancelled'].includes(o.status)
+  const active = activeOrdersList.value.length
+
+  const inProgress = activeOrdersList.value.filter(o =>
+    !['pending', 'ready_to_delivery', 'collected'].includes(o.status)
   ).length
 
-  const inProgress = orders.value.filter(o =>
-    !['pending', 'ready_to_delivery', 'collected', 'delivered', 'completed', 'invoiced', 'cancelled'].includes(o.status)
-  ).length
-
-  const ready = orders.value.filter(o => o.status === 'ready_to_delivery').length
-  const outstanding = invoices.value
-    .filter(i => i.status !== 'Paid')
+  const ready = activeOrdersList.value.filter(o => o.status === 'ready_to_delivery').length
+  const outstanding = unpaidInvoicesList.value
     .reduce((sum, i) => sum + (i.grandTotal ?? 0), 0)
+  
   return [
     { label: t('client.activeOrders'), value: active, color: 'blue' },
     { label: t('client.inProgress'), value: inProgress, color: 'yellow' },
@@ -96,7 +104,7 @@ const clientKPIs = computed(() => {
 })
 
 const recentOrders = computed(() =>
-  orders.value.slice(0, 5).map(o => ({
+  recentOrdersList.value.map(o => ({
     id: o.id,
     date: o.pickupDate,
     items: o.estimatedBags,
@@ -106,7 +114,7 @@ const recentOrders = computed(() =>
 )
 
 const openInvoices = computed(() =>
-  invoices.value.filter(i => i.status !== 'Paid').slice(0, 5).map(i => ({
+  recentInvoicesList.value.map(i => ({
     id: i.id,
     amount: `€${(i.grandTotal ?? 0).toFixed(2)}`,
     due: i.dueDate,

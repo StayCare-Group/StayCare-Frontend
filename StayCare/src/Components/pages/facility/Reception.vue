@@ -199,7 +199,7 @@ let codeReader = null
 
 const allOrders = ref([])
 const loading = ref(true)
-const RECEPTION_STATUSES = 'transit,in_transit,arrived'
+const RECEPTION_STATUSES = 'transit,arrived'
 
 onMounted(async () => {
   try {
