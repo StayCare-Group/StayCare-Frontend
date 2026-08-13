@@ -195,8 +195,8 @@ const noClientsAvailable = computed(() =>
 onMounted(async () => {
   try {
     if (isAdmin.value) {
-      const users = await getUsers().catch(() => [])
-      clients.value = (users ?? []).filter(u => u.role === 'client').map(u => ({
+      const users = await getUsers({ role: 'client', limit: '200' }).catch(() => [])
+      clients.value = (users ?? []).map(u => ({
         ...u,
         _id: u._id ?? u.id,
         id: u._id ?? u.id,
