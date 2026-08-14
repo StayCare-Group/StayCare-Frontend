@@ -6,6 +6,7 @@
     @mouseleave="scheduleHide"
     @focusin="showTooltip"
     @focusout="scheduleHide"
+    @click="toggleTooltip"
   >
     <slot />
 
@@ -17,6 +18,7 @@
         class="fixed z-50 p-2.5 bg-gray-900 text-white text-xs rounded-lg shadow-xl border border-gray-700 pointer-events-auto transition-opacity duration-150"
         @mouseenter="cancelHide"
         @mouseleave="scheduleHide"
+        @click.stop
       >
         <div v-if="title" class="font-semibold text-brand-300 mb-1 border-b border-gray-700 pb-1">
           {{ title }}
@@ -30,7 +32,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, nextTick, onUnmounted } from 'vue'
+import { ref, reactive, computed, nextTick, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
@@ -143,8 +145,42 @@ function scheduleHide() {
   }, 200)
 }
 
+function toggleTooltip(e) {
+  e?.stopPropagation()
+  cancelHide()
+  if (visible.value) {
+    visible.value = false
+  } else {
+    showTooltip()
+  }
+}
+
+function handleOutsideClick(e) {
+  if (
+    visible.value &&
+    triggerRef.value &&
+    !triggerRef.value.contains(e.target) &&
+    tooltipRef.value &&
+    !tooltipRef.value.contains(e.target)
+  ) {
+    visible.value = false
+  }
+}
+
+watch(visible, (isShown) => {
+  if (isShown) {
+    window.addEventListener('click', handleOutsideClick, true)
+    window.addEventListener('touchstart', handleOutsideClick, true)
+  } else {
+    window.removeEventListener('click', handleOutsideClick, true)
+    window.removeEventListener('touchstart', handleOutsideClick, true)
+  }
+})
+
 onUnmounted(() => {
   cancelHide()
   visible.value = false
+  window.removeEventListener('click', handleOutsideClick, true)
+  window.removeEventListener('touchstart', handleOutsideClick, true)
 })
 </script>
