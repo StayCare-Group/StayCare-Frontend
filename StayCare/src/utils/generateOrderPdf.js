@@ -146,15 +146,16 @@ export function generateOrderPdf(order, t) {
     y += 1.5
   }
 
-  /* ── SECTION: ITEMS TABLE (Compact 7.0pt font size) ── */
+  /* ── SECTION: ITEMS TABLE (Condition breakdown without prices) ── */
   sectionTitle(_('common.items', 'Items'))
 
   const itemRows = (order.items ?? []).map(i => [
     i.code || '—',
     i.name || '—',
     String(i.qty ?? 0),
-    `€${(i.unitPrice ?? 0).toFixed(2)}`,
-    `€${((i.qty ?? 0) * (i.unitPrice ?? 0)).toFixed(2)}`,
+    i.qtyGood !== null && i.qtyGood !== undefined ? String(i.qtyGood) : '—',
+    i.qtyBad !== null && i.qtyBad !== undefined ? String(i.qtyBad) : '—',
+    i.qtyStained !== null && i.qtyStained !== undefined ? String(i.qtyStained) : '—',
   ])
 
   autoTable(doc, {
@@ -163,10 +164,11 @@ export function generateOrderPdf(order, t) {
       _('orderDetail.itemCode', 'Code'),
       _('orderDetail.itemName', 'Name'),
       _('orderDetail.quantity', 'Qty'),
-      _('orderDetail.unitPrice', 'Unit'),
-      _('orderDetail.lineTotal', 'Total'),
+      _('facility.goodQty', 'Good'),
+      _('facility.badQty', 'Bad'),
+      _('facility.stainedQty', 'Stained'),
     ]],
-    body: itemRows.length ? itemRows : [['—', _('orderDetail.noItems', 'No items recorded'), '', '', '']],
+    body: itemRows.length ? itemRows : [['—', _('orderDetail.noItems', 'No items recorded'), '', '', '', '']],
     margin: { left: margin, right: margin },
     tableWidth: contentW,
     styles: {
@@ -189,17 +191,21 @@ export function generateOrderPdf(order, t) {
       fillColor: [...WHITE],
     },
     columnStyles: {
-      0: { cellWidth: 16 },
-      1: { cellWidth: 36 },
-      2: { halign: 'right', cellWidth: 10 },
-      3: { halign: 'right', cellWidth: 15 },
-      4: { halign: 'right', cellWidth: 15 },
+      0: { cellWidth: 14 },
+      1: { cellWidth: 31 },
+      2: { halign: 'right', cellWidth: 11 },
+      3: { halign: 'right', cellWidth: 11 },
+      4: { halign: 'right', cellWidth: 11 },
+      5: { halign: 'right', cellWidth: 12 },
     },
   })
 
   y = doc.lastAutoTable.finalY + 2
 
-  /* ── TOTAL ROW ── */
+  /* ── PIECES SUMMARY ROW (Without financial prices) ── */
+  const totalQty = (order.items ?? []).reduce((acc, i) => acc + (i.qty ?? 0), 0)
+  const hasConditions = (order.items ?? []).some(i => i.qtyGood !== null && i.qtyGood !== undefined)
+
   doc.setDrawColor(...BLACK)
   doc.setLineWidth(0.3)
   doc.rect(margin, y, contentW, 5)
@@ -207,8 +213,18 @@ export function generateOrderPdf(order, t) {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7.5)
   doc.setTextColor(...BLACK)
-  doc.text(_('orderDetail.orderTotal', 'Order Total'), margin + 2, y + 3.5)
-  doc.text(`€${(order.total ?? 0).toFixed(2)}`, pageW - margin - 2, y + 3.5, { align: 'right' })
+
+  if (hasConditions) {
+    const totalGood = (order.items ?? []).reduce((acc, i) => acc + (i.qtyGood ?? 0), 0)
+    const totalBad = (order.items ?? []).reduce((acc, i) => acc + (i.qtyBad ?? 0), 0)
+    const totalStained = (order.items ?? []).reduce((acc, i) => acc + (i.qtyStained ?? 0), 0)
+
+    doc.text(`${_('orderDetail.quantity', 'Qty')}: ${totalQty}`, margin + 2, y + 3.5)
+    const summaryRight = `${_('facility.goodQty', 'Good')}: ${totalGood}  ·  ${_('facility.badQty', 'Bad')}: ${totalBad}  ·  ${_('facility.stainedQty', 'Stained')}: ${totalStained}`
+    doc.text(summaryRight, pageW - margin - 2, y + 3.5, { align: 'right' })
+  } else {
+    doc.text(`${_('orderDetail.quantity', 'Total Items')}: ${totalQty}`, margin + 2, y + 3.5)
+  }
 
   /* ── FOOTER ── */
   const footerY = pageH - 3.5
