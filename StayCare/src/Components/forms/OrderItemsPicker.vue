@@ -20,9 +20,14 @@
     <div v-else class="divide-y divide-gray-100">
       <div v-for="item in sortedLaundryItems" :key="item.code" class="flex items-center justify-between py-3 gap-4">
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-gray-800">
-            {{ item.name }} <span class="text-xs text-gray-400">({{ item.code }})</span>
-          </p>
+          <div class="flex items-center gap-2">
+            <p class="text-sm font-medium text-gray-800">
+              {{ item.name }} <span class="text-xs text-gray-400">({{ item.code }})</span>
+            </p>
+            <span v-if="!item.active" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+              {{ t('admin.inactive') }}
+            </span>
+          </div>
           <p class="text-xs text-gray-400">&euro;{{ item.unitPrice.toFixed(2) }} / unit</p>
         </div>
         <input
@@ -39,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchAllItems, mapItemForCatalog } from '../../api/items'
 import ItemSortSelector from '../ui/ItemSortSelector.vue'
@@ -49,6 +54,10 @@ const props = defineProps({
   modelValue: {
     type: Object,
     default: () => ({}),
+  },
+  activeOnly: {
+    type: Boolean,
+    default: true,
   },
 })
 
@@ -70,7 +79,15 @@ async function loadItems() {
   loadingItems.value = true
   try {
     const rawItems = await fetchAllItems().catch(() => [])
-    laundryItems.value = (rawItems ?? []).map(mapItemForCatalog)
+    const allMapped = (rawItems ?? []).map(mapItemForCatalog)
+
+    // Filter items: when activeOnly is true, include active items or items already in modelValue with qty > 0
+    laundryItems.value = allMapped.filter((item) => {
+      if (!props.activeOnly) return true
+      if (item.active) return true
+      return Boolean(props.modelValue && props.modelValue[item.code] > 0)
+    })
+
     const initialQtys = { ...props.modelValue }
     
     laundryItems.value.forEach((item) => {
@@ -88,4 +105,5 @@ async function loadItems() {
 }
 
 onMounted(loadItems)
+watch(() => props.activeOnly, loadItems)
 </script>

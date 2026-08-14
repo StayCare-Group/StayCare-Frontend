@@ -84,6 +84,7 @@ export function mapItemForCatalog(item: any) {
     code: item.item_code,
     name: item.name,
     unitPrice: Number(item.base_price ?? 0),
+    active: item.is_active !== false && item.is_active !== 0,
   }
 }
 
