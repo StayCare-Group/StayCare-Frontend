@@ -72,7 +72,7 @@ export function generateOrderPdf(order, t) {
   doc.setLineWidth(0.4)
   doc.line(margin, y, pageW - margin, y)
 
-  y += 3
+  y += 4
 
   /* ── SECTION TITLE HELPER ── */
   function sectionTitle(label) {
@@ -94,7 +94,7 @@ export function generateOrderPdf(order, t) {
     doc.setFontSize(6.5)
     doc.setTextColor(...DARK_GRAY)
     doc.text(label, x, y)
-    doc.setFontSize(7.5)
+    doc.setFontSize(7.0)
     doc.setTextColor(...BLACK)
     doc.setFont('helvetica', 'bold')
     const valStr = String(value || '—')
@@ -131,7 +131,7 @@ export function generateOrderPdf(order, t) {
 
     const labelW = doc.getTextWidth(label) + 2
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7)
+    doc.setFontSize(7.0)
     doc.setTextColor(...BLACK)
 
     const wrapped = doc.splitTextToSize(String(order.specialNotes), contentW - labelW)
@@ -146,7 +146,7 @@ export function generateOrderPdf(order, t) {
     y += 1.5
   }
 
-  /* ── SECTION: ITEMS TABLE (Compact padding & height) ── */
+  /* ── SECTION: ITEMS TABLE (Compact 7.0pt font size) ── */
   sectionTitle(_('common.items', 'Items'))
 
   const itemRows = (order.items ?? []).map(i => [
@@ -199,13 +199,13 @@ export function generateOrderPdf(order, t) {
 
   y = doc.lastAutoTable.finalY + 2
 
-  /* ── TOTAL ROW (Compact) ── */
+  /* ── TOTAL ROW ── */
   doc.setDrawColor(...BLACK)
   doc.setLineWidth(0.3)
   doc.rect(margin, y, contentW, 5)
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
+  doc.setFontSize(7.5)
   doc.setTextColor(...BLACK)
   doc.text(_('orderDetail.orderTotal', 'Order Total'), margin + 2, y + 3.5)
   doc.text(`€${(order.total ?? 0).toFixed(2)}`, pageW - margin - 2, y + 3.5, { align: 'right' })
@@ -217,7 +217,7 @@ export function generateOrderPdf(order, t) {
   doc.line(margin, footerY - 2, pageW - margin, footerY - 2)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(6)
+  doc.setFontSize(6.5)
   doc.setTextColor(...DARK_GRAY)
 
   const generatedOn = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
