@@ -399,8 +399,7 @@
     "qualityCheckConditionChanged": "Condición actualizada.",
     "qualityCheckNoteLabel": "Nota interna (opcional)",
     "qualityCheckNotePlaceholder": "ej: 2 prendas desmanchadas exitosamente",
-    "qualityCheckContinueWithoutChanges": "Continuar sin editar",
-    "qualityCheckSaveAndContinue": "Guardar cambios y continuar"
+    "qualityCheckContinue": "Confirmar y Liberar"
   },
   "orderDetail": {
     "orderInformation": "Información del Pedido",

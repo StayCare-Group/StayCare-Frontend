@@ -399,8 +399,7 @@
     "qualityCheckConditionChanged": "Condition updated.",
     "qualityCheckNoteLabel": "Internal note (optional)",
     "qualityCheckNotePlaceholder": "e.g. 2 items successfully de-stained",
-    "qualityCheckContinueWithoutChanges": "Release without changes",
-    "qualityCheckSaveAndContinue": "Save changes & release"
+    "qualityCheckContinue": "Confirm & Release"
   },
   "orderDetail": {
     "orderInformation": "Order Information",
