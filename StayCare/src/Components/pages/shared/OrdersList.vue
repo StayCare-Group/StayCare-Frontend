@@ -85,7 +85,6 @@ import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
 import { fetchAllOrders, mapOrderForList } from '../../../api/orders'
-import { fetchMe } from '../../../api/users'
 import { isClientProfileCompleteForOrder } from '../../../utils/orderEligibility'
 import { isCancelableStatus } from '../../../utils/orderFlow'
 
@@ -109,13 +108,10 @@ const loadOrders = async () => {
     const params = auth.user?.role === 'client' && auth.user?.id
       ? { client_id: String(auth.user.id) }
       : undefined
-    const [data, meData] = await Promise.all([
-      fetchAllOrders(params),
-      isClient.value ? fetchMe().catch(() => null) : Promise.resolve(null),
-    ])
+    const data = await fetchAllOrders(params)
     orders.value = (data ?? []).map(mapOrderForList)
     if (isClient.value) {
-      canCreateOrder.value = isClientProfileCompleteForOrder(meData)
+      canCreateOrder.value = isClientProfileCompleteForOrder(auth.user, auth.clientProfile)
     } else {
       canCreateOrder.value = true
     }

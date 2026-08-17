@@ -2,9 +2,9 @@ function hasText(value) {
   return typeof value === 'string' && value.trim().length > 0
 }
 
-export function isClientProfileCompleteForOrder(meData) {
+export function isClientProfileCompleteForOrder(meData, clientProfileOverride) {
   const user = meData?.user ?? meData ?? {}
-  const profile = meData?.client_profile ?? {}
+  const profile = clientProfileOverride ?? meData?.client_profile ?? {}
 
   return (
     hasText(user.phone) &&

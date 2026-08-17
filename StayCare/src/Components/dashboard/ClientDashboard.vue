@@ -44,7 +44,6 @@ import AppButton from '../ui/AppButton.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
 import { fetchOrders, fetchAllOrders, mapOrderForList } from '../../api/orders'
 import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
-import { fetchMe } from '../../api/users'
 import { useAuthStore } from '../../stores/auth.js'
 import { isClientProfileCompleteForOrder } from '../../utils/orderEligibility'
 
@@ -65,12 +64,11 @@ onMounted(async () => {
     const orderParams = clientId ? { client_id: String(clientId) } : undefined
     const activeStatuses = 'pending,assigned,transit,arrived,washing,drying,ironing,quality_check,ready_to_delivery,collected,rescheduled'
 
-    const [activeOrdersData, recentOrdersData, unpaidInvoicesData, recentInvoicesData, meData] = await Promise.all([
+    const [activeOrdersData, recentOrdersData, unpaidInvoicesData, recentInvoicesData] = await Promise.all([
       fetchAllOrders({ ...orderParams, status: activeStatuses }).catch(() => []),
       fetchOrders({ ...orderParams, limit: '5' }).catch(() => []),
       fetchInvoices({ status: 'pending,overdue', limit: '200' }).catch(() => []),
       fetchInvoices({ limit: '5' }).catch(() => []),
-      fetchMe().catch(() => null),
     ])
 
     activeOrdersList.value = (activeOrdersData ?? []).map(mapOrderForList)
@@ -78,7 +76,7 @@ onMounted(async () => {
     unpaidInvoicesList.value = (unpaidInvoicesData ?? []).map(mapInvoiceForList)
     recentInvoicesList.value = (recentInvoicesData ?? []).map(mapInvoiceForList)
     
-    canCreateOrder.value = isClientProfileCompleteForOrder(meData)
+    canCreateOrder.value = isClientProfileCompleteForOrder(authStore.user, authStore.clientProfile)
   } catch { /* data stays empty */ } finally {
     loading.value = false
   }

@@ -8,6 +8,7 @@ import { setApiRequestsBlocked, abortActiveApiRequests } from '../api/client'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
+  const clientProfile = ref(null)
   const loading = ref(true)
 
   const isLoggedIn = computed(() => !!user.value)
@@ -26,6 +27,7 @@ export const useAuthStore = defineStore('auth', () => {
     const raw = data?.user ?? data ?? null
     if (!raw) {
       user.value = null
+      clientProfile.value = null
       return null
     }
 
@@ -41,6 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
       clientId: clientObj?._id ?? (typeof raw.client === 'string' ? raw.client : null),
       client: clientObj ?? null,
     }
+    clientProfile.value = data?.client_profile ?? null
 
     applyLanguage(user.value.language)
     return user.value
@@ -63,6 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
       // server may already have cleared the cookie
     }
     user.value = null
+    clientProfile.value = null
     useNavStore().resetToDashboard()
   }
 
@@ -74,10 +78,11 @@ export const useAuthStore = defineStore('auth', () => {
       await loadCurrentUser()
     } catch {
       user.value = null
+      clientProfile.value = null
     } finally {
       loading.value = false
     }
   }
 
-  return { user, loading, isLoggedIn, userRole, login, logout, tryRefresh, loadCurrentUser, applyLanguage }
+  return { user, clientProfile, loading, isLoggedIn, userRole, login, logout, tryRefresh, loadCurrentUser, applyLanguage }
 })
