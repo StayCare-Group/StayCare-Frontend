@@ -16,6 +16,17 @@ export async function updateUserById(id: string, data: Record<string, any>) {
   })
 }
 
+export async function deactivateUser(id: string) {
+  return apiFetch(`/api/users/${id}/deactivate`, { method: 'PATCH' })
+}
+
+export async function reactivateUser(id: string) {
+  return apiFetch(`/api/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ is_active: true }),
+  })
+}
+
 export async function fetchMe() {
   return apiFetch('/api/auth/me')
 }

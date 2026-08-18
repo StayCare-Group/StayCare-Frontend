@@ -72,6 +72,39 @@
       </template>
     </AppModal>
 
+    <!-- Deactivate / Activate User Modal -->
+    <AppModal
+      :show="showToggleModal"
+      :title="selectedUser?.status === 'Active' ? $t('admin.deactivateUserTitle') : $t('admin.activateUserTitle')"
+      size="sm"
+      :close-on-backdrop="false"
+      :loading="toggling"
+      @close="closeToggleModal"
+    >
+      <p class="text-sm text-gray-600">
+        {{
+          selectedUser?.status === 'Active'
+            ? $t('admin.deactivateUserConfirm', { name: selectedUser?.name })
+            : $t('admin.activateUserConfirm', { name: selectedUser?.name })
+        }}
+      </p>
+      <p v-if="toggleError" class="text-red-500 text-sm mt-2">{{ toggleError }}</p>
+
+      <template #footer>
+        <AppButton variant="secondary" size="sm" :disabled="toggling" @click="closeToggleModal">
+          {{ $t('common.cancel') }}
+        </AppButton>
+        <AppButton
+          :variant="selectedUser?.status === 'Active' ? 'danger' : 'primary'"
+          size="sm"
+          :loading="toggling"
+          @click="confirmToggle"
+        >
+          {{ selectedUser?.status === 'Active' ? $t('admin.deactivateUser') : $t('admin.activateUser') }}
+        </AppButton>
+      </template>
+    </AppModal>
+
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
 
     <!-- Tabs -->
@@ -122,6 +155,16 @@
       <template #cell-shift="{ value }">
         <span class="text-xs">{{ value || '—' }}</span>
       </template>
+      <template #cell-actions="{ item }">
+        <AppButton
+          v-if="item.id !== currentUserId"
+          :variant="item.status === 'Active' ? 'danger' : 'secondary'"
+          size="sm"
+          @click.stop="openToggleModal(item)"
+        >
+          {{ item.status === 'Active' ? $t('admin.deactivateUser') : $t('admin.activateUser') }}
+        </AppButton>
+      </template>
     </DataTable>
 
     <!-- Pagination -->
@@ -146,13 +189,19 @@ import LoadingPanel from '../../ui/LoadingPanel.vue'
 import AppModal from '../../ui/AppModal.vue'
 import AppPagination from '../../ui/AppPagination.vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { getUsers } from '../../../api/users'
+import { useAuthStore } from '../../../stores/auth.js'
+import { useUiStore } from '../../../stores/ui.js'
+import { getUsers, deactivateUser, reactivateUser } from '../../../api/users'
 import { registerUser } from '../../../api/auth'
 import { createInvitation } from '../../../api/invitations'
 import { getInviteRoleOptions } from '../../../constants/roles'
 
 const { t, locale } = useI18n()
 const navStore = useNavStore()
+const authStore = useAuthStore()
+const uiStore = useUiStore()
+
+const currentUserId = computed(() => authStore.user?.id ?? null)
 
 const activeTab = ref('clients')
 const loading = ref(true)
@@ -208,6 +257,61 @@ const inviteSuccess = ref('')
 const inviteLink = ref('')
 const inviteSending = ref(false)
 const copied = ref(false)
+
+// --- Deactivate / Activate modal state ---
+const showToggleModal = ref(false)
+const selectedUser = ref(null)
+const toggling = ref(false)
+const toggleError = ref('')
+
+const BACKEND_ERROR_I18N_MAP = {
+  'Client has active orders': 'admin.deactivateBlockedOrders',
+  'Driver has active routes': 'admin.deactivateBlockedRoutes',
+  'Cannot deactivate your own account': 'admin.deactivateSelfBlocked',
+}
+
+function openToggleModal(user) {
+  selectedUser.value = user
+  toggleError.value = ''
+  showToggleModal.value = true
+}
+
+function closeToggleModal() {
+  if (toggling.value) return
+  showToggleModal.value = false
+  selectedUser.value = null
+  toggleError.value = ''
+}
+
+async function confirmToggle() {
+  if (!selectedUser.value || toggling.value) return
+  const user = selectedUser.value
+  const isDeactivating = user.status === 'Active'
+  try {
+    toggling.value = true
+    toggleError.value = ''
+    if (isDeactivating) {
+      await deactivateUser(user.id)
+    } else {
+      await reactivateUser(user.id)
+    }
+    // Invalidate cache for the current tab so the list refreshes
+    const tab = activeTab.value
+    if (usersCache.value[tab]) usersCache.value[tab] = {}
+    await loadTabUsers(tab, currentPage.value)
+    uiStore.showSuccess(t(isDeactivating ? 'admin.deactivateSuccess' : 'admin.activateSuccess'))
+    // Close directly: closeToggleModal() is blocked while toggling=true (the finally runs after)
+    showToggleModal.value = false
+    selectedUser.value = null
+    toggleError.value = ''
+  } catch (err) {
+    const msg = err?.message ?? ''
+    const i18nKey = BACKEND_ERROR_I18N_MAP[msg]
+    toggleError.value = i18nKey ? t(i18nKey) : t(isDeactivating ? 'admin.deactivateError' : 'admin.activateError')
+  } finally {
+    toggling.value = false
+  }
+}
 
 const roleOptions = computed(() => getInviteRoleOptions(t))
 const isClientInvite = computed(() => inviteRole.value === 'client')
@@ -446,6 +550,7 @@ const clientHeaders = computed(() => [
   { key: 'contact', label: t('common.contact') },
   { key: 'phone', label: t('settings.phone'), tdClass: 'text-gray-500' },
   { key: 'status', label: t('common.status') },
+  { key: 'actions', label: '', tdClass: 'text-right' },
 ])
 
 const driverHeaders = computed(() => [
@@ -456,6 +561,7 @@ const driverHeaders = computed(() => [
   { key: 'zone', label: t('admin.zone'), tdClass: 'text-gray-500' },
   { key: 'status', label: t('common.status') },
   { key: 'todayStops', label: t('common.today'), tdClass: 'text-gray-700' },
+  { key: 'actions', label: '', tdClass: 'text-right' },
 ])
 
 const staffHeaders = computed(() => [
@@ -464,6 +570,7 @@ const staffHeaders = computed(() => [
   { key: 'contact', label: t('common.contact') },
   { key: 'shift', label: t('admin.shift') },
   { key: 'status', label: t('common.status') },
+  { key: 'actions', label: '', tdClass: 'text-right' },
 ])
 
 const operatorsHeaders = computed(() => [
@@ -471,6 +578,7 @@ const operatorsHeaders = computed(() => [
   { key: 'name', label: t('common.name') },
   { key: 'contact', label: t('common.contact') },
   { key: 'status', label: t('common.status') },
+  { key: 'actions', label: '', tdClass: 'text-right' },
 ])
 
 const adminsHeaders = computed(() => [
@@ -478,6 +586,7 @@ const adminsHeaders = computed(() => [
   { key: 'name', label: t('common.name') },
   { key: 'contact', label: t('common.contact') },
   { key: 'status', label: t('common.status') },
+  { key: 'actions', label: '', tdClass: 'text-right' },
 ])
 
 const activeHeaders = computed(() => {

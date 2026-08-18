@@ -271,7 +271,20 @@
     "errorCreateRoute": "Failed to create route. Please try again.",
     "errorDeleteRoute": "Failed to delete route.",
     "errorSaveItem": "Failed to save item.",
-    "errorUpdateClient": "Failed to update client."
+    "errorUpdateClient": "Failed to update client.",
+    "deactivateUser": "Deactivate",
+    "activateUser": "Activate",
+    "deactivateUserTitle": "Deactivate user",
+    "activateUserTitle": "Activate user",
+    "deactivateUserConfirm": "Do you want to deactivate {name}? They will not be able to log in until reactivated.",
+    "activateUserConfirm": "Do you want to reactivate {name}? They will be able to log in again.",
+    "deactivateSuccess": "User deactivated successfully.",
+    "activateSuccess": "User activated successfully.",
+    "deactivateError": "Could not deactivate the user.",
+    "activateError": "Could not activate the user.",
+    "deactivateBlockedOrders": "This client has active orders. Resolve them before deactivating.",
+    "deactivateBlockedRoutes": "This driver has active routes. Reassign them before deactivating.",
+    "deactivateSelfBlocked": "You cannot deactivate your own account."
   },
   "client": {
     "activeOrders": "Active Orders",

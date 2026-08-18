@@ -271,7 +271,20 @@
     "errorCreateRoute": "No se pudo crear la ruta. Inténtalo de nuevo.",
     "errorDeleteRoute": "No se pudo eliminar la ruta.",
     "errorSaveItem": "No se pudo guardar el artículo.",
-    "errorUpdateClient": "No se pudo actualizar el cliente."
+    "errorUpdateClient": "No se pudo actualizar el cliente.",
+    "deactivateUser": "Desactivar",
+    "activateUser": "Activar",
+    "deactivateUserTitle": "Desactivar usuario",
+    "activateUserTitle": "Activar usuario",
+    "deactivateUserConfirm": "¿Deseas desactivar a {name}? No podrá iniciar sesión hasta que sea reactivado.",
+    "activateUserConfirm": "¿Deseas reactivar a {name}? Podrá volver a iniciar sesión.",
+    "deactivateSuccess": "Usuario desactivado correctamente.",
+    "activateSuccess": "Usuario activado correctamente.",
+    "deactivateError": "No se pudo desactivar el usuario.",
+    "activateError": "No se pudo activar el usuario.",
+    "deactivateBlockedOrders": "Este cliente tiene pedidos activos. Resuélvelos antes de desactivarlo.",
+    "deactivateBlockedRoutes": "Este conductor tiene rutas activas. Reasígnelas antes de desactivarlo.",
+    "deactivateSelfBlocked": "No puedes desactivar tu propia cuenta."
   },
   "client": {
     "activeOrders": "Pedidos activos",
