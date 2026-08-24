@@ -98,12 +98,15 @@
       :title="$t('admin.confirmDelete')"
       size="sm"
       :loading="deleting"
-      @close="showDeleteConfirm = false"
+      @close="cancelDelete"
     >
       <p class="text-sm text-gray-500">{{ $t('admin.confirmDeleteItem', { name: deletingItem?.name }) }}</p>
+      <p v-if="deleteError" class="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+        {{ deleteError }}
+      </p>
 
       <template #footer>
-        <button @click="showDeleteConfirm = false" :disabled="deleting"
+        <button @click="cancelDelete" :disabled="deleting"
           class="flex-1 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-50">
           {{ $t('common.cancel') }}
         </button>
@@ -248,21 +251,31 @@ async function handleSave() {
 const showDeleteConfirm = ref(false)
 const deletingItem = ref(null)
 const deleting = ref(false)
+const deleteError = ref('')
 
 function handleDelete(item) {
   deletingItem.value = item
+  deleteError.value = ''
   showDeleteConfirm.value = true
+}
+
+function cancelDelete() {
+  showDeleteConfirm.value = false
+  deleteError.value = ''
 }
 
 async function confirmDelete() {
   if (!deletingItem.value) return
   deleting.value = true
+  deleteError.value = ''
   try {
     await deleteItem(deletingItem.value._id)
     showDeleteConfirm.value = false
     showToast(t('admin.itemDeleted'))
     await loadItems()
-  } catch { /* silent */ } finally {
+  } catch (err) {
+    deleteError.value = err?.response?.data?.message || t('admin.errorDeleteItem')
+  } finally {
     deleting.value = false
   }
 }

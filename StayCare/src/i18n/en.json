@@ -244,6 +244,7 @@
     "itemCreated": "Item created successfully!",
     "itemUpdated": "Item updated successfully!",
     "itemDeleted": "Item deleted successfully!",
+    "errorDeleteItem": "Cannot delete item because it is currently used in one or more in-progress orders.",
     "createInvoice": "Create Invoice",
     "newInvoice": "New Invoice",
     "dueDate": "Due Date",

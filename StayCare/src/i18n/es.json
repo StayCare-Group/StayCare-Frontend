@@ -244,6 +244,7 @@
     "itemCreated": "¡Artículo creado exitosamente!",
     "itemUpdated": "¡Artículo actualizado exitosamente!",
     "itemDeleted": "¡Artículo eliminado exitosamente!",
+    "errorDeleteItem": "No se puede eliminar el artículo porque está siendo utilizado en una o más órdenes en progreso.",
     "createInvoice": "Crear Factura",
     "newInvoice": "Nueva Factura",
     "dueDate": "Fecha de Vencimiento",
