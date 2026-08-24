@@ -55,6 +55,14 @@
       </div>
     </div>
 
+    <!-- Historical Data Notice Banner -->
+    <div class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800 shadow-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ $t('reports.historicalNotice') }}</span>
+    </div>
+
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <!-- Revenue Chart -->
       <div class="bg-white rounded-xl shadow-sm p-5">
@@ -76,7 +84,12 @@
 
       <!-- Orders by Client -->
       <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="text-sm font-semibold text-gray-700 mb-4">{{ $t('reports.ordersByClient') }}</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-gray-700">{{ $t('reports.ordersByClient') }}</h3>
+          <span class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+            {{ $t('reports.historicalData') }}
+          </span>
+        </div>
         <div class="space-y-3">
           <div v-for="row in ordersByClient" :key="row.client" class="flex items-center gap-3">
             <div class="flex-1 min-w-0">
@@ -96,7 +109,12 @@
 
       <!-- SLA Report -->
       <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="text-sm font-semibold text-gray-700 mb-4">{{ $t('reports.slaPerformance') }}</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-gray-700">{{ $t('reports.slaPerformance') }}</h3>
+          <span class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+            {{ $t('reports.historicalData') }}
+          </span>
+        </div>
         <div class="grid grid-cols-2 gap-4">
           <div class="text-center p-4 bg-green-50 rounded-lg">
             <p class="text-2xl font-bold text-green-700">{{ slaReport.onTime }}%</p>
@@ -119,7 +137,12 @@
 
       <!-- Avg Delivery Time -->
       <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="text-sm font-semibold text-gray-700 mb-4">{{ $t('reports.keyMetrics') }}</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-gray-700">{{ $t('reports.keyMetrics') }}</h3>
+          <span class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+            {{ $t('reports.historicalData') }}
+          </span>
+        </div>
         <div class="space-y-4">
           <div class="flex items-center justify-between">
             <span class="text-sm text-gray-600">{{ $t('reports.avgProcessingTime') }}</span>

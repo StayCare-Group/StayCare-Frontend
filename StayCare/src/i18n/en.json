@@ -368,7 +368,9 @@
     "totalClients": "Total Clients",
     "activeDrivers": "Active Drivers",
     "totalRevenue6mo": "Total Revenue (6mo)",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "historicalData": "Historical values",
+    "historicalNotice": "Note: Only 'Revenue by Month' filters by the selected period. Other cards display all-time historical totals."
   },
   "facilityProcessing": {
     "release": "Release",

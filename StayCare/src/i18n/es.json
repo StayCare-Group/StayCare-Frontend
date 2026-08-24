@@ -368,7 +368,9 @@
     "totalClients": "Total de Clientes",
     "activeDrivers": "Conductores Activos",
     "totalRevenue6mo": "Ingresos Totales (6m)",
-    "unknown": "Desconocido"
+    "unknown": "Desconocido",
+    "historicalData": "Valores históricos",
+    "historicalNotice": "Nota: Solo 'Ingresos por Mes' se filtra según el período seleccionado. Las demás tarjetas muestran acumulados históricos globales."
   },
   "facilityProcessing": {
     "release": "Liberar",
