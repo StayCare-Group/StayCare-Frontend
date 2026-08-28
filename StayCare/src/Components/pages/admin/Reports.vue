@@ -40,18 +40,17 @@
           <option v-for="y in yearOptions" :key="y" :value="y" class="text-gray-800">{{ y }}</option>
         </select>
 
-        <button
-          @click="exportToExcel"
+        <AppButton
+          variant="secondary"
+          size="sm"
           :disabled="loading || !hasOrdersInPeriod"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white
-                 bg-gradient-to-r from-brand-700 to-brand-400 hover:opacity-90
-                 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"
+          @click="exportToExcel"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"/>
           </svg>
           {{ $t('admin.exportExcel') }}
-        </button>
+        </AppButton>
       </div>
     </div>
 

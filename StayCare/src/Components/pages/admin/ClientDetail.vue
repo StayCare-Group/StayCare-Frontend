@@ -51,7 +51,13 @@
 
           <div>
             <span class="text-gray-500">{{ $t('clientDetail.contactPerson') }}</span>
-            <p class="font-medium text-gray-800">{{ client.contact_person ?? '—' }}</p>
+            <input
+              v-if="isEditing"
+              v-model="editForm.contact_person"
+              type="text"
+              class="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
+            />
+            <p v-else class="font-medium text-gray-800">{{ client.contact_person ?? '—' }}</p>
           </div>
 
           <div>
@@ -61,12 +67,23 @@
 
           <div>
             <span class="text-gray-500">{{ $t('settings.phone') }}</span>
-            <p class="font-medium text-gray-800">{{ client.phone ?? '—' }}</p>
+            <input
+              v-if="isEditing"
+              v-model="editForm.phone"
+              type="text"
+              class="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
+            />
+            <p v-else class="font-medium text-gray-800">{{ client.phone ?? '—' }}</p>
           </div>
 
           <div>
             <span class="text-gray-500">{{ $t('clientDetail.billingAddress') }}</span>
             <p class="font-medium text-gray-800">{{ client.billing_address ?? '—' }}</p>
+          </div>
+
+          <div>
+            <span class="text-gray-500">{{ $t('clientDetail.vatNumber') }}</span>
+            <p class="font-medium text-gray-800">{{ client.vat_number ?? '—' }}</p>
           </div>
 
           <div>
@@ -161,6 +178,8 @@ const error = ref('')
 const isEditing = ref(false)
 const saving = ref(false)
 const editForm = ref({
+  contact_person: '',
+  phone: '',
   credits_terms_days: 30,
   pricing_tier: 'standard',
 })
@@ -168,6 +187,8 @@ const editForm = ref({
 function fillEditForm() {
   if (!client.value) return
   editForm.value = {
+    contact_person: client.value.contact_person ?? '',
+    phone: client.value.phone ?? '',
     credits_terms_days: Number(client.value.credits_terms_days ?? 30),
     pricing_tier: client.value.pricing_tier ?? 'standard',
   }
@@ -189,7 +210,9 @@ async function saveClientProfile() {
   try {
     const userId = String(client.value.id ?? client.value._id ?? client.value.user_id ?? '')
     const payload = {
+      phone: editForm.value.phone,
       client_profile: {
+        contact_person: editForm.value.contact_person,
         credits_terms_days: Number(editForm.value.credits_terms_days),
         pricing_tier: editForm.value.pricing_tier,
       },
@@ -198,7 +221,10 @@ async function saveClientProfile() {
 
     client.value = {
       ...client.value,
-      ...payload.client_profile,
+      phone: editForm.value.phone,
+      contact_person: editForm.value.contact_person,
+      credits_terms_days: Number(editForm.value.credits_terms_days),
+      pricing_tier: editForm.value.pricing_tier,
     }
     isEditing.value = false
     ui.showSuccess('Client updated')

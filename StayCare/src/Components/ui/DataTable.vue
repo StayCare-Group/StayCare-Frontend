@@ -24,7 +24,9 @@
               class="px-3 sm:px-5 py-2.5 sm:py-3 font-medium whitespace-nowrap"
               :class="col.thClass"
             >
-              {{ col.label }}
+              <slot :name="`header-${col.key}`" :column="col">
+                {{ col.label }}
+              </slot>
             </th>
             <!-- Actions column header (empty, only when clickable) -->
             <th v-if="clickable" class="px-3 sm:px-5 py-2.5 sm:py-3 w-px"></th>

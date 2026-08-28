@@ -59,20 +59,23 @@ function getInvoiceClientId(inv: any, clientObj: any): string {
   return String(inv?.client_id ?? inv?.client ?? '')
 }
 
-function getInvoiceOrderId(firstOrder: any): string {
-  if (!firstOrder) return ''
-  if (typeof firstOrder === 'string' || typeof firstOrder === 'number') return String(firstOrder)
-  return String(firstOrder.order_number ?? firstOrder._id ?? firstOrder.id ?? '')
+function getInvoiceOrdersText(orders: any): string {
+  if (!orders) return '—'
+  const list = Array.isArray(orders) ? orders : [orders]
+  const formatted = list.map(o => {
+    if (typeof o === 'string' || typeof o === 'number') return String(o)
+    return String(o?.order_number ?? o?._id ?? o?.id ?? '')
+  }).filter(Boolean)
+  return formatted.length ? formatted.join(', ') : '—'
 }
 
 export function mapInvoiceForList(inv: any) {
-  const firstOrder = Array.isArray(inv.orders) ? inv.orders[0] : null
   const clientObj = typeof inv.client === 'object' && inv.client ? inv.client : null
   const invoicePk = getInvoicePk(inv)
   return {
     id: String(inv.invoice_number ?? invoicePk),
     _id: invoicePk,
-    orderId: getInvoiceOrderId(firstOrder),
+    orderId: getInvoiceOrdersText(inv.orders),
     client: getInvoiceClientName(inv, clientObj),
     clientId: getInvoiceClientId(inv, clientObj),
     issueDate: formatDate(inv.issue_date),
@@ -83,25 +86,25 @@ export function mapInvoiceForList(inv: any) {
 }
 
 export function mapInvoiceForDetail(inv: any) {
-  const firstOrder = Array.isArray(inv.orders) ? inv.orders[0] : null
   const clientObj = typeof inv.client === 'object' && inv.client ? inv.client : null
   const invoicePk = getInvoicePk(inv)
   return {
     id: String(inv.invoice_number ?? invoicePk),
     _id: invoicePk,
-    orderId: getInvoiceOrderId(firstOrder),
+    orderId: getInvoiceOrdersText(inv.orders),
+    orders: Array.isArray(inv.orders) ? inv.orders : [],
     client: getInvoiceClientName(inv, clientObj),
     clientId: getInvoiceClientId(inv, clientObj),
     issueDate: formatDate(inv.issue_date),
     dueDate: formatDate(inv.due_date),
     status: capitalize(inv.status),
     paymentMethod: inv.payments?.length ? capitalize(inv.payments[0].method) : null,
-    items: (inv.line_items ?? []).map((li: any) => ({
-      code: '',
-      name: li.description,
-      qty: li.quantity,
-      unitPrice: toNumber(li.unit_price),
-      total: toNumber(li.total_price),
+    items: (inv.line_items ?? inv.items ?? []).map((li: any) => ({
+      code: li.code || li.item_code || '',
+      name: li.description || li.name || li.item_name || li.name_snapshot || '',
+      qty: toNumber(li.quantity ?? li.qty ?? 1),
+      unitPrice: toNumber(li.unit_price ?? li.unitPrice),
+      total: toNumber(li.total_price ?? li.total),
     })),
     subtotal: toNumber(inv.subtotal),
     expressCharge: 0,

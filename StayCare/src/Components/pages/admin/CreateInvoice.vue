@@ -18,7 +18,7 @@
           <select v-model="form.clientId" required @change="onClientChange"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none">
             <option value="">{{ $t('admin.selectClient') }}</option>
-            <option v-for="c in clients" :key="getClientId(c)" :value="getClientId(c)">
+            <option v-for="c in clients" :key="getClientUserId(c)" :value="getClientUserId(c)">
               {{ getClientDisplayName(c) }}
             </option>
           </select>
@@ -55,9 +55,12 @@
 
       <!-- Line Items -->
       <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('admin.lineItems') }}</h3>
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('admin.lineItems') }}</h3>
+          <span class="text-xs text-gray-400 font-normal">({{ $t('common.optional') }})</span>
+        </div>
 
-        <div class="overflow-x-auto">
+        <div v-if="form.lineItems.length" class="overflow-x-auto">
           <table class="w-full text-sm min-w-[500px]">
             <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
               <tr>
@@ -71,22 +74,22 @@
             <tbody class="divide-y divide-gray-100">
               <tr v-for="(item, idx) in form.lineItems" :key="idx">
                 <td class="px-3 py-2">
-                  <input v-model="item.description" required :placeholder="$t('createInvoice.serviceDescription')"
+                  <input v-model="item.description" :placeholder="$t('createInvoice.serviceDescription')"
                     class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 </td>
                 <td class="px-3 py-2">
-                  <input v-model.number="item.quantity" type="number" min="1" required
+                  <input v-model.number="item.quantity" type="number" min="1"
                     class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 </td>
                 <td class="px-3 py-2">
-                  <input v-model.number="item.unit_price" type="number" min="0" step="0.01" required
+                  <input v-model.number="item.unit_price" type="number" min="0" step="0.01"
                     class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 </td>
                 <td class="px-3 py-2 text-right font-medium text-gray-800">
                   &euro;{{ ((item.quantity || 0) * (item.unit_price || 0)).toFixed(2) }}
                 </td>
                 <td class="px-3 py-2 text-center">
-                  <button v-if="form.lineItems.length > 1" type="button" @click="form.lineItems.splice(idx, 1)"
+                  <button type="button" @click="form.lineItems.splice(idx, 1)"
                     class="text-red-400 hover:text-red-600 text-xs font-medium">{{ $t('admin.removeItem') }}</button>
                 </td>
               </tr>
@@ -135,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import { useNavStore } from '../../../stores/nav.js'
@@ -166,11 +169,16 @@ const form = reactive({
   clientId: '',
   orderIds: [],
   dueDate: defaultDueStr,
-  lineItems: [{ description: '', quantity: 1, unit_price: 0 }],
+  lineItems: [],
 })
 
 function getOrderId(order) {
   return String(order?._id ?? order?.id ?? '')
+}
+
+function getClientUserId(client) {
+  if (!client || typeof client !== 'object') return ''
+  return String(client.user_id ?? client._id ?? client.id ?? getClientId(client) ?? '')
 }
 
 function getOrderClientId(order) {
@@ -190,11 +198,17 @@ function getOrderTotal(order) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+function getOrderSubtotal(order) {
+  const value = order?.subtotal ?? order?.pricing_snapshot?.subtotal ?? order?.total ?? 0
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 onMounted(async () => {
   try {
     const [clientsData, ordersData, invoicesData] = await Promise.all([
       fetchClients().catch(() => []),
-      fetchOrders({ status: 'delivered,collected,ready_to_delivery', limit: '200' }).catch(() => []),
+      fetchOrders({ status: 'delivered,collected,ready_to_delivery', is_invoiced: 'false', limit: '200' }).catch(() => []),
       fetchInvoices().catch(() => []),
     ])
     clients.value = clientsData ?? []
@@ -239,52 +253,33 @@ const clientOrders = computed(() => {
     const orderClientId = String(getOrderClientId(o))
     if (!orderClientId || !selectedClientMatchIds.value.has(orderClientId)) return false
     if (!UNINVOICED_STATUSES.has(normalizeStatus(o.status))) return false
-    if (invoicedOrderIds.value.has(getOrderId(o))) return false
+    if (o.is_invoiced || o.isInvoiced || invoicedOrderIds.value.has(getOrderId(o))) return false
     return true
   })
 })
 
 function onClientChange() {
-  form.orderIds = clientOrders.value.map(o => getOrderId(o))
-  populateLineItems()
+  form.orderIds = []
 }
-
-function populateLineItems() {
-  const selectedIds = new Set((form.orderIds ?? []).map(id => String(id)))
-  const selected = allOrders.value.filter(o => selectedIds.has(getOrderId(o)))
-  const items = []
-  for (const order of selected) {
-    if (order.items?.length) {
-      for (const item of order.items) {
-        items.push({
-          description: `${item.name} (${order.order_number})`,
-          quantity: item.quantity ?? 1,
-          unit_price: item.unit_price ?? 0,
-        })
-      }
-    } else if (order.pricing_snapshot?.total) {
-      items.push({
-        description: t('createInvoice.orderLineDescription', { order: order.order_number }),
-        quantity: 1,
-        unit_price: order.pricing_snapshot.subtotal ?? order.pricing_snapshot.total ?? 0,
-      })
-    }
-  }
-  form.lineItems = items.length ? items : [{ description: '', quantity: 1, unit_price: 0 }]
-}
-
-watch(() => [...form.orderIds], () => {
-  populateLineItems()
-})
 
 function addLineItem() {
   form.lineItems.push({ description: '', quantity: 1, unit_price: 0 })
 }
 
-const subtotal = computed(() =>
-  form.lineItems.reduce((sum, li) => sum + (li.quantity || 0) * (li.unit_price || 0), 0)
+const selectedOrdersSubtotal = computed(() => {
+  const selectedIds = new Set((form.orderIds ?? []).map(id => String(id)))
+  const selected = allOrders.value.filter(o => selectedIds.has(getOrderId(o)))
+  return selected.reduce((sum, o) => sum + getOrderSubtotal(o), 0)
+})
+
+const extraItemsSubtotal = computed(() =>
+  form.lineItems.reduce((sum, li) => {
+    if (!li.description || !li.description.trim()) return sum
+    return sum + (Number(li.quantity) || 0) * (Number(li.unit_price) || 0)
+  }, 0)
 )
 
+const subtotal = computed(() => selectedOrdersSubtotal.value + extraItemsSubtotal.value)
 const vatAmount = computed(() => subtotal.value * VAT_RATE)
 const grandTotal = computed(() => subtotal.value + vatAmount.value)
 
@@ -298,26 +293,29 @@ async function submitInvoice() {
     errorMessage.value = t('validation.fillRequiredFields')
     return
   }
-  if (!form.lineItems || form.lineItems.length === 0 || form.lineItems.some(li => !li.description || !li.description.trim())) {
-    errorMessage.value = t('validation.fillRequiredFields')
+
+  const validLineItems = form.lineItems
+    .filter(li => li.description && li.description.trim())
+    .map(li => ({
+      description: li.description.trim(),
+      quantity: Number(li.quantity) || 1,
+      unit_price: Number(li.unit_price) || 0,
+      total_price: (Number(li.quantity) || 1) * (Number(li.unit_price) || 0),
+    }))
+
+  if (!form.orderIds || form.orderIds.length === 0) {
+    errorMessage.value = t('createInvoice.selectOrdersRequired')
     return
   }
 
   submitting.value = true
   errorMessage.value = ''
   try {
-    const lineItems = form.lineItems.map(li => ({
-      description: li.description,
-      quantity: li.quantity,
-      unit_price: li.unit_price,
-      total_price: (li.quantity || 0) * (li.unit_price || 0),
-    }))
-
     const payload = {
       client: form.clientId,
       orders: (form.orderIds ?? []).map(id => String(id)),
       due_date: new Date(form.dueDate).toISOString(),
-      line_items: lineItems,
+      line_items: validLineItems,
       subtotal: subtotal.value,
       vat_percentage: 18,
       vat_amount: vatAmount.value,
