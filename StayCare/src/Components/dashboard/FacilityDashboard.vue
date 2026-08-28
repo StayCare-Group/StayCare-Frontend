@@ -2,6 +2,8 @@
   <div>
     <!-- Sub-pages -->
     <OrdersList v-if="navStore.currentPage === 'orders'" />
+    <PickupConfirm v-else-if="navStore.currentPage === 'pickup-confirm'" />
+    <DeliveryConfirm v-else-if="navStore.currentPage === 'delivery-confirm'" />
     <OrderDetail v-else-if="navStore.currentPage === 'order-detail'" />
     <OrderCreateForm v-else-if="navStore.currentPage === 'create-order'" mode="admin" />
     <Reception v-else-if="navStore.currentPage === 'reception'" />
@@ -27,6 +29,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import OrdersList from '../pages/shared/OrdersList.vue'
+import PickupConfirm from '../pages/driver/PickupConfirm.vue'
+import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import OrderDetail from '../pages/shared/OrderDetail.vue'
 import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
 import Reception from '../pages/facility/Reception.vue'
@@ -36,7 +40,8 @@ import Settings from '../pages/shared/Settings.vue'
 import ProfileAccount from '../pages/shared/ProfileAccount.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { fetchAllOrders, mapOrderForList } from '../../api/orders'
+import { fetchAllOrders } from '../../api/orders'
+import { mapOrderForList } from '@/utils/orderMappers'
 
 const { t } = useI18n()
 const navStore = useNavStore()

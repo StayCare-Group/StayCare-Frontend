@@ -17,6 +17,9 @@
           {{ step.status }}
         </p>
         <p v-if="step.date" class="text-xs text-gray-400">{{ step.date }}</p>
+        <p v-if="getExecutorText(step)" class="text-xs text-gray-500 font-medium mt-0.5">
+          {{ getExecutorText(step) }}
+        </p>
         <p v-if="step.note" class="text-xs text-gray-500 mt-0.5">{{ step.note }}</p>
       </div>
     </div>
@@ -25,6 +28,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t, te } = useI18n()
 
 const props = defineProps({
   steps: { type: Array, default: () => [] },
@@ -36,4 +42,20 @@ const currentIndex = computed(() => {
   const idx = props.steps.findIndex(s => s.status === props.currentStatus)
   return idx >= 0 ? idx : props.steps.length - 1
 })
+
+function getExecutorText(step) {
+  if (!step) return ''
+  if (step.isSystem) {
+    return `${t('orderDetail.executedBy')}: ${t('orderDetail.bySystem')}`
+  }
+  if (step.changedByName) {
+    let roleText = ''
+    if (step.changedByRole) {
+      const roleKey = `profile.role${step.changedByRole.charAt(0).toUpperCase() + step.changedByRole.slice(1)}`
+      roleText = te(roleKey) ? ` (${t(roleKey)})` : ` (${step.changedByRole})`
+    }
+    return `${t('orderDetail.executedBy')}: ${step.changedByName}${roleText}`
+  }
+  return `${t('orderDetail.executedBy')}: ${t('orderDetail.userUnavailable')}`
+}
 </script>

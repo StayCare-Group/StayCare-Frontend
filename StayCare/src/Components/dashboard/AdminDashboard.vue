@@ -93,7 +93,8 @@ import LoadingPanel from '../ui/LoadingPanel.vue'
 import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { fetchAllOrders, mapOrderForList } from '../../api/orders'
+import { fetchAllOrders } from '../../api/orders'
+import { mapOrderForList } from '@/utils/orderMappers'
 import { fetchDashboardStats } from '../../api/reports'
 
 const { t } = useI18n()

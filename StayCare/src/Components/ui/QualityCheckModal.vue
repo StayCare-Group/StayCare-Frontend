@@ -123,7 +123,8 @@ import { useI18n } from 'vue-i18n'
 import AppModal from './AppModal.vue'
 import AppButton from './AppButton.vue'
 import { useUiStore } from '../../stores/ui.js'
-import { fetchOrderById, mapOrderForDetail, updateOrder, updateOrderStatus } from '../../api/orders'
+import { fetchOrderById, updateOrder, updateOrderStatus } from '../../api/orders'
+import { mapOrderForDetail } from '@/utils/orderMappers'
 
 const props = defineProps({
   show: { type: Boolean, default: false },

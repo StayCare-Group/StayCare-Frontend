@@ -375,7 +375,8 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fetchOrders, fetchAllOrders, mapOrderForList, reassignOrder, confirmPickup as apiConfirmPickup } from '@/api/orders'
+import { fetchOrders, fetchAllOrders, reassignOrder, confirmPickup as apiConfirmPickup } from '@/api/orders'
+import { mapOrderForList } from '@/utils/orderMappers'
 import { fetchRoutes, fetchAllRoutes, mapRouteForDriver, deleteRoute } from '../../../api/routes'
 import { getUsers } from '../../../api/users'
 import { fetchClients } from '../../../api/clients'
