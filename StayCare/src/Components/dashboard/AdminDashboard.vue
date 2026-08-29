@@ -169,7 +169,7 @@ const adminChartData = computed(() => {
   sunday.setHours(23, 59, 59, 999)
 
   for (const o of orders.value) {
-    const dateStr = o.pickupDate || o.createdAt
+    const dateStr = o.createdAt
     if (dateStr) {
       const parts = dateStr.split('-').map(Number)
       if (parts.length === 3 && !parts.some(isNaN)) {

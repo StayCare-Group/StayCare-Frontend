@@ -232,12 +232,8 @@ const generatingPdf = ref(false)
 
 const showCancelModal = ref(false)
 
-const isAdmin = computed(() => authStore.user?.role === 'admin')
-
-const isAdminOrStaff = computed(() => {
-  const role = authStore.user?.role ?? ''
-  return role === 'admin' || role === 'staff' || role === 'operator'
-})
+const isAdmin = computed(() => authStore.isAdmin)
+const isAdminOrStaff = computed(() => authStore.isInternal)
 
 async function downloadPdf() {
   if (!order.value || generatingPdf.value) return

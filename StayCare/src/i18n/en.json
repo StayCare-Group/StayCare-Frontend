@@ -329,6 +329,7 @@
     "filterClient": "Client",
     "exportExcel": "Download Excel ({count})",
     "exportExcelAll": "Download Excel",
+    "exportSelectRequired": "Select at least one order to download.",
     "selectAll": "Select all"
   },
   "excel": {
@@ -366,7 +367,17 @@
     "qtyStained": "Stained Qty",
     "qtyDamaged": "Damaged Qty",
     "totalReceived": "Total Received",
-    "noItems": "No detailed items"
+    "noItems": "No detailed items",
+    "flatSheet": "Orders",
+    "createdDate": "Creation Date",
+    "qualityCheckBy": "USER QUALITY CHECK",
+    "timestampArrived": "Received at Facility Date",
+    "timestampIroning": "Ironing Date",
+    "timestampDelivered": "Delivery Date",
+    "exportFormatDetailed": "Detailed (one sheet per order)",
+    "exportFormatFlat": "Summary (one row per order + items)",
+    "exportGenerating": "Generating Excel file...",
+    "exportLimitError": "Too many orders ({count}). Apply a narrower filter (max 200 orders)."
   },
   "invoiceDetail": {
     "paymentMethod": "Payment Method",
@@ -696,7 +707,12 @@
   },
   "orderFilters": {
     "all": "All",
-    "inProgress": "In Progress"
+    "inProgress": "In Progress",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "pickupDate": "Pickup Date",
+    "createdDate": "Creation Date",
+    "clearDates": "Reset to last 30 days"
   },
   "invoiceStatuses": {
     "pending": "Pending Payment",

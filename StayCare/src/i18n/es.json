@@ -329,6 +329,7 @@
     "filterClient": "Cliente",
     "exportExcel": "Descargar Excel ({count})",
     "exportExcelAll": "Descargar Excel",
+    "exportSelectRequired": "Selecciona al menos una orden para descargar.",
     "selectAll": "Seleccionar todo"
   },
   "excel": {
@@ -366,7 +367,17 @@
     "qtyStained": "Cant. Manchada",
     "qtyDamaged": "Cant. Dañada",
     "totalReceived": "Total Recibido",
-    "noItems": "Sin ítems detallados"
+    "noItems": "Sin ítems detallados",
+    "flatSheet": "Órdenes",
+    "createdDate": "Fecha Creación",
+    "qualityCheckBy": "USUARIO CONTROL CALIDAD",
+    "timestampArrived": "Fecha y Hora de Recepción",
+    "timestampIroning": "Fecha y Hora de Plancha",
+    "timestampDelivered": "Fecha y Hora de Entrega",
+    "exportFormatDetailed": "Detallado (una hoja por orden)",
+    "exportFormatFlat": "Resumen (una fila por orden + prendas)",
+    "exportGenerating": "Generando archivo Excel...",
+    "exportLimitError": "Demasiadas órdenes ({count}). Aplica un filtro más específico (máx. 200 órdenes)."
   },
   "invoiceDetail": {
     "paymentMethod": "Método de Pago",
@@ -696,7 +707,12 @@
   },
   "orderFilters": {
     "all": "Todos",
-    "inProgress": "En Progreso"
+    "inProgress": "En Progreso",
+    "dateFrom": "Desde",
+    "dateTo": "Hasta",
+    "pickupDate": "Fecha de recogida",
+    "createdDate": "Fecha de creación",
+    "clearDates": "Restablecer a últimos 30 días"
   },
   "invoiceStatuses": {
     "pending": "Pendiente de Pago",

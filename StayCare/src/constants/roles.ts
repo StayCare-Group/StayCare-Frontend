@@ -24,6 +24,34 @@ export function toInviteRoleLabel(raw: unknown): string {
   return getRoleLabel(raw)
 }
 
+export function isAdminRole(role: unknown): boolean {
+  return role === 'admin'
+}
+
+export function isStaffRole(role: unknown): boolean {
+  return role === 'staff'
+}
+
+export function isClientRole(role: unknown): boolean {
+  return role === 'client'
+}
+
+export function isDriverRole(role: unknown): boolean {
+  return role === 'driver'
+}
+
+export function isOperatorRole(role: unknown): boolean {
+  return role === 'operator'
+}
+
+export function isAdminOrStaffRole(role: unknown): boolean {
+  return role === 'admin' || role === 'staff'
+}
+
+export function isInternalRole(role: unknown): boolean {
+  return role === 'admin' || role === 'staff' || role === 'operator'
+}
+
 export function getInviteRoleOptions(t: (key: string) => string) {
   return [
     { value: 'client', label: t('common.client') },
@@ -33,3 +61,4 @@ export function getInviteRoleOptions(t: (key: string) => string) {
     { value: 'admin', label: t('admin.admin') },
   ] as const
 }
+

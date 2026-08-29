@@ -118,7 +118,7 @@ const navStore = useNavStore()
 const authStore = useAuthStore()
 const { exportInvoicesDetailed } = useExcelExporter()
 
-const isAdmin = computed(() => authStore.user?.role === 'admin')
+const isAdmin = computed(() => authStore.isAdmin)
 
 const PAGE_SIZE = 10
 

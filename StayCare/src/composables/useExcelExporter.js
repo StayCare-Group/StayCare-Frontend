@@ -231,8 +231,130 @@ export function useExcelExporter() {
     XLSX.writeFile(wb, `Ordenes-StayCare-${dateStr}.xlsx`)
   }
 
+  /**
+   * Flat export: one row per order, item quantities pivoted as columns,
+   * plus timestamps for key status changes.
+   * @param {Array} ordersList - Orders from the list (mapped, lightweight)
+   * @returns {Promise<{ exported: number } | { error: string, count: number }>}
+   */
+  async function exportOrdersFlat(ordersList) {
+    if (!ordersList || !ordersList.length) return
+
+    const MAX_ORDERS = 200
+    if (ordersList.length > MAX_ORDERS) {
+      return { error: 'limit', count: ordersList.length }
+    }
+
+    // Fetch full details for every order in parallel
+    const details = await Promise.all(
+      ordersList.map(async (o) => {
+        try {
+          const raw = await fetchOrderById(o._id)
+          return { listOrder: o, fullData: raw }
+        } catch {
+          return { listOrder: o, fullData: null }
+        }
+      })
+    )
+
+    // --- Collect all unique item names (pivot columns) ---
+    const itemNamesSet = new Set()
+    for (const { fullData } of details) {
+      const items = fullData?.items ?? fullData?.order?.items ?? []
+      for (const item of items) {
+        const name = item.name_snapshot || item.name || item.item_name || item.description
+        if (name) itemNamesSet.add(name)
+      }
+    }
+    const itemNames = Array.from(itemNamesSet).sort()
+
+    // --- Helper: find status history entry by status name ---
+    function findHistory(statusHistory, statusName) {
+      if (!Array.isArray(statusHistory)) return null
+      return statusHistory.find((h) => h.status === statusName) ?? null
+    }
+
+    function formatTs(entry) {
+      if (!entry?.changed_at) return ''
+      return new Date(entry.changed_at).toLocaleString()
+    }
+
+    // --- Build rows ---
+    const kOrderId    = t('excel.orderId')
+    const kClient     = t('excel.client')
+    const kProperty   = t('excel.property')
+    const kCreated    = t('excel.createdDate')
+    const kPickup     = t('excel.pickupDate')
+    const kService    = t('excel.serviceType')
+    const kStatus     = t('excel.status')
+    const kBags       = t('excel.bags')
+    const kTotal      = t('excel.total')
+    const kQcUser     = t('excel.qualityCheckBy')
+    const kArrived    = t('excel.timestampArrived')
+    const kIroning    = t('excel.timestampIroning')
+    const kDelivered  = t('excel.timestampDelivered')
+
+    const rows = details.map(({ listOrder, fullData }) => {
+      const orderData = fullData?.order ?? fullData ?? {}
+      const items     = fullData?.items ?? orderData.items ?? []
+      const history   = fullData?.status_history ?? orderData.status_history ?? []
+
+      // Pivot: map item name → total quantity
+      const itemQtyMap = {}
+      for (const item of items) {
+        const name = item.name_snapshot || item.name || item.item_name || item.description
+        if (!name) continue
+        const qGood    = Number(item.quantity_good    ?? item.qty_good    ?? 0)
+        const qStained = Number(item.quantity_stained ?? item.qty_stained ?? 0)
+        const qDamaged = Number(item.quantity_damaged ?? item.qty_damaged ?? 0)
+        itemQtyMap[name] = (itemQtyMap[name] ?? 0) + (qGood + qStained + qDamaged || Number(item.quantity ?? 0))
+      }
+
+      // Timestamps
+      const qcEntry        = findHistory(history, 'quality_check')
+      const arrivedEntry   = findHistory(history, 'received') ?? findHistory(history, 'arrived')
+      const ironingEntry   = findHistory(history, 'ironing')
+      const deliveredEntry = findHistory(history, 'delivered')
+
+      const row = {
+        [kOrderId]:  listOrder.id,
+        [kClient]:   listOrder.client  || '—',
+        [kProperty]: listOrder.propertyName || '—',
+        [kCreated]:  listOrder.createdAt   || orderData.created_at || '—',
+        [kPickup]:   listOrder.pickupDate  || orderData.pickup_date || '—',
+        [kService]:  listOrder.serviceType || '—',
+        [kStatus]:   listOrder.status      || '—',
+        [kBags]:     listOrder.actualBags ?? listOrder.estimatedBags ?? 0,
+        [kTotal]:    listOrder.total ?? 0,
+      }
+
+      // Item pivot columns
+      for (const name of itemNames) {
+        row[name] = itemQtyMap[name] ?? 0
+      }
+
+      // Timestamps & QC
+      row[kQcUser]    = qcEntry?.changed_by_user_name ?? ''
+      row[kArrived]   = formatTs(arrivedEntry)
+      row[kIroning]   = formatTs(ironingEntry)
+      row[kDelivered] = formatTs(deliveredEntry)
+
+      return row
+    })
+
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(rows)
+    XLSX.utils.book_append_sheet(wb, ws, t('excel.flatSheet'))
+
+    const dateStr = new Date().toISOString().slice(0, 10)
+    XLSX.writeFile(wb, `Ordenes-Resumen-StayCare-${dateStr}.xlsx`)
+
+    return { exported: rows.length }
+  }
+
   return {
     exportInvoicesDetailed,
     exportOrdersDetailed,
+    exportOrdersFlat,
   }
 }

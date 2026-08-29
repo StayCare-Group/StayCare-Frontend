@@ -5,6 +5,15 @@ import { fetchMe } from '../api/users'
 import { useLangStore } from './lang.js'
 import { useNavStore } from './nav.js'
 import { setApiRequestsBlocked, abortActiveApiRequests } from '../api/client'
+import {
+  isAdminRole,
+  isStaffRole,
+  isClientRole,
+  isDriverRole,
+  isOperatorRole,
+  isAdminOrStaffRole,
+  isInternalRole,
+} from '../constants/roles'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -13,6 +22,14 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!user.value)
   const userRole = computed(() => user.value?.role ?? null)
+
+  const isAdmin = computed(() => isAdminRole(user.value?.role))
+  const isStaff = computed(() => isStaffRole(user.value?.role))
+  const isClient = computed(() => isClientRole(user.value?.role))
+  const isDriver = computed(() => isDriverRole(user.value?.role))
+  const isOperator = computed(() => isOperatorRole(user.value?.role))
+  const isAdminOrStaff = computed(() => isAdminOrStaffRole(user.value?.role))
+  const isInternal = computed(() => isInternalRole(user.value?.role))
 
   function applyLanguage(lang) {
     if (lang && ['en', 'es'].includes(lang)) {
@@ -84,5 +101,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, clientProfile, loading, isLoggedIn, userRole, login, logout, tryRefresh, loadCurrentUser, applyLanguage }
+  return {
+    user,
+    clientProfile,
+    loading,
+    isLoggedIn,
+    userRole,
+    isAdmin,
+    isStaff,
+    isClient,
+    isDriver,
+    isOperator,
+    isAdminOrStaff,
+    isInternal,
+    login,
+    logout,
+    tryRefresh,
+    loadCurrentUser,
+    applyLanguage,
+  }
 })

@@ -195,8 +195,8 @@ import { apiFetch } from '../../../api/client'
 const { t } = useI18n()
 const authStore = useAuthStore()
 const ui = useUiStore()
-const isAdmin = computed(() => authStore.user?.role === 'admin')
-const isAdminOrStaff = computed(() => authStore.user?.role === 'admin' || authStore.user?.role === 'staff')
+const isAdmin = computed(() => authStore.isAdmin)
+const isAdminOrStaff = computed(() => authStore.isAdminOrStaff)
 
 const allOrders = ref([])
 const machines = ref([])

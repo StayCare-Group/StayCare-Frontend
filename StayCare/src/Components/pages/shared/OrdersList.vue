@@ -4,16 +4,42 @@
     <div class="flex items-center justify-between gap-4">
       <h2 class="text-lg font-semibold text-brand-700">{{ $t('client.allOrders') }}</h2>
       <div class="flex items-center gap-2">
-        <AppButton
-          variant="secondary"
-          size="sm"
-          @click="exportSelectedOrdersToExcel"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"/>
-          </svg>
-          {{ selectedOrderIds.length ? $t('invoices.exportExcel', { count: selectedOrderIds.length }) : $t('invoices.exportExcelAll') }}
-        </AppButton>
+        <!-- Excel export with format picker -->
+        <div v-if="isAdminOrStaff" class="relative" ref="exportMenuRef">
+          <AppButton
+            variant="secondary"
+            size="sm"
+            :disabled="exportLoading"
+            @click="toggleExportMenu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"/>
+            </svg>
+            <span v-if="exportLoading">{{ $t('excel.exportGenerating') }}</span>
+            <span v-else>{{ selectedOrderIds.length ? $t('invoices.exportExcel', { count: selectedOrderIds.length }) : $t('invoices.exportExcelAll') }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </AppButton>
+          <!-- Dropdown -->
+          <div
+            v-if="showExportMenu"
+            class="absolute right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20"
+          >
+            <button
+              class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 rounded-t-lg"
+              @click="exportWithFormat('flat')"
+            >
+              <span class="font-medium block">{{ $t('excel.exportFormatFlat') }}</span>
+            </button>
+            <button
+              class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 rounded-b-lg border-t"
+              @click="exportWithFormat('detailed')"
+            >
+              <span class="font-medium block">{{ $t('excel.exportFormatDetailed') }}</span>
+            </button>
+          </div>
+        </div>
         <AppButton :disabled="isClient && !canCreateOrder" @click="navStore.goToDetail('create-order', null)">{{ $t('client.newOrder') }}</AppButton>
       </div>
     </div>
@@ -26,7 +52,7 @@
     </p>
 
     <!-- Filters & Client Select -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="flex flex-col gap-3">
       <div class="flex flex-wrap gap-2">
         <button
           v-for="f in filters" :key="f.key"
@@ -36,12 +62,23 @@
         >{{ f.label }}</button>
       </div>
 
-      <!-- Client filter dropdown for admin -->
-      <ClientFilterSelect
-        v-if="isAdmin"
-        v-model="selectedClientId"
-        @change="onClientFilterChange"
-      />
+      <!-- Date range filter — visible for all roles -->
+      <div class="flex flex-wrap items-center gap-3">
+        <DateRangeFilter
+          id-prefix="orders"
+          :from="dateFrom"
+          :to="dateTo"
+          @update:from="dateFrom = $event; onDateFilterChange()"
+          @update:to="dateTo = $event; onDateFilterChange()"
+          @clear="clearDateFilter"
+        />
+
+        <ClientFilterSelect
+          v-if="isAdminOrStaff"
+          v-model="selectedClientId"
+          @change="onClientFilterChange"
+        />
+      </div>
     </div>
 
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
@@ -72,7 +109,7 @@
       <template #cell-client="{ value }">
         <span class="text-gray-700">{{ value }}</span>
       </template>
-      <template #cell-pickupDate="{ value }">
+      <template #cell-createdAt="{ value }">
         <span class="text-gray-500">{{ value }}</span>
       </template>
       <template #cell-serviceType="{ value }">
@@ -113,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
@@ -121,6 +158,7 @@ import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import CancelOrderModal from '../../ui/CancelOrderModal.vue'
 import ClientFilterSelect from '../../ui/ClientFilterSelect.vue'
+import DateRangeFilter from '../../ui/DateRangeFilter.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
@@ -134,13 +172,39 @@ const { t } = useI18n()
 const navStore = useNavStore()
 const auth = useAuthStore()
 const uiStore = useUiStore()
-const { exportOrdersDetailed } = useExcelExporter()
+const { exportOrdersDetailed, exportOrdersFlat } = useExcelExporter()
 
-const isAdmin = computed(() => auth.user?.role === 'admin')
-const isClient = computed(() => auth.user?.role === 'client')
+function getDefaultDateRange() {
+  const now = new Date()
+  const past = new Date()
+  past.setDate(now.getDate() - 30)
+
+  const toStr = (d) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
+  return {
+    from: toStr(past),
+    to: toStr(now),
+  }
+}
+
+const defaultDateRange = getDefaultDateRange()
+const dateFrom = ref(defaultDateRange.from)
+const dateTo = ref(defaultDateRange.to)
+
+const isAdmin = computed(() => auth.isAdmin)
+const isAdminOrStaff = computed(() => auth.isAdminOrStaff)
+const isClient = computed(() => auth.isClient)
 
 const orders = ref([])
 const loading = ref(true)
+const exportLoading = ref(false)
+const showExportMenu = ref(false)
+const exportMenuRef = ref(null)
 const canCreateOrder = ref(false)
 const selectedClientId = ref('')
 const selectedOrderIds = ref([])
@@ -172,6 +236,12 @@ const loadOrders = async () => {
     } else if (selectedClientId.value) {
       params.client_id = selectedClientId.value
     }
+    if (dateFrom.value) {
+      params.from = dateFrom.value
+    }
+    if (dateTo.value) {
+      params.to = `${dateTo.value} 23:59:59`
+    }
     const data = await fetchAllOrders(params)
     orders.value = (data ?? []).map(mapOrderForList)
     if (isClient.value) {
@@ -190,17 +260,63 @@ function onClientFilterChange() {
   loadOrders()
 }
 
-async function exportSelectedOrdersToExcel() {
-  const selectedSet = new Set(selectedOrderIds.value)
-  const itemsToExport = selectedSet.size
-    ? filteredOrders.value.filter(o => selectedSet.has(o._id))
-    : filteredOrders.value
-
-  if (!itemsToExport.length) return
-  await exportOrdersDetailed(itemsToExport)
+function onDateFilterChange() {
+  loadOrders()
 }
 
-onMounted(loadOrders)
+function clearDateFilter() {
+  const defaultRange = getDefaultDateRange()
+  dateFrom.value = defaultRange.from
+  dateTo.value = defaultRange.to
+  loadOrders()
+}
+
+function toggleExportMenu() {
+  showExportMenu.value = !showExportMenu.value
+}
+
+async function exportWithFormat(format) {
+  showExportMenu.value = false
+
+  if (!selectedOrderIds.value.length) {
+    uiStore.showError(t('invoices.exportSelectRequired'))
+    return
+  }
+
+  const selectedSet = new Set(selectedOrderIds.value)
+  const itemsToExport = filteredOrders.value.filter(o => selectedSet.has(o._id))
+
+  if (!itemsToExport.length) return
+
+  exportLoading.value = true
+  try {
+    if (format === 'flat') {
+      const result = await exportOrdersFlat(itemsToExport)
+      if (result?.error === 'limit') {
+        uiStore.showError(t('excel.exportLimitError', { count: result.count }))
+      }
+    } else {
+      await exportOrdersDetailed(itemsToExport)
+    }
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+function handleClickOutside(event) {
+  if (exportMenuRef.value && !exportMenuRef.value.contains(event.target)) {
+    showExportMenu.value = false
+  }
+}
+
+onMounted(() => {
+  loadOrders()
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 const promptCancelOrder = (item) => {
   orderToCancel.value = item
@@ -230,7 +346,7 @@ const orderHeaders = computed(() => [
   { key: 'select', label: '', thClass: 'w-10 text-center', tdClass: 'text-center' },
   { key: 'id', label: t('client.orderId') },
   { key: 'client', label: t('common.client') },
-  { key: 'pickupDate', label: t('client.date') },
+  { key: 'createdAt', label: t('client.date') },
   { key: 'serviceType', label: t('client.service') },
   { key: 'bags', label: t('client.bagsLabel') },
   { key: 'status', label: t('common.status') },
