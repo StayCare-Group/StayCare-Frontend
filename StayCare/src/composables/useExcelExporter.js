@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx'
 import { useI18n } from 'vue-i18n'
 import { fetchInvoiceById } from '../api/invoices'
 import { fetchOrderById } from '../api/orders'
+import { fetchAllItems } from '../api/items'
 
 function sanitizeSheetName(name) {
   if (!name) return 'Sheet'
@@ -33,6 +34,7 @@ export function useExcelExporter() {
     const kInvoicesSheet = t('excel.invoicesSheet')
 
     // 1. Summary sheet
+    const summaryHeaders = [kNum, kOrders, kClient, kIssue, kDue, kStatus, kTotal]
     const summaryRows = invoicesList.map(inv => ({
       [kNum]: inv.id,
       [kOrders]: inv.orderId || '—',
@@ -42,7 +44,7 @@ export function useExcelExporter() {
       [kStatus]: inv.status || '—',
       [kTotal]: inv.grandTotal ?? 0,
     }))
-    const wsSummary = XLSX.utils.json_to_sheet(summaryRows)
+    const wsSummary = XLSX.utils.json_to_sheet(summaryRows, { header: summaryHeaders })
     XLSX.utils.book_append_sheet(wb, wsSummary, kInvoicesSheet)
 
     // 2. Fetch full details for each invoice & add individual sheets
@@ -129,11 +131,23 @@ export function useExcelExporter() {
     const kServiceType = t('excel.serviceType')
     const kStatus = t('excel.status')
     const kBags = t('excel.bags')
+    const kNotes = t('excel.specialNotes')
     const kTotal = t('excel.total')
     const kGrandTotal = t('excel.grandTotal')
     const kOrdersSheet = t('excel.ordersSheet')
 
     // 1. Summary sheet
+    const summaryHeaders = [
+      kOrderId,
+      kClient,
+      kProperty,
+      kPickupDate,
+      kServiceType,
+      kStatus,
+      kBags,
+      kNotes,
+      kTotal,
+    ]
     const summaryRows = ordersList.map(o => ({
       [kOrderId]: o.id,
       [kClient]: o.client || '—',
@@ -142,9 +156,10 @@ export function useExcelExporter() {
       [kServiceType]: o.serviceType || '—',
       [kStatus]: o.status || '—',
       [kBags]: o.actualBags ?? o.estimatedBags ?? 0,
+      [kNotes]: o.specialNotes || '—',
       [kTotal]: o.total ?? 0,
     }))
-    const wsSummary = XLSX.utils.json_to_sheet(summaryRows)
+    const wsSummary = XLSX.utils.json_to_sheet(summaryRows, { header: summaryHeaders })
     XLSX.utils.book_append_sheet(wb, wsSummary, kOrdersSheet)
 
     // 2. Fetch full details for each order & add individual sheets
@@ -180,7 +195,7 @@ export function useExcelExporter() {
         [`${kPickupDate}:`, listOrder.pickupDate || orderData.pickup_date || '—'],
         [`${kServiceType}:`, listOrder.serviceType || orderData.service_type || '—'],
         [`${kStatus}:`, listOrder.status || orderData.status || '—'],
-        [`${t('excel.specialNotes')}:`, orderData.special_notes || '—'],
+        [`${t('excel.specialNotes')}:`, orderData.special_notes || listOrder.specialNotes || '—'],
         [],
         [t('excel.itemsTitle')],
         [
@@ -245,20 +260,27 @@ export function useExcelExporter() {
       return { error: 'limit', count: ordersList.length }
     }
 
-    // Fetch full details for every order in parallel
-    const details = await Promise.all(
-      ordersList.map(async (o) => {
-        try {
-          const raw = await fetchOrderById(o._id)
-          return { listOrder: o, fullData: raw }
-        } catch {
-          return { listOrder: o, fullData: null }
-        }
-      })
-    )
+    // Fetch full details for every order and catalog items in parallel
+    const [details, catalogItems] = await Promise.all([
+      Promise.all(
+        ordersList.map(async (o) => {
+          try {
+            const raw = await fetchOrderById(o._id)
+            return { listOrder: o, fullData: raw }
+          } catch {
+            return { listOrder: o, fullData: null }
+          }
+        })
+      ),
+      fetchAllItems(false).catch(() => []),
+    ])
 
-    // --- Collect all unique item names (pivot columns) ---
+    // --- Collect all unique item names (master catalog + order items) ---
     const itemNamesSet = new Set()
+    for (const catItem of (catalogItems || [])) {
+      const name = catItem?.name || catItem?.name_snapshot || catItem?.description
+      if (name) itemNamesSet.add(name)
+    }
     for (const { fullData } of details) {
       const items = fullData?.items ?? fullData?.order?.items ?? []
       for (const item of items) {
@@ -288,11 +310,30 @@ export function useExcelExporter() {
     const kService    = t('excel.serviceType')
     const kStatus     = t('excel.status')
     const kBags       = t('excel.bags')
+    const kNotes      = t('excel.specialNotes')
     const kTotal      = t('excel.total')
     const kQcUser     = t('excel.qualityCheckBy')
     const kArrived    = t('excel.timestampArrived')
     const kIroning    = t('excel.timestampIroning')
     const kDelivered  = t('excel.timestampDelivered')
+
+    const flatHeaders = [
+      kOrderId,
+      kClient,
+      kProperty,
+      kCreated,
+      kPickup,
+      kService,
+      kStatus,
+      kBags,
+      kNotes,
+      kTotal,
+      kQcUser,
+      kArrived,
+      kIroning,
+      kDelivered,
+      ...itemNames,
+    ]
 
     const rows = details.map(({ listOrder, fullData }) => {
       const orderData = fullData?.order ?? fullData ?? {}
@@ -317,33 +358,32 @@ export function useExcelExporter() {
       const deliveredEntry = findHistory(history, 'delivered')
 
       const row = {
-        [kOrderId]:  listOrder.id,
-        [kClient]:   listOrder.client  || '—',
-        [kProperty]: listOrder.propertyName || '—',
-        [kCreated]:  listOrder.createdAt   || orderData.created_at || '—',
-        [kPickup]:   listOrder.pickupDate  || orderData.pickup_date || '—',
-        [kService]:  listOrder.serviceType || '—',
-        [kStatus]:   listOrder.status      || '—',
-        [kBags]:     listOrder.actualBags ?? listOrder.estimatedBags ?? 0,
-        [kTotal]:    listOrder.total ?? 0,
+        [kOrderId]:    listOrder.id,
+        [kClient]:     listOrder.client  || '—',
+        [kProperty]:   listOrder.propertyName || '—',
+        [kCreated]:    listOrder.createdAt   || orderData.created_at || '—',
+        [kPickup]:     listOrder.pickupDate  || orderData.pickup_date || '—',
+        [kService]:    listOrder.serviceType || '—',
+        [kStatus]:     listOrder.status      || '—',
+        [kBags]:       listOrder.actualBags ?? listOrder.estimatedBags ?? 0,
+        [kNotes]:      orderData.special_notes || listOrder.specialNotes || '—',
+        [kTotal]:      listOrder.total ?? 0,
+        [kQcUser]:     qcEntry?.changed_by_user_name ?? '',
+        [kArrived]:    formatTs(arrivedEntry),
+        [kIroning]:    formatTs(ironingEntry),
+        [kDelivered]:  formatTs(deliveredEntry),
       }
 
-      // Item pivot columns
+      // Item pivot columns at the end
       for (const name of itemNames) {
         row[name] = itemQtyMap[name] ?? 0
       }
-
-      // Timestamps & QC
-      row[kQcUser]    = qcEntry?.changed_by_user_name ?? ''
-      row[kArrived]   = formatTs(arrivedEntry)
-      row[kIroning]   = formatTs(ironingEntry)
-      row[kDelivered] = formatTs(deliveredEntry)
 
       return row
     })
 
     const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.json_to_sheet(rows)
+    const ws = XLSX.utils.json_to_sheet(rows, { header: flatHeaders })
     XLSX.utils.book_append_sheet(wb, ws, t('excel.flatSheet'))
 
     const dateStr = new Date().toISOString().slice(0, 10)
