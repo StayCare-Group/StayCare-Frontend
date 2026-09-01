@@ -6,6 +6,8 @@
     "types": ["vite/client"],
     "allowJs": true,
     "checkJs": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "strict": false,
     "jsx": "preserve",
     "baseUrl": ".",

@@ -100,18 +100,17 @@
           :placeholder="t('admin.specialNotesPlaceholder')"></textarea>
       </div>
 
-      <div v-if="estimatedTotal > 0" class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">{{ t('admin.priceEstimate') }}</h3>
-        <div class="space-y-1 text-sm">
-          <div class="flex justify-between"><span class="text-gray-500">{{ t('admin.subtotal') }}</span><span
-              class="font-medium">&euro;{{ subtotal.toFixed(2) }}</span></div>
-          <div class="flex justify-between"><span class="text-gray-500">{{ t('admin.vat') }}</span><span
-              class="font-medium">&euro;{{ vat.toFixed(2) }}</span></div>
-          <div class="flex justify-between border-t border-gray-100 pt-2 mt-2"><span
-              class="font-semibold text-gray-800">{{ t('admin.estimatedTotal') }}</span><span
-              class="font-bold text-gray-800">&euro;{{ estimatedTotal.toFixed(2) }}</span></div>
-        </div>
-      </div>
+      <PricingSummaryCard
+        v-if="estimatedTotal > 0"
+        :title="t('admin.priceEstimate')"
+        :subtotal="subtotal"
+        :surcharge="expressCharge"
+        :surchargeLabel="t('admin.expressSurcharge')"
+        :vatAmount="vat"
+        :vatLabel="t('admin.vat')"
+        :total="estimatedTotal"
+        :totalLabel="t('admin.estimatedTotal')"
+      />
 
       <div class="flex gap-3">
         <AppButton type="submit" size="lg" :loading="submitting" :disabled="noClientsAvailable">
@@ -144,7 +143,9 @@ import { getPropertiesByUserId } from '../../../api/properties'
 
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
 import OrderItemsPicker from '../../forms/OrderItemsPicker.vue'
+import PricingSummaryCard from '../../ui/PricingSummaryCard.vue'
 import { getTodayDateString, isPastDate } from '../../../utils/date'
+import { DEFAULT_VAT_RATE } from '../../../utils/pricing'
 import { formatApiErrorMessage } from '../../../utils/errors'
 
 const props = defineProps({
@@ -163,7 +164,6 @@ const isAdmin = computed(() => props.mode === 'admin')
 const isAdminOrStaff = computed(() => isAdmin.value || authStore.user?.role === 'staff' || authStore.user?.role === 'admin')
 const title = computed(() => isAdmin.value ? t('admin.createOrderTitle') : t('client.createOrderTitle'))
 
-const VAT_RATE = 0.18
 const SERVICE_TYPES = ['Standard (48h)']
 const todayStr = computed(() => getTodayDateString())
 
@@ -255,7 +255,7 @@ const expressCharge = computed(() =>
   form.serviceType === 'Express (24h)' ? 25 : 0
 )
 
-const vat = computed(() => (subtotal.value + expressCharge.value) * VAT_RATE)
+const vat = computed(() => (subtotal.value + expressCharge.value) * DEFAULT_VAT_RATE)
 
 const estimatedTotal = computed(() => subtotal.value + expressCharge.value + vat.value)
 

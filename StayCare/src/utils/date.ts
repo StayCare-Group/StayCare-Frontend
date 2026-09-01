@@ -35,3 +35,28 @@ export function isPastDate(targetDateStr?: string | Date | null, referenceDateSt
   if (!target || !ref) return false
   return target < ref
 }
+
+/**
+ * Returns a default date range object with `from` and `to` formatted as YYYY-MM-DD strings.
+ * Defaults to the last `days` days (default: 30) up to today in local time.
+ */
+export function getDefaultDateRange(days: number = 30): { from: string; to: string } {
+  const now = new Date()
+  const past = new Date()
+  past.setDate(now.getDate() - days)
+
+  return {
+    from: normalizeDateString(past),
+    to: normalizeDateString(now),
+  }
+}
+
+/**
+ * Returns a future calendar date as a YYYY-MM-DD string in local time, adding `days` to `fromDate` (defaults to today).
+ */
+export function getFutureDateString(days: number = 30, fromDate: Date = new Date()): string {
+  const target = new Date(fromDate)
+  target.setDate(target.getDate() + days)
+  return normalizeDateString(target)
+}
+

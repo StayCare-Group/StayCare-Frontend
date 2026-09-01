@@ -41,25 +41,21 @@
               <td class="px-5 py-2 text-gray-500 font-mono text-xs">{{ item.code }}</td>
               <td class="px-5 py-2 text-gray-800">{{ item.name }}</td>
               <td class="px-5 py-2 text-right text-gray-700">{{ item.qty }}</td>
-              <td class="px-5 py-2 text-right text-gray-500">&euro;{{ item.unitPrice.toFixed(2) }}</td>
-              <td class="px-5 py-2 text-right font-medium text-gray-800">&euro;{{ item.total.toFixed(2) }}</td>
+              <td class="px-5 py-2 text-right text-gray-500">{{ formatCurrency(item.unitPrice) }}</td>
+              <td class="px-5 py-2 text-right font-medium text-gray-800">{{ formatCurrency(item.total) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <!-- Totals -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="space-y-2 text-sm max-w-xs ml-auto">
-          <div class="flex justify-between"><span class="text-gray-500">{{ $t('admin.subtotal') }}</span><span class="font-medium">&euro;{{ invoice.subtotal.toFixed(2) }}</span></div>
-          <div v-if="invoice.expressCharge > 0" class="flex justify-between"><span class="text-gray-500">{{ $t('admin.expressSurcharge') }}</span><span class="font-medium">&euro;{{ invoice.expressCharge.toFixed(2) }}</span></div>
-          <div class="flex justify-between"><span class="text-gray-500">{{ $t('admin.vatPercent') }}</span><span class="font-medium">&euro;{{ invoice.vat.toFixed(2) }}</span></div>
-          <div class="flex justify-between border-t border-gray-200 pt-2 mt-2 text-base">
-            <span class="font-bold text-gray-800">{{ $t('admin.grandTotal') }}</span>
-            <span class="font-bold text-gray-800">&euro;{{ invoice.grandTotal.toFixed(2) }}</span>
-          </div>
-        </div>
-      </div>
+      <PricingSummaryCard
+        :subtotal="invoice.subtotal"
+        :surcharge="invoice.expressCharge"
+        :vatAmount="invoice.vat"
+        :total="invoice.grandTotal"
+        :alignRight="true"
+      />
 
       <!-- Pay button (if not already paid) -->
       <div v-if="invoice.status !== 'Paid'" class="flex gap-3">
@@ -84,8 +80,11 @@
 import { ref, watch, onMounted } from 'vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import AppButton from '../../ui/AppButton.vue'
+import PricingSummaryCard from '../../ui/PricingSummaryCard.vue'
 import { useNavStore } from '../../../stores/nav.js'
-import { fetchInvoiceById, mapInvoiceForDetail, recordPayment } from '../../../api/invoices'
+import { fetchInvoiceById, recordPayment } from '../../../api/invoices'
+import { mapInvoiceForDetail } from '@/utils/invoiceMappers'
+import { formatCurrency } from '@/utils/pricing'
 
 const navStore = useNavStore()
 const showSuccess = ref(false)

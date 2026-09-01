@@ -387,6 +387,7 @@
   },
   "createInvoice": {
     "uninvoicedFound": "Se encontraron {count} pedidos sin facturar",
+    "loadingOrders": "Cargando pedidos...",
     "serviceDescription": "Descripción del servicio",
     "orderLineDescription": "Pedido {order}",
     "createFailed": "No se pudo crear la factura. Inténtalo de nuevo.",

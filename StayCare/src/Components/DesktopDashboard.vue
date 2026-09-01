@@ -20,7 +20,7 @@ const sidebarOpen = ref(false)
   <div class="flex min-h-screen lg:h-screen overflow-hidden relative">
 
     <!-- Unified responsive Sidebar -->
-    <Sidebar :role="role" v-model:open="sidebarOpen" class="relative z-[1]" />
+    <Sidebar :role="role" v-model:open="sidebarOpen" />
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col min-w-0 min-h-screen lg:h-screen relative z-[1]">

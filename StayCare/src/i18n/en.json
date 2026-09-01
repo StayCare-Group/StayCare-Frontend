@@ -387,6 +387,7 @@
   },
   "createInvoice": {
     "uninvoicedFound": "{count} uninvoiced orders found",
+    "loadingOrders": "Loading orders...",
     "serviceDescription": "Service description",
     "orderLineDescription": "Order {order}",
     "createFailed": "Failed to create invoice. Please try again.",

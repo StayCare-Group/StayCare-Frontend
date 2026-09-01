@@ -103,21 +103,21 @@
               </span>
             </template>
             <template #cell-unitPrice="{ value }">
-              <span class="text-gray-500">&euro;{{ value.toFixed(2) }}</span>
+              <span class="text-gray-500">{{ formatCurrency(value) }}</span>
             </template>
             <template #cell-lineTotal="{ value }">
-              <span class="font-medium text-gray-800">&euro;{{ value.toFixed(2) }}</span>
+              <span class="font-medium text-gray-800">{{ formatCurrency(value) }}</span>
             </template>
           </DataTable>
 
           <div class="bg-gray-50 rounded-lg px-5 py-3 text-sm space-y-1">
             <div class="flex justify-end gap-4">
               <span class="text-gray-600 font-medium">{{ $t('orderDetail.vatAmount') }}</span>
-              <span class="text-gray-800 font-medium">&euro;{{ (order.vatAmount ?? 0).toFixed(2) }}</span>
+              <span class="text-gray-800 font-medium">{{ formatCurrency(order.vatAmount) }}</span>
             </div>
             <div class="flex justify-end gap-4 font-semibold">
               <span class="text-gray-600">{{ $t('orderDetail.orderTotal') }}</span>
-              <span class="text-gray-800">&euro;{{ order.total.toFixed(2) }}</span>
+              <span class="text-gray-800">{{ formatCurrency(order.total) }}</span>
             </div>
           </div>
         </div>
@@ -220,6 +220,7 @@ import { isCancelableStatus } from '../../../utils/orderFlow'
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
 import OrderItemsPicker from '../../forms/OrderItemsPicker.vue'
 import { getTodayDateString, normalizeDateString, isPastDate } from '../../../utils/date'
+import { formatCurrency } from '@/utils/pricing'
 
 const { t } = useI18n()
 const navStore = useNavStore()

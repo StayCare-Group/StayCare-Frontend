@@ -26,24 +26,30 @@
         </div>
 
         <div v-if="form.clientId">
-          <div v-if="clientOrders.length" class="space-y-3">
-            <div class="flex items-center gap-2 bg-brand-150 border border-brand-300 rounded-lg px-3 py-2">
-              <svg class="w-4 h-4 text-brand-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <span class="text-sm text-brand-700 font-medium">{{ $t('createInvoice.uninvoicedFound', { count: clientOrders.length }) }}</span>
-            </div>
-            <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-              <label v-for="o in clientOrders" :key="getOrderId(o)"
-                class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded px-2 py-1.5 transition-colors">
-                <input type="checkbox" :value="getOrderId(o)" v-model="form.orderIds"
-                  class="rounded border-gray-300 text-brand-700 focus:ring-brand-400" />
-                <div class="flex-1 min-w-0">
-                  <span class="text-sm font-medium text-gray-800">{{ o.order_number }}</span>
-                  <span class="text-xs text-gray-400 ml-2">{{ o.status }} &middot; &euro;{{ getOrderTotal(o).toFixed(2) }}</span>
-                </div>
-              </label>
-            </div>
+          <div v-if="loadingOrders" class="flex items-center gap-2 text-sm text-gray-400 py-2">
+            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            {{ $t('createInvoice.loadingOrders') }}
           </div>
-          <p v-else class="text-xs text-gray-400 mt-1">{{ $t('admin.noOrdersForClient') }}</p>
+          <template v-else>
+            <div v-if="clientOrders.length" class="space-y-3">
+              <div class="flex items-center gap-2 bg-brand-150 border border-brand-300 rounded-lg px-3 py-2">
+                <svg class="w-4 h-4 text-brand-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-sm text-brand-700 font-medium">{{ $t('createInvoice.uninvoicedFound', { count: clientOrders.length }) }}</span>
+              </div>
+              <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                <label v-for="o in clientOrders" :key="getOrderId(o)"
+                  class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded px-2 py-1.5 transition-colors">
+                  <input type="checkbox" :value="getOrderId(o)" v-model="form.orderIds"
+                    class="rounded border-gray-300 text-brand-700 focus:ring-brand-400" />
+                  <div class="flex-1 min-w-0">
+                    <span class="text-sm font-medium text-gray-800">{{ o.order_number }}</span>
+                    <span class="text-xs text-gray-400 ml-2">{{ o.status }} &middot; {{ formatCurrency(getOrderTotal(o)) }}</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <p v-else class="text-xs text-gray-400 mt-1">{{ $t('admin.noOrdersForClient') }}</p>
+          </template>
         </div>
 
         <div>
@@ -86,7 +92,7 @@
                     class="w-full border border-gray-200 rounded px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
                 </td>
                 <td class="px-3 py-2 text-right font-medium text-gray-800">
-                  &euro;{{ ((item.quantity || 0) * (item.unit_price || 0)).toFixed(2) }}
+                  {{ formatCurrency((item.quantity || 0) * (item.unit_price || 0)) }}
                 </td>
                 <td class="px-3 py-2 text-center">
                   <button type="button" @click="form.lineItems.splice(idx, 1)"
@@ -101,22 +107,12 @@
       </div>
 
       <!-- Totals -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="space-y-2 text-sm max-w-xs ml-auto">
-          <div class="flex justify-between">
-            <span class="text-gray-500">{{ $t('admin.subtotal') }}</span>
-            <span class="font-medium">&euro;{{ subtotal.toFixed(2) }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-500">{{ $t('admin.vatPercent') }}</span>
-            <span class="font-medium">&euro;{{ vatAmount.toFixed(2) }}</span>
-          </div>
-          <div class="flex justify-between border-t border-gray-200 pt-2 mt-2 text-base">
-            <span class="font-bold text-gray-800">{{ $t('admin.grandTotal') }}</span>
-            <span class="font-bold text-gray-800">&euro;{{ grandTotal.toFixed(2) }}</span>
-          </div>
-        </div>
-      </div>
+      <PricingSummaryCard
+        :subtotal="subtotal"
+        :vatAmount="vatAmount"
+        :total="grandTotal"
+        :alignRight="true"
+      />
 
       <!-- Submit -->
       <div class="flex gap-3">
@@ -138,29 +134,29 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
+import PricingSummaryCard from '../../ui/PricingSummaryCard.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchClients } from '../../../api/clients'
 import { fetchOrders } from '../../../api/orders'
-import { createInvoice, fetchInvoices } from '../../../api/invoices'
-import { getClientDisplayName, getClientId } from '../../../utils/client'
+import { createInvoice } from '../../../api/invoices'
+import { getClientDisplayName } from '../../../utils/client'
+import { getTodayDateString, getFutureDateString } from '../../../utils/date'
+import { DEFAULT_VAT_RATE, DEFAULT_VAT_PERCENTAGE, calculateVatBreakdown, formatCurrency } from '../../../utils/pricing'
 import { formatApiErrorMessage } from '../../../utils/errors'
 
 const { t } = useI18n()
 const navStore = useNavStore()
 
-const VAT_RATE = 0.18
-const _now = new Date()
-const today = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')}`
-const defaultDue = new Date(_now.getTime() + 30 * 86400000)
-const defaultDueStr = `${defaultDue.getFullYear()}-${String(defaultDue.getMonth()+1).padStart(2,'0')}-${String(defaultDue.getDate()).padStart(2,'0')}`
+const today = getTodayDateString()
+const defaultDueStr = getFutureDateString(30)
 
 const clients = ref([])
-const allOrders = ref([])
-const invoicedOrderIds = ref(new Set())
+const clientOrders = ref([])
 const loadingData = ref(true)
+const loadingOrders = ref(false)
 const submitting = ref(false)
 const showSuccess = ref(false)
 const errorMessage = ref('')
@@ -178,18 +174,7 @@ function getOrderId(order) {
 
 function getClientUserId(client) {
   if (!client || typeof client !== 'object') return ''
-  return String(client.user_id ?? client._id ?? client.id ?? getClientId(client) ?? '')
-}
-
-function getOrderClientId(order) {
-  return String(order?.client?._id ?? order?.client?._id ?? order?.client ?? order?.client_id ?? '')
-}
-
-function normalizeStatus(value) {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, '_')
+  return String(client.user_id ?? client.id ?? '')
 }
 
 function getOrderTotal(order) {
@@ -206,60 +191,37 @@ function getOrderSubtotal(order) {
 
 onMounted(async () => {
   try {
-    const [clientsData, ordersData, invoicesData] = await Promise.all([
-      fetchClients().catch(() => []),
-      fetchOrders({ status: 'delivered,collected,ready_to_delivery', is_invoiced: 'false', limit: '200' }).catch(() => []),
-      fetchInvoices().catch(() => []),
-    ])
-    clients.value = clientsData ?? []
-    allOrders.value = ordersData ?? []
-
-    const ids = new Set()
-    for (const inv of (invoicesData ?? [])) {
-      for (const o of (inv.orders ?? [])) {
-        const oid = typeof o === 'string' || typeof o === 'number' ? o : (o?._id ?? o?.id ?? o)
-        ids.add(String(oid))
-      }
-    }
-    invoicedOrderIds.value = ids
-  } catch { /* stays empty */ } finally {
+    clients.value = await fetchClients().catch(() => [])
+  } finally {
     loadingData.value = false
   }
 })
 
-const UNINVOICED_STATUSES = new Set(['delivered', 'ready_to_delivery', 'collected'])
-
-const selectedClientMatchIds = computed(() => {
-  const selectedId = String(form.clientId ?? '')
-  if (!selectedId) return new Set()
-
-  const selected = clients.value.find(c => String(getClientId(c)) === selectedId)
-  const ids = new Set([selectedId])
-
-  if (selected) {
-    ids.add(String(selected._id ?? ''))
-    ids.add(String(selected.id ?? ''))
-    ids.add(String(selected.client_profile_id ?? ''))
-    ids.add(String(selected.user_id ?? ''))
+async function loadOrdersForClient(clientId) {
+  if (!clientId) {
+    clientOrders.value = []
+    return
   }
+  loadingOrders.value = true
+  try {
+    const orders = await fetchOrders({
+      client_id: clientId,
+      status: 'delivered,collected,ready_to_delivery',
+      is_invoiced: 'false',
+    }).catch(() => [])
+    clientOrders.value = orders ?? []
+  } finally {
+    loadingOrders.value = false
+  }
+}
 
-  ids.delete('')
-  return ids
-})
-
-const clientOrders = computed(() => {
-  if (!form.clientId) return []
-  return allOrders.value.filter(o => {
-    const orderClientId = String(getOrderClientId(o))
-    if (!orderClientId || !selectedClientMatchIds.value.has(orderClientId)) return false
-    if (!UNINVOICED_STATUSES.has(normalizeStatus(o.status))) return false
-    if (o.is_invoiced || o.isInvoiced || invoicedOrderIds.value.has(getOrderId(o))) return false
-    return true
-  })
+watch(() => form.clientId, (clientId) => {
+  loadOrdersForClient(clientId)
 })
 
 function onClientChange() {
   form.orderIds = []
+  // La carga de órdenes se dispara via watch sobre form.clientId
 }
 
 function addLineItem() {
@@ -268,7 +230,7 @@ function addLineItem() {
 
 const selectedOrdersSubtotal = computed(() => {
   const selectedIds = new Set((form.orderIds ?? []).map(id => String(id)))
-  const selected = allOrders.value.filter(o => selectedIds.has(getOrderId(o)))
+  const selected = clientOrders.value.filter(o => selectedIds.has(getOrderId(o)))
   return selected.reduce((sum, o) => sum + getOrderSubtotal(o), 0)
 })
 
@@ -280,8 +242,8 @@ const extraItemsSubtotal = computed(() =>
 )
 
 const subtotal = computed(() => selectedOrdersSubtotal.value + extraItemsSubtotal.value)
-const vatAmount = computed(() => subtotal.value * VAT_RATE)
-const grandTotal = computed(() => subtotal.value + vatAmount.value)
+const vatAmount = computed(() => calculateVatBreakdown(subtotal.value).vatAmount)
+const grandTotal = computed(() => calculateVatBreakdown(subtotal.value).total)
 
 async function submitInvoice() {
   if (submitting.value) return
@@ -317,7 +279,7 @@ async function submitInvoice() {
       due_date: new Date(form.dueDate).toISOString(),
       line_items: validLineItems,
       subtotal: subtotal.value,
-      vat_percentage: 18,
+      vat_percentage: DEFAULT_VAT_PERCENTAGE,
       vat_amount: vatAmount.value,
       total: grandTotal.value,
     }

@@ -44,9 +44,11 @@ import AppButton from '../ui/AppButton.vue'
 import LoadingPanel from '../ui/LoadingPanel.vue'
 import { fetchOrders, fetchAllOrders } from '../../api/orders'
 import { mapOrderForList } from '@/utils/orderMappers'
-import { fetchInvoices, mapInvoiceForList } from '../../api/invoices'
+import { fetchInvoices } from '../../api/invoices'
+import { mapInvoiceForList } from '@/utils/invoiceMappers'
 import { useAuthStore } from '../../stores/auth.js'
 import { isClientProfileCompleteForOrder } from '../../utils/orderEligibility'
+import { formatCurrency } from '@/utils/pricing'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -108,14 +110,14 @@ const recentOrders = computed(() =>
     date: o.pickupDate,
     items: o.estimatedBags,
     status: o.status,
-    total: `€${(o.total ?? 0).toFixed(2)}`,
+    total: formatCurrency(o.total),
   }))
 )
 
 const openInvoices = computed(() =>
   recentInvoicesList.value.map(i => ({
     id: i.id,
-    amount: `€${(i.grandTotal ?? 0).toFixed(2)}`,
+    amount: formatCurrency(i.grandTotal),
     due: i.dueDate,
     status: i.status,
   }))

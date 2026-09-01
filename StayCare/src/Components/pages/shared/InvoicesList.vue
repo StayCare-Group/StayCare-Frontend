@@ -17,8 +17,8 @@
       </div>
     </div>
 
-    <!-- Status & Client filters -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <!-- Status filters -->
+    <div class="flex flex-col gap-3">
       <div class="flex flex-wrap gap-2">
         <button
           v-for="f in filters" :key="f.key"
@@ -28,12 +28,23 @@
         >{{ f.label }}</button>
       </div>
 
-      <!-- Client filter dropdown for admin -->
-      <ClientFilterSelect
-        v-if="isAdmin"
-        v-model="selectedClientId"
-        @change="onClientFilterChange"
-      />
+      <!-- Date range + Client filters -->
+      <div class="flex flex-wrap items-center gap-3">
+        <DateRangeFilter
+          id-prefix="invoices"
+          :from="dateFrom"
+          :to="dateTo"
+          @update:from="onDateFromChange"
+          @update:to="onDateToChange"
+          @clear="clearDateFilter"
+        />
+
+        <ClientFilterSelect
+          v-if="isAdmin"
+          v-model="selectedClientId"
+          @change="onClientFilterChange"
+        />
+      </div>
     </div>
 
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
@@ -77,7 +88,7 @@
         <StatusBadge :status="value" type="invoice" />
       </template>
       <template #cell-grandTotal="{ value }">
-        <span class="font-semibold text-gray-800">&euro;{{ value.toFixed(2) }}</span>
+        <span class="font-semibold text-gray-800">{{ formatCurrency(value) }}</span>
       </template>
       <template #cell-actions="{ item }">
         <button
@@ -86,16 +97,6 @@
         >{{ $t('common.viewDetails') }}</button>
       </template>
     </DataTable>
-
-    <!-- Pagination -->
-    <AppPagination
-      v-if="!loading"
-      :current-page="currentPage"
-      :total-pages="totalPages"
-      :total-items="totalItems"
-      :disabled="filterLoading"
-      @page-change="onPageChange"
-    />
   </div>
 </template>
 
@@ -106,30 +107,36 @@ import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
-import AppPagination from '../../ui/AppPagination.vue'
 import ClientFilterSelect from '../../ui/ClientFilterSelect.vue'
+import DateRangeFilter from '../../ui/DateRangeFilter.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
-import { fetchInvoices, mapInvoiceForList } from '../../../api/invoices'
+import { useUiStore } from '../../../stores/ui.js'
+import { fetchInvoices } from '../../../api/invoices'
+import { mapInvoiceForList } from '@/utils/invoiceMappers'
+import { formatCurrency } from '@/utils/pricing'
 import { useExcelExporter } from '../../../composables/useExcelExporter.js'
+import { getDefaultDateRange } from '@/utils/date'
 
 const { t } = useI18n()
 const navStore = useNavStore()
 const authStore = useAuthStore()
+const uiStore = useUiStore()
 const { exportInvoicesDetailed } = useExcelExporter()
 
 const isAdmin = computed(() => authStore.isAdmin)
 
-const PAGE_SIZE = 10
+const LOAD_LIMIT = '200'
+
+const defaultRange = getDefaultDateRange()
+const dateFrom = ref(defaultRange.from)
+const dateTo = ref(defaultRange.to)
 
 const invoices = ref([])
 const selectedClientId = ref('')
 const selectedInvoiceIds = ref([])
 const loading = ref(true)
-const filterLoading = ref(false)
-const currentPage = ref(1)
-const totalPages = ref(1)
-const totalItems = ref(0)
+const activeFilter = ref('all')
 
 const isAllSelected = computed(() => {
   if (!invoices.value.length) return false
@@ -148,22 +155,17 @@ function toggleSelectAll(e) {
 }
 
 async function exportSelectedToExcel() {
+  if (!selectedInvoiceIds.value.length) {
+    uiStore.showError(t('invoices.exportSelectRequired'))
+    return
+  }
+
   const selectedSet = new Set(selectedInvoiceIds.value)
-  const itemsToExport = selectedSet.size
-    ? invoices.value.filter(inv => selectedSet.has(inv._id))
-    : invoices.value
+  const itemsToExport = invoices.value.filter(inv => selectedSet.has(inv._id))
 
   if (!itemsToExport.length) return
   await exportInvoicesDetailed(itemsToExport)
 }
-
-function getClientUserId(client) {
-  if (!client || typeof client !== 'object') return ''
-  return String(client.user_id ?? client._id ?? client.id ?? getClientId(client) ?? '')
-}
-
-// Filter keys match backend status values (lowercase)
-const activeFilter = ref('all')
 
 const filters = computed(() => [
   { key: 'all',     label: t('invoices.filterAll') },
@@ -172,56 +174,67 @@ const filters = computed(() => [
   { key: 'paid',    label: t('invoices.filterPaid') },
 ])
 
-async function loadInvoices(status, page) {
-  filterLoading.value = true
+async function loadInvoices() {
+  loading.value = true
   try {
-    const params = { page: String(page), limit: String(PAGE_SIZE) }
-    if (status && status !== 'all') {
-      params.status = status
+    const params = { limit: LOAD_LIMIT }
+    if (activeFilter.value && activeFilter.value !== 'all') {
+      params.status = activeFilter.value
     }
     if (selectedClientId.value) {
       params.client_id = selectedClientId.value
     }
+    if (dateFrom.value) {
+      params.from = dateFrom.value
+    }
+    if (dateTo.value) {
+      params.to = dateTo.value
+    }
 
     const data = await fetchInvoices(params)
     const rawItems = Array.isArray(data) ? data : []
-    const pagination = data?._pagination ?? {}
-
     invoices.value = rawItems.map(mapInvoiceForList)
-    totalItems.value = pagination.total ?? rawItems.length
-    totalPages.value = pagination.pages ?? Math.max(1, Math.ceil(totalItems.value / PAGE_SIZE))
   } catch {
     invoices.value = []
-    totalItems.value = 0
-    totalPages.value = 1
   } finally {
-    filterLoading.value = false
+    loading.value = false
   }
 }
 
 function onFilterChange(filterKey) {
   if (activeFilter.value === filterKey) return
   activeFilter.value = filterKey
-  currentPage.value = 1
-  loadInvoices(filterKey, 1)
+  selectedInvoiceIds.value = []
+  loadInvoices()
 }
 
 function onClientFilterChange() {
-  currentPage.value = 1
-  loadInvoices(activeFilter.value, 1)
+  selectedInvoiceIds.value = []
+  loadInvoices()
 }
 
-function onPageChange(newPage) {
-  currentPage.value = newPage
-  loadInvoices(activeFilter.value, newPage)
+function onDateFromChange(val) {
+  dateFrom.value = val
+  selectedInvoiceIds.value = []
+  loadInvoices()
 }
 
-onMounted(async () => {
-  try {
-    await loadInvoices('all', 1)
-  } finally {
-    loading.value = false
-  }
+function onDateToChange(val) {
+  dateTo.value = val
+  selectedInvoiceIds.value = []
+  loadInvoices()
+}
+
+function clearDateFilter() {
+  const range = getDefaultDateRange()
+  dateFrom.value = range.from
+  dateTo.value = range.to
+  selectedInvoiceIds.value = []
+  loadInvoices()
+}
+
+onMounted(() => {
+  loadInvoices()
 })
 
 const invoiceHeaders = computed(() => [

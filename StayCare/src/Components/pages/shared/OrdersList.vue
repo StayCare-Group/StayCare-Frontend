@@ -68,8 +68,8 @@
           id-prefix="orders"
           :from="dateFrom"
           :to="dateTo"
-          @update:from="dateFrom = $event; onDateFilterChange()"
-          @update:to="dateTo = $event; onDateFilterChange()"
+          @update:from="onDateFromChange"
+          @update:to="onDateToChange"
           @clear="clearDateFilter"
         />
 
@@ -167,30 +167,13 @@ import { mapOrderForList } from '@/utils/orderMappers'
 import { isClientProfileCompleteForOrder } from '../../../utils/orderEligibility'
 import { isCancelableStatus } from '../../../utils/orderFlow'
 import { useExcelExporter } from '../../../composables/useExcelExporter.js'
+import { getDefaultDateRange } from '@/utils/date'
 
 const { t } = useI18n()
 const navStore = useNavStore()
 const auth = useAuthStore()
 const uiStore = useUiStore()
 const { exportOrdersDetailed, exportOrdersFlat } = useExcelExporter()
-
-function getDefaultDateRange() {
-  const now = new Date()
-  const past = new Date()
-  past.setDate(now.getDate() - 30)
-
-  const toStr = (d) => {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  }
-
-  return {
-    from: toStr(past),
-    to: toStr(now),
-  }
-}
 
 const defaultDateRange = getDefaultDateRange()
 const dateFrom = ref(defaultDateRange.from)
@@ -260,7 +243,15 @@ function onClientFilterChange() {
   loadOrders()
 }
 
-function onDateFilterChange() {
+function onDateFromChange(val) {
+  dateFrom.value = val
+  selectedOrderIds.value = []
+  loadOrders()
+}
+
+function onDateToChange(val) {
+  dateTo.value = val
+  selectedOrderIds.value = []
   loadOrders()
 }
 
@@ -268,6 +259,7 @@ function clearDateFilter() {
   const defaultRange = getDefaultDateRange()
   dateFrom.value = defaultRange.from
   dateTo.value = defaultRange.to
+  selectedOrderIds.value = []
   loadOrders()
 }
 
