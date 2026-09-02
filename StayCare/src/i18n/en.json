@@ -374,6 +374,9 @@
     "timestampArrived": "Received at Facility Date",
     "timestampIroning": "Ironing Date",
     "timestampDelivered": "Delivery Date",
+    "machineWash": "Washing Machine",
+    "machineDry": "Drying Machine",
+    "machineIroning": "Ironing Machine / Station",
     "exportFormatDetailed": "Detailed (one sheet per order)",
     "exportFormatFlat": "Summary (one row per order + items)",
     "exportGenerating": "Generating Excel file...",
@@ -472,6 +475,14 @@
     "qualityCheckNoteLabel": "Internal note (optional)",
     "qualityCheckNotePlaceholder": "e.g. 2 items successfully de-stained",
     "qualityCheckContinue": "Confirm & Release"
+  },
+  "machineSelectModal": {
+    "title": "Assign Machine",
+    "description": "Select the machine to use for the {stage} stage. You can skip and assign it later from the board.",
+    "noMachines": "No machines available for this stage. You can still advance the order and assign one later.",
+    "skipHint": "Skipping assignment is allowed — the order will appear on the board without a machine.",
+    "skipAssign": "Skip & Advance",
+    "confirm": "Assign & Advance"
   },
   "orderDetail": {
     "orderInformation": "Order Information",

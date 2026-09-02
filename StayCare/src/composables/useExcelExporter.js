@@ -12,6 +12,18 @@ function sanitizeSheetName(name) {
     .slice(0, 31)
 }
 
+function findHistory(statusHistory, statusName) {
+  if (!Array.isArray(statusHistory)) return null
+  return statusHistory.find((h) => h.status === statusName) ?? null
+}
+
+function findMachine(statusHistory, statusName) {
+  if (!Array.isArray(statusHistory)) return '—'
+  const entry = statusHistory.find((h) => h.status === statusName && h.note)
+  if (!entry?.note) return '—'
+  return String(entry.note).replace(/^Machine:\s*/i, '').trim() || '—'
+}
+
 export function useExcelExporter() {
   const { t } = useI18n()
 
@@ -186,6 +198,7 @@ export function useExcelExporter() {
 
       const orderData = fullData?.order ?? fullData ?? {}
       const items = fullData?.items ?? orderData.items ?? []
+      const history = fullData?.status_history ?? orderData.status_history ?? []
 
       const sheetData = [
         [t('excel.orderDetailTitle')],
@@ -195,6 +208,9 @@ export function useExcelExporter() {
         [`${kPickupDate}:`, listOrder.pickupDate || orderData.pickup_date || '—'],
         [`${kServiceType}:`, listOrder.serviceType || orderData.service_type || '—'],
         [`${kStatus}:`, listOrder.status || orderData.status || '—'],
+        [`${t('excel.machineWash')}:`, findMachine(history, 'washing')],
+        [`${t('excel.machineDry')}:`, findMachine(history, 'drying')],
+        [`${t('excel.machineIroning')}:`, findMachine(history, 'ironing')],
         [`${t('excel.specialNotes')}:`, orderData.special_notes || listOrder.specialNotes || '—'],
         [],
         [t('excel.itemsTitle')],
@@ -290,32 +306,29 @@ export function useExcelExporter() {
     }
     const itemNames = Array.from(itemNamesSet).sort()
 
-    // --- Helper: find status history entry by status name ---
-    function findHistory(statusHistory, statusName) {
-      if (!Array.isArray(statusHistory)) return null
-      return statusHistory.find((h) => h.status === statusName) ?? null
-    }
-
     function formatTs(entry) {
       if (!entry?.changed_at) return ''
       return new Date(entry.changed_at).toLocaleString()
     }
 
     // --- Build rows ---
-    const kOrderId    = t('excel.orderId')
-    const kClient     = t('excel.client')
-    const kProperty   = t('excel.property')
-    const kCreated    = t('excel.createdDate')
-    const kPickup     = t('excel.pickupDate')
-    const kService    = t('excel.serviceType')
-    const kStatus     = t('excel.status')
-    const kBags       = t('excel.bags')
-    const kNotes      = t('excel.specialNotes')
-    const kTotal      = t('excel.total')
-    const kQcUser     = t('excel.qualityCheckBy')
-    const kArrived    = t('excel.timestampArrived')
-    const kIroning    = t('excel.timestampIroning')
-    const kDelivered  = t('excel.timestampDelivered')
+    const kOrderId        = t('excel.orderId')
+    const kClient         = t('excel.client')
+    const kProperty       = t('excel.property')
+    const kCreated        = t('excel.createdDate')
+    const kPickup         = t('excel.pickupDate')
+    const kService        = t('excel.serviceType')
+    const kStatus         = t('excel.status')
+    const kBags           = t('excel.bags')
+    const kNotes          = t('excel.specialNotes')
+    const kTotal          = t('excel.total')
+    const kMachineWash    = t('excel.machineWash')
+    const kMachineDry     = t('excel.machineDry')
+    const kMachineIroning = t('excel.machineIroning')
+    const kQcUser         = t('excel.qualityCheckBy')
+    const kArrived        = t('excel.timestampArrived')
+    const kIroning        = t('excel.timestampIroning')
+    const kDelivered      = t('excel.timestampDelivered')
 
     const flatHeaders = [
       kOrderId,
@@ -328,6 +341,9 @@ export function useExcelExporter() {
       kBags,
       kNotes,
       kTotal,
+      kMachineWash,
+      kMachineDry,
+      kMachineIroning,
       kQcUser,
       kArrived,
       kIroning,
@@ -358,20 +374,23 @@ export function useExcelExporter() {
       const deliveredEntry = findHistory(history, 'delivered')
 
       const row = {
-        [kOrderId]:    listOrder.id,
-        [kClient]:     listOrder.client  || '—',
-        [kProperty]:   listOrder.propertyName || '—',
-        [kCreated]:    listOrder.createdAt   || orderData.created_at || '—',
-        [kPickup]:     listOrder.pickupDate  || orderData.pickup_date || '—',
-        [kService]:    listOrder.serviceType || '—',
-        [kStatus]:     listOrder.status      || '—',
-        [kBags]:       listOrder.actualBags ?? listOrder.estimatedBags ?? 0,
-        [kNotes]:      orderData.special_notes || listOrder.specialNotes || '—',
-        [kTotal]:      listOrder.total ?? 0,
-        [kQcUser]:     qcEntry?.changed_by_user_name ?? '',
-        [kArrived]:    formatTs(arrivedEntry),
-        [kIroning]:    formatTs(ironingEntry),
-        [kDelivered]:  formatTs(deliveredEntry),
+        [kOrderId]:        listOrder.id,
+        [kClient]:         listOrder.client  || '—',
+        [kProperty]:       listOrder.propertyName || '—',
+        [kCreated]:        listOrder.createdAt   || orderData.created_at || '—',
+        [kPickup]:         listOrder.pickupDate  || orderData.pickup_date || '—',
+        [kService]:        listOrder.serviceType || '—',
+        [kStatus]:         listOrder.status      || '—',
+        [kBags]:           listOrder.actualBags ?? listOrder.estimatedBags ?? 0,
+        [kNotes]:          orderData.special_notes || listOrder.specialNotes || '—',
+        [kTotal]:          listOrder.total ?? 0,
+        [kMachineWash]:    findMachine(history, 'washing'),
+        [kMachineDry]:     findMachine(history, 'drying'),
+        [kMachineIroning]: findMachine(history, 'ironing'),
+        [kQcUser]:         qcEntry?.changed_by_user_name ?? '',
+        [kArrived]:        formatTs(arrivedEntry),
+        [kIroning]:        formatTs(ironingEntry),
+        [kDelivered]:      formatTs(deliveredEntry),
       }
 
       // Item pivot columns at the end

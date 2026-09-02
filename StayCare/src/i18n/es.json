@@ -374,6 +374,9 @@
     "timestampArrived": "Fecha y Hora de Recepción",
     "timestampIroning": "Fecha y Hora de Plancha",
     "timestampDelivered": "Fecha y Hora de Entrega",
+    "machineWash": "Máquina de Lavado",
+    "machineDry": "Máquina de Secado",
+    "machineIroning": "Máquina / Estación de Plancha",
     "exportFormatDetailed": "Detallado (una hoja por orden)",
     "exportFormatFlat": "Resumen (una fila por orden + prendas)",
     "exportGenerating": "Generando archivo Excel...",
@@ -472,6 +475,14 @@
     "qualityCheckNoteLabel": "Nota interna (opcional)",
     "qualityCheckNotePlaceholder": "ej: 2 prendas desmanchadas exitosamente",
     "qualityCheckContinue": "Confirmar y Liberar"
+  },
+  "machineSelectModal": {
+    "title": "Asignar Máquina",
+    "description": "Selecciona la máquina para la etapa de {stage}. Puedes omitirlo y asignarla más tarde desde el tablero.",
+    "noMachines": "No hay máquinas disponibles para esta etapa. Puedes avanzar la orden y asignarla después.",
+    "skipHint": "Omitir la asignación está permitido — la orden aparecerá en el tablero sin máquina.",
+    "skipAssign": "Omitir y Avanzar",
+    "confirm": "Asignar y Avanzar"
   },
   "orderDetail": {
     "orderInformation": "Información del Pedido",

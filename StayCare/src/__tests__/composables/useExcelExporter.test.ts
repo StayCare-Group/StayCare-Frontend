@@ -61,6 +61,9 @@ vi.mock('vue-i18n', () => ({
         'excel.timestampArrived': 'Fecha y Hora de Recepción',
         'excel.timestampIroning': 'Fecha y Hora de Plancha',
         'excel.timestampDelivered': 'Fecha y Hora de Entrega',
+        'excel.machineWash': 'Máquina de Lavado',
+        'excel.machineDry': 'Máquina de Secado',
+        'excel.machineIroning': 'Máquina / Estación de Plancha',
       }
       return dict[key] ?? key
     },
@@ -73,7 +76,7 @@ describe('useExcelExporter', () => {
   })
 
   describe('exportOrdersDetailed', () => {
-    it('incluye las notas especiales tanto en la hoja resumen como en la hoja de detalle individual', async () => {
+    it('incluye las notas especiales y las máquinas en la hoja de detalle individual', async () => {
       const mockOrderList = [
         {
           _id: 'ord-123',
@@ -112,6 +115,16 @@ describe('useExcelExporter', () => {
             subtotal: 150,
           },
         ],
+        status_history: [
+          {
+            status: 'washing',
+            note: 'Machine: Washer #1',
+          },
+          {
+            status: 'drying',
+            note: 'Machine: Dryer #2',
+          },
+        ],
       })
 
       const { exportOrdersDetailed } = useExcelExporter()
@@ -130,10 +143,13 @@ describe('useExcelExporter', () => {
         })
       )
 
-      // 2. Verificar llamada aoa_to_sheet para el detalle
+      // 2. Verificar llamada aoa_to_sheet para el detalle con notas y máquinas
       expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith(
         expect.arrayContaining([
           ['Notas Especiales:', 'Fragile fabrics only, handle with care'],
+          ['Máquina de Lavado:', 'Washer #1'],
+          ['Máquina de Secado:', 'Dryer #2'],
+          ['Máquina / Estación de Plancha:', '—'],
         ])
       )
 
@@ -142,7 +158,7 @@ describe('useExcelExporter', () => {
   })
 
   describe('exportOrdersFlat', () => {
-    it('incluye las notas especiales en la fila plana de cada orden', async () => {
+    it('incluye las notas especiales y las máquinas en la fila plana de cada orden', async () => {
       const mockOrderList = [
         {
           _id: 'ord-456',
@@ -177,6 +193,14 @@ describe('useExcelExporter', () => {
             status: 'received',
             changed_at: '2026-09-01T10:00:00.000Z',
           },
+          {
+            status: 'washing',
+            note: 'Machine: Lavadora Industrial 01',
+          },
+          {
+            status: 'ironing',
+            note: 'Machine: Plancha Estación 3',
+          },
         ],
       })
 
@@ -189,6 +213,9 @@ describe('useExcelExporter', () => {
           expect.objectContaining({
             'ID Orden': 'ORD-002',
             'Notas Especiales': 'Do not use bleach - extra delicate',
+            'Máquina de Lavado': 'Lavadora Industrial 01',
+            'Máquina de Secado': '—',
+            'Máquina / Estación de Plancha': 'Plancha Estación 3',
             'Bed Sheet': 4,
             'Bath Towel': 0,
             'Pillow Case': 0,
@@ -198,6 +225,9 @@ describe('useExcelExporter', () => {
           header: expect.arrayContaining([
             'ID Orden',
             'Notas Especiales',
+            'Máquina de Lavado',
+            'Máquina de Secado',
+            'Máquina / Estación de Plancha',
             'Bath Towel',
             'Bed Sheet',
             'Pillow Case',
