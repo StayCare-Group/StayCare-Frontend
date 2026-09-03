@@ -570,7 +570,11 @@
     "errorLoadDelivery": "No se pudo cargar la información de entrega.",
     "errorInvalidPackages": "Ingresa un número válido de paquetes entregados.",
     "errorRecipientRequired": "Ingresa el nombre de la persona que recibió la entrega.",
-    "errorConfirmDelivery": "No se pudo confirmar la entrega."
+    "errorConfirmDelivery": "No se pudo confirmar la entrega.",
+    "noActiveRoutes": "No hay rutas activas asignadas.",
+    "hideMap": "Ocultar mapa",
+    "showMap": "Ver ruta en el mapa",
+    "stopsCompleted": "{completed}/{total} paradas completadas"
   },
   "facility": {
     "processingBoard": "Tablero de procesamiento",

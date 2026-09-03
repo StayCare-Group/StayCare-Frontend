@@ -61,8 +61,8 @@ export async function fetchAllRoutes(params?: Record<string, string>) {
   return allRoutes
 }
 
-export async function fetchRoutesByDriver(driverId: string | number) {
-  return fetchAllRoutes({ driver: String(driverId) })
+export async function fetchRoutesByDriver(driverId: string | number, params?: Record<string, string>) {
+  return fetchAllRoutes({ driver: String(driverId), ...(params || {}) })
 }
 
 export async function fetchRouteById(id: string) {
@@ -146,6 +146,11 @@ export function mapRouteForDriver(route: any) {
       const area = property?.area ?? o.property_area ?? o.area ?? ''
       const startWindow = o.pickup_window?.start_time ?? o.pickup_window_start
       const endWindow = o.pickup_window?.end_time ?? o.pickup_window_end
+      const rawLat = property?.lat ?? o.property_lat ?? o.lat ?? null
+      const rawLng = property?.lng ?? o.property_lng ?? o.lng ?? null
+      const lat = rawLat !== null && rawLat !== undefined && rawLat !== '' && !isNaN(Number(rawLat)) ? Number(rawLat) : null
+      const lng = rawLng !== null && rawLng !== undefined && rawLng !== '' && !isNaN(Number(rawLng)) ? Number(rawLng) : null
+
       return {
         id: idx + 1,
         orderId: o.order_number ?? o.order_id ?? o._id ?? o.id,
@@ -157,6 +162,8 @@ export function mapRouteForDriver(route: any) {
         clientPhone,
         area,
         address: addr,
+        lat,
+        lng,
         type: getRouteTypeFromOrderStatus(o.status),
         timeWindow: startWindow && endWindow
           ? `${formatTime(startWindow)} - ${formatTime(endWindow)}`

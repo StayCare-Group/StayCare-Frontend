@@ -570,7 +570,11 @@
     "errorLoadDelivery": "The delivery information could not be loaded.",
     "errorInvalidPackages": "Enter a valid number of packages delivered.",
     "errorRecipientRequired": "Enter the name of the person who received the delivery.",
-    "errorConfirmDelivery": "The delivery could not be confirmed."
+    "errorConfirmDelivery": "The delivery could not be confirmed.",
+    "noActiveRoutes": "No active routes assigned.",
+    "hideMap": "Hide Map",
+    "showMap": "Show Route on Map",
+    "stopsCompleted": "{completed}/{total} stops completed"
   },
   "facility": {
     "processingBoard": "Processing Board",
