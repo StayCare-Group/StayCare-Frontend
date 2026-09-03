@@ -56,7 +56,11 @@
     "categoryAsc": "Category (A-Z)",
     "categoryDesc": "Category (Z-A)",
     "nameAsc": "Name (A-Z)",
-    "nameDesc": "Name (Z-A)"
+    "nameDesc": "Name (Z-A)",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "filterClient": "Client",
+    "filterAllClients": "All clients"
   },
   "auth": {
     "loginHeading": "Login for {brand} laundry management",
@@ -325,12 +329,9 @@
     "filterPending": "Pending",
     "filterOverdue": "Overdue",
     "filterPaid": "Paid",
-    "filterAllClients": "All Clients",
-    "filterClient": "Client",
     "exportExcel": "Download Excel ({count})",
     "exportExcelAll": "Download Excel",
-    "exportSelectRequired": "Select at least one order to download.",
-    "selectAll": "Select all"
+    "exportSelectRequired": "Select at least one order to download."
   },
   "excel": {
     "invoicesSheet": "Invoices",

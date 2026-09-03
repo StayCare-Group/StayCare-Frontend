@@ -11,15 +11,7 @@
 
     <div v-if="invoice" class="space-y-6">
       <!-- Invoice Meta -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div><span class="text-gray-400">{{ $t('common.client') }}</span><p class="font-medium text-gray-800">{{ invoice.client }}</p></div>
-          <div><span class="text-gray-400">{{ $t('common.order') }}</span><p class="font-medium text-gray-800">{{ invoice.orderId }}</p></div>
-          <div><span class="text-gray-400">{{ $t('client.issueDate') }}</span><p class="font-medium text-gray-800">{{ invoice.issueDate }}</p></div>
-          <div><span class="text-gray-400">{{ $t('client.dueDate') }}</span><p class="font-medium text-gray-800">{{ invoice.dueDate }}</p></div>
-          <div v-if="invoice.paymentMethod"><span class="text-gray-400">{{ $t('invoiceDetail.paymentMethod') }}</span><p class="font-medium text-gray-800">{{ invoice.paymentMethod }}</p></div>
-        </div>
-      </div>
+      <InfoGridCard :items="invoiceMetaItems" />
 
       <!-- Line Items -->
       <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -77,20 +69,38 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import AppButton from '../../ui/AppButton.vue'
 import PricingSummaryCard from '../../ui/PricingSummaryCard.vue'
+import InfoGridCard from '../../ui/InfoGridCard.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchInvoiceById, recordPayment } from '../../../api/invoices'
 import { mapInvoiceForDetail } from '@/utils/invoiceMappers'
 import { formatCurrency } from '@/utils/pricing'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 const showSuccess = ref(false)
 
 const invoice = ref(null)
 const loading = ref(true)
+
+const invoiceMetaItems = computed(() => {
+  if (!invoice.value) return []
+  return [
+    { label: t('common.client'), value: invoice.value.client },
+    { label: t('common.order'), value: invoice.value.orderId },
+    { label: t('client.issueDate'), value: invoice.value.issueDate },
+    { label: t('client.dueDate'), value: invoice.value.dueDate },
+    {
+      label: t('invoiceDetail.paymentMethod'),
+      value: invoice.value.paymentMethod,
+      show: Boolean(invoice.value.paymentMethod),
+    },
+  ]
+})
 
 async function loadInvoice() {
   const id = navStore.selectedId

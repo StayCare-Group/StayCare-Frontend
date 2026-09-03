@@ -57,23 +57,15 @@
       <!-- Left column: details + items -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Order Info -->
-        <div class="bg-white rounded-xl shadow-sm p-5 space-y-3">
-          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('orderDetail.orderInformation') }}</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div><span class="text-gray-400">{{ $t('common.client') }}</span><p class="font-medium text-gray-800">{{ order.client }}</p></div>
-            <div><span class="text-gray-400">{{ $t('orderDetail.serviceType') }}</span><p class="font-medium text-gray-800">{{ order.serviceType }}</p></div>
-            <div><span class="text-gray-400">{{ $t('orderDetail.pickupAddress') }}</span><p class="font-medium text-gray-800">{{ order.pickupAddress }}</p></div>
-            <div><span class="text-gray-400">{{ $t('orderDetail.pickupDate') }}</span><p class="font-medium text-gray-800">{{ order.pickupDate }} &middot; {{ order.pickupTimeWindow }}</p></div>
-            <div><span class="text-gray-400">{{ $t('orderDetail.estimatedBags') }}</span><p class="font-medium text-gray-800">{{ order.estimatedBags }}</p></div>
-            <div><span class="text-gray-400">{{ $t('orderDetail.actualBags') }}</span><p class="font-medium text-gray-800">{{ order.actualBags ?? '—' }}</p></div>
-            <div v-if="order.driverPickup"><span class="text-gray-400">{{ $t('orderDetail.pickupDriver') }}</span><p class="font-medium text-gray-800">{{ order.driverPickup }}</p></div>
-            <div v-if="order.driverDelivery"><span class="text-gray-400">{{ $t('orderDetail.deliveryDriver') }}</span><p class="font-medium text-gray-800">{{ order.driverDelivery }}</p></div>
-          </div>
-          <div v-if="order.specialNotes" class="pt-2 border-t border-gray-100">
-            <span class="text-xs text-gray-400">{{ $t('common.specialNotes') }}</span>
+        <InfoGridCard
+          :title="$t('orderDetail.orderInformation')"
+          :items="orderInfoItems"
+        >
+          <template v-if="order.specialNotes" #footer>
+            <span class="text-xs text-gray-400 block">{{ $t('common.specialNotes') }}</span>
             <p class="text-sm text-gray-700 mt-0.5">{{ order.specialNotes }}</p>
-          </div>
-        </div>
+          </template>
+        </InfoGridCard>
 
         <!-- Items -->
         <div class="space-y-2">
@@ -209,6 +201,7 @@ import OrderTimeline from '../../ui/OrderTimeline.vue'
 import AppButton from '../../ui/AppButton.vue'
 import DataTable from '../../ui/DataTable.vue'
 import CancelOrderModal from '../../ui/CancelOrderModal.vue'
+import InfoGridCard from '../../ui/InfoGridCard.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
@@ -235,6 +228,31 @@ const showCancelModal = ref(false)
 
 const isAdmin = computed(() => authStore.isAdmin)
 const isAdminOrStaff = computed(() => authStore.isInternal)
+
+const orderInfoItems = computed(() => {
+  if (!order.value) return []
+  return [
+    { label: t('common.client'), value: order.value.client },
+    { label: t('orderDetail.serviceType'), value: order.value.serviceType },
+    { label: t('orderDetail.pickupAddress'), value: order.value.pickupAddress },
+    {
+      label: t('orderDetail.pickupDate'),
+      value: `${order.value.pickupDate} · ${order.value.pickupTimeWindow}`,
+    },
+    { label: t('orderDetail.estimatedBags'), value: order.value.estimatedBags },
+    { label: t('orderDetail.actualBags'), value: order.value.actualBags ?? '—' },
+    {
+      label: t('orderDetail.pickupDriver'),
+      value: order.value.driverPickup,
+      show: Boolean(order.value.driverPickup),
+    },
+    {
+      label: t('orderDetail.deliveryDriver'),
+      value: order.value.driverDelivery,
+      show: Boolean(order.value.driverDelivery),
+    },
+  ]
+})
 
 async function downloadPdf() {
   if (!order.value || generatingPdf.value) return

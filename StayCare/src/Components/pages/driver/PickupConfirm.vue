@@ -42,89 +42,7 @@
 
       <div v-if="stop" class="space-y-6">
         <!-- Stop / Order information -->
-        <div class="bg-white rounded-xl shadow-sm p-5">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div>
-              <span class="text-gray-400">
-                {{ $t('common.client') }}
-              </span>
-
-              <p class="font-medium text-gray-800">
-                {{ stop.company || stop.client || '-' }}
-              </p>
-            </div>
-
-            <div>
-              <span class="text-gray-400">
-                {{ $t('common.order') }}
-              </span>
-
-              <p class="font-medium text-gray-800">
-                {{ stop.orderId || '-' }}
-              </p>
-            </div>
-
-            <div>
-              <span class="text-gray-400">
-                {{ $t('common.contactPerson') }}
-              </span>
-
-              <p class="font-medium text-gray-800">
-                {{ stop.contactPerson || '-' }}
-              </p>
-            </div>
-
-            <div>
-              <span class="text-gray-400">
-                {{ $t('common.phone') }}
-              </span>
-
-              <p class="font-medium text-gray-800">
-                {{ stop.clientPhone || '-' }}
-              </p>
-            </div>
-
-            <div>
-              <span class="text-gray-400">
-                {{ $t('common.area') }}
-              </span>
-
-              <p class="font-medium text-gray-800">
-                {{ stop.area || '-' }}
-              </p>
-            </div>
-
-            <div>
-              <span class="text-gray-400">
-                {{ $t('common.address') }}
-              </span>
-
-              <p class="font-medium text-gray-800">
-                {{ stop.address || '-' }}
-              </p>
-            </div>
-
-            <div>
-              <span class="text-gray-400">
-                {{ $t('driver.timeWindow') }}
-              </span>
-
-              <p class="font-medium text-gray-800">
-                {{ stop.timeWindow || '-' }}
-              </p>
-            </div>
-
-            <div>
-              <span class="text-gray-400">
-                {{ $t('driver.expectedBags') }}
-              </span>
-
-              <p class="font-medium text-gray-800">
-                {{ stop.estimatedBags ?? '-' }}
-              </p>
-            </div>
-          </div>
-        </div>
+        <InfoGridCard :items="stopInfoItems" />
 
         <!-- Pickup form -->
         <form class="space-y-5" @submit.prevent="confirmPickup">
@@ -244,7 +162,7 @@
         class="bg-white rounded-xl shadow-sm p-10 text-center"
       >
         <p class="text-gray-400">
-          {{ errorMsg || $t('driver.stopNotFound') }}
+          {{ loadError || $t('driver.stopNotFound') }}
         </p>
 
         <button
@@ -253,44 +171,6 @@
           @click="goBack"
         >
           {{ $t('common.cancel') }}
-        </button>
-      </div>
-
-      <!-- Error toast -->
-      <div
-        v-if="errorMsg && stop"
-        class="fixed bottom-6 right-6 bg-red-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50 max-w-sm flex items-start gap-2"
-      >
-        <div>
-          <p class="font-bold">
-            {{ $t('common.error') }}:
-          </p>
-
-          <p>{{ errorMsg }}</p>
-        </div>
-
-        <button
-          type="button"
-          class="text-white/70 hover:text-white ml-2 shrink-0"
-          @click="errorMsg = ''"
-        >
-          &times;
-        </button>
-      </div>
-
-      <!-- Success toast -->
-      <div
-        v-if="showSuccess"
-        class="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50 flex items-center gap-2"
-      >
-        {{ $t('driver.confirmPickup') }} ✓
-
-        <button
-          type="button"
-          class="text-white/70 hover:text-white ml-2"
-          @click="showSuccess = false"
-        >
-          &times;
         </button>
       </div>
     </template>
@@ -302,8 +182,10 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useNavStore } from '../../../stores/nav.js'
+import { useUiStore } from '../../../stores/ui.js'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
+import InfoGridCard from '../../ui/InfoGridCard.vue'
 
 import {
   fetchRouteById,
@@ -317,12 +199,50 @@ import {
 
 const { t } = useI18n()
 const navStore = useNavStore()
-const showSuccess = ref(false)
-const errorMsg = ref('')
+const ui = useUiStore()
+const loadError = ref('')
 const stop = ref(null)
 const loading = ref(true)
 const submitting = ref(false)
 const photoPreview = ref(null)
+
+const stopInfoItems = computed(() => {
+  if (!stop.value) return []
+  return [
+    {
+      label: t('common.client'),
+      value: stop.value.company || stop.value.client || '-',
+    },
+    {
+      label: t('common.order'),
+      value: stop.value.orderId || '-',
+    },
+    {
+      label: t('common.contactPerson'),
+      value: stop.value.contactPerson || '-',
+    },
+    {
+      label: t('common.phone'),
+      value: stop.value.clientPhone || '-',
+    },
+    {
+      label: t('common.area'),
+      value: stop.value.area || '-',
+    },
+    {
+      label: t('common.address'),
+      value: stop.value.address || '-',
+    },
+    {
+      label: t('driver.timeWindow'),
+      value: stop.value.timeWindow || '-',
+    },
+    {
+      label: t('driver.expectedBags'),
+      value: stop.value.estimatedBags ?? '-',
+    },
+  ]
+})
 // TODO: Signature - Commented out for future implementation
 // const signatureCanvas = ref(null)
 // let signatureCtx = null
@@ -495,6 +415,42 @@ function resolveProperty(order, client) {
   return client.properties[0] ?? null
 }
 
+function formatTimeFromDate(dateValue) {
+  if (!dateValue) return ''
+  const d = new Date(dateValue)
+  if (isNaN(d.getTime())) return String(dateValue)
+  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+}
+
+function resolvePickupTimeWindow(order) {
+  if (order?.pickup_time_window) return order.pickup_time_window
+  if (order?.pickupTimeWindow) return order.pickupTimeWindow
+  if (order?.time_window) return order.time_window
+  if (order?.timeWindow) return order.timeWindow
+  const start = order?.pickup_window?.start_time ?? order?.pickup_window_start
+  const end = order?.pickup_window?.end_time ?? order?.pickup_window_end
+  if (start && end) {
+    return `${formatTimeFromDate(start)} - ${formatTimeFromDate(end)}`
+  }
+  return ''
+}
+
+function resolveOrderAddress(order, property) {
+  if (property?.address) {
+    return `${property.address}${property.city ? ', ' + property.city : ''}`
+  }
+  if (property?.full_address || property?.fullAddress) {
+    return property.full_address || property.fullAddress
+  }
+  if (order?.property_address) {
+    return `${order.property_address}${order.property_city ? ', ' + order.property_city : ''}`
+  }
+  if (order?.pickup_address || order?.pickupAddress) {
+    return order.pickup_address || order.pickupAddress
+  }
+  return order?.address || ''
+}
+
 /**
  * Convierte una orden normal al formato que el template
  * esperaba anteriormente de un route stop.
@@ -514,6 +470,39 @@ function mapOrderToConfirmation(order) {
 
   const property = resolveProperty(order, client)
 
+  const propertyAddress = resolveOrderAddress(order, property)
+
+  const propertyArea =
+    property?.area ??
+    property?.locality ??
+    order?.property_area ??
+    order?.area ??
+    ''
+
+  const contactPerson =
+    property?.contact_person ??
+    property?.contactPerson ??
+    client?.contact_person ??
+    client?.contactPerson ??
+    order?.client_contact_person ??
+    order?.contact_person ??
+    order?.contactPerson ??
+    order?.propertyContactPerson ??
+    ''
+
+  const clientPhone =
+    property?.phone ??
+    property?.phone_number ??
+    property?.phoneNumber ??
+    client?.phone ??
+    client?.phone_number ??
+    client?.phoneNumber ??
+    order?.client_phone ??
+    order?.clientPhone ??
+    order?.phone ??
+    order?.propertyPhone ??
+    ''
+
   return {
     _id: orderDatabaseId,
     orderDbId: orderDatabaseId,
@@ -531,52 +520,22 @@ function mapOrderToConfirmation(order) {
       client?.name ??
       order?.company_name ??
       order?.companyName ??
+      order?.client_name ??
+      order?.clientName ??
       '',
 
     client:
       client?.name ??
       order?.client_name ??
       order?.clientName ??
+      order?.client ??
       '',
 
-    contactPerson:
-      property?.contact_person ??
-      property?.contactPerson ??
-      client?.contact_person ??
-      client?.contactPerson ??
-      order?.contact_person ??
-      order?.contactPerson ??
-      '',
-
-    clientPhone:
-      property?.phone ??
-      property?.phone_number ??
-      property?.phoneNumber ??
-      client?.phone ??
-      client?.phone_number ??
-      client?.phoneNumber ??
-      order?.phone ??
-      '',
-
-    area:
-      property?.area ??
-      property?.locality ??
-      order?.area ??
-      '',
-
-    address:
-      property?.address ??
-      property?.full_address ??
-      property?.fullAddress ??
-      order?.address ??
-      '',
-
-    timeWindow:
-      order?.pickup_time_window ??
-      order?.pickupTimeWindow ??
-      order?.time_window ??
-      order?.timeWindow ??
-      '',
+    contactPerson,
+    clientPhone,
+    area: propertyArea,
+    address: propertyAddress,
+    timeWindow: resolvePickupTimeWindow(order),
 
     estimatedBags:
       order?.estimated_bags ??
@@ -679,7 +638,7 @@ async function loadConfirmationData() {
 
 onMounted(async () => {
   loading.value = true
-  errorMsg.value = ''
+  loadError.value = ''
 
   try {
     stop.value = await loadConfirmationData()
@@ -698,7 +657,7 @@ onMounted(async () => {
 
     stop.value = null
 
-    errorMsg.value =
+    loadError.value =
       error?.message ??
       t('driver.errorLoadPickup')
   } finally {
@@ -722,10 +681,7 @@ async function confirmPickup() {
   }
 
   if (!isPendingStatus(stop.value.status)) {
-    errorMsg.value =
-      t('driver.errorAlreadyConfirmed')
-
-    showSuccess.value = false
+    ui.showError(t('driver.errorAlreadyConfirmed'))
     return
   }
 
@@ -733,9 +689,7 @@ async function confirmPickup() {
     !Number.isFinite(Number(form.actualBags)) ||
     Number(form.actualBags) < 1
   ) {
-    errorMsg.value =
-      t('driver.errorInvalidBags')
-
+    ui.showError(t('driver.errorInvalidBags'))
     return
   }
 
@@ -745,15 +699,11 @@ async function confirmPickup() {
     stop.value._id
 
   if (!orderId) {
-    errorMsg.value =
-      t('driver.errorInvalidOrderId')
-
+    ui.showError(t('driver.errorInvalidOrderId'))
     return
   }
 
   submitting.value = true
-  errorMsg.value = ''
-  showSuccess.value = false
 
   try {
     const payload = {
@@ -766,10 +716,9 @@ async function confirmPickup() {
       payload
     )
 
-    showSuccess.value = true
+    ui.showSuccess(`${t('driver.confirmPickup')} ✓`)
 
     window.setTimeout(() => {
-      showSuccess.value = false
       goBack()
     }, 1500)
   } catch (error) {
@@ -778,12 +727,11 @@ async function confirmPickup() {
       error
     )
 
-    errorMsg.value =
+    ui.showError(
       error?.message ??
       error?.error ??
       t('driver.errorConfirmPickup')
-
-    showSuccess.value = false
+    )
   } finally {
     submitting.value = false
   }

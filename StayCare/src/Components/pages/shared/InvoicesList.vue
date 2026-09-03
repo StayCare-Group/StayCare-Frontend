@@ -57,7 +57,7 @@
           :checked="isAllSelected"
           @change="toggleSelectAll"
           class="rounded border-gray-300 text-brand-700 focus:ring-brand-500 cursor-pointer"
-          :title="$t('invoices.selectAll')"
+          :title="$t('common.selectAll')"
         />
       </template>
       <template #cell-select="{ item }">

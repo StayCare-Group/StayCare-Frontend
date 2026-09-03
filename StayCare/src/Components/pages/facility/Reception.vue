@@ -78,20 +78,16 @@
 
     <!-- Order found -->
     <div v-if="foundOrder" class="space-y-5">
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-semibold text-gray-700">{{ foundOrder.id }} — {{ foundOrder.client }}</h3>
+      <InfoGridCard :items="foundOrderInfoItems">
+        <template #header>
+          <h3 class="text-sm font-semibold text-gray-700">
+            {{ foundOrder.id }} — {{ foundOrder.client }}
+          </h3>
+        </template>
+        <template #header-extra>
           <StatusBadge :status="foundOrder.status" />
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div><span class="text-gray-400">{{ $t('facility.serviceType') }}</span><p class="font-medium text-gray-800">{{ foundOrder.serviceType }}</p></div>
-          <div><span class="text-gray-400">{{ $t('facility.expectedBags') }}</span><p class="font-medium text-gray-800">{{ foundOrder.actualBags ?? foundOrder.estimatedBags }}</p></div>
-          <div><span class="text-gray-400">{{ $t('facility.property') }}</span><p class="font-medium text-gray-800">{{ foundOrder.propertyName }}</p></div>
-          <div><span class="text-gray-400">{{ $t('facility.contactPerson') }}</span><p class="font-medium text-gray-800">{{ foundOrder.propertyContactPerson }}</p></div>
-          <div><span class="text-gray-400">{{ $t('facility.contactPhone') }}</span><p class="font-medium text-gray-800">{{ foundOrder.propertyPhone }}</p></div>
-          <div v-if="foundOrder.specialNotes"><span class="text-gray-400">{{ $t('facility.notes') }}</span><p class="font-medium text-gray-800">{{ foundOrder.specialNotes }}</p></div>
-        </div>
-      </div>
+        </template>
+      </InfoGridCard>
 
       <!-- Check-in form -->
       <form @submit.prevent="checkIn" class="space-y-5">
@@ -175,6 +171,7 @@ import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
+import InfoGridCard from '../../ui/InfoGridCard.vue'
 import { fetchOrderById, fetchAllOrders, receiveAtFacility } from '../../../api/orders'
 import { mapOrderForDetail } from '@/utils/orderMappers'
 import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
@@ -191,6 +188,25 @@ const showSuccess = ref(false)
 const checkinItems = ref([])
 const itemCatalog = ref([])
 const selectedCatalogCode = ref('')
+
+const foundOrderInfoItems = computed(() => {
+  if (!foundOrder.value) return []
+  return [
+    { label: t('facility.serviceType'), value: foundOrder.value.serviceType },
+    {
+      label: t('facility.expectedBags'),
+      value: foundOrder.value.actualBags ?? foundOrder.value.estimatedBags,
+    },
+    { label: t('facility.property'), value: foundOrder.value.propertyName },
+    { label: t('facility.contactPerson'), value: foundOrder.value.propertyContactPerson },
+    { label: t('facility.contactPhone'), value: foundOrder.value.propertyPhone },
+    {
+      label: t('facility.notes'),
+      value: foundOrder.value.specialNotes,
+      show: Boolean(foundOrder.value.specialNotes),
+    },
+  ]
+})
 
 const isScanning = ref(false)
 const videoRef = ref(null)

@@ -171,22 +171,43 @@
 
       <!-- Pending orders -->
       <div class="bg-white rounded-xl shadow-sm p-5 xl:col-span-2 space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-2">
           <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('routePlanner.ordersToAssign') }}</h3>
           <span class="text-xs text-gray-500">{{ $t('routePlanner.pendingOrdersHint') }}</span>
         </div>
-        <div class="flex items-center gap-2">
-          <button
-            class="px-3 py-1.5 rounded-lg text-xs font-medium border transition"
-            :class="assignQueue === 'pickup' ? 'bg-brand-700 text-white border-brand-700' : 'bg-white text-gray-600 border-gray-200 hover:border-brand-700'"
-            @click="assignQueue = 'pickup'"
-          >{{ $t('routePlanner.pickupOrders') }} ({{ pickupQueueCount }})</button>
-          <button
-            class="px-3 py-1.5 rounded-lg text-xs font-medium border transition"
-            :class="assignQueue === 'delivery' ? 'bg-brand-700 text-white border-brand-700' : 'bg-white text-gray-600 border-gray-200 hover:border-brand-700'"
-            @click="assignQueue = 'delivery'"
-          >{{ $t('routePlanner.deliveryOrders') }} ({{ deliveryQueueCount }})</button>
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div class="flex items-center gap-2">
+            <button
+              class="px-3 py-1.5 rounded-lg text-xs font-medium border transition"
+              :class="assignQueue === 'pickup' ? 'bg-brand-700 text-white border-brand-700' : 'bg-white text-gray-600 border-gray-200 hover:border-brand-700'"
+              @click="setAssignQueue('pickup')"
+            >{{ $t('routePlanner.pickupOrders') }} ({{ pickupQueueCount }})</button>
+            <button
+              class="px-3 py-1.5 rounded-lg text-xs font-medium border transition"
+              :class="assignQueue === 'delivery' ? 'bg-brand-700 text-white border-brand-700' : 'bg-white text-gray-600 border-gray-200 hover:border-brand-700'"
+              @click="setAssignQueue('delivery')"
+            >{{ $t('routePlanner.deliveryOrders') }} ({{ deliveryQueueCount }})</button>
+          </div>
+
+          <ClientFilterSelect
+            v-model="selectedClientId"
+            :show-label="false"
+          />
         </div>
+
+        <!-- Select All Toolbar -->
+        <div v-if="pendingOrders.length" class="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+          <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-gray-700">
+            <input
+              type="checkbox"
+              :checked="isAllPendingSelected"
+              @change="toggleSelectAllPending"
+              class="rounded border-gray-300 text-brand-700 focus:ring-brand-500 cursor-pointer"
+            />
+            <span>{{ isAllPendingSelected ? $t('common.deselectAll') : $t('common.selectAll') }} ({{ pendingOrders.length }})</span>
+          </label>
+        </div>
+
         <p v-if="initializingRoutes || routesLoading" class="text-sm text-gray-400 py-2">{{ $t('routePlanner.loadingRoutes') }}</p>
         <div v-else class="max-h-[480px] overflow-y-auto divide-y divide-gray-100">
           <label
@@ -390,6 +411,7 @@ import {
 } from '../../../utils/orderFlow'
 import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
+import ClientFilterSelect from '../../ui/ClientFilterSelect.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
 import { getTodayDateString, normalizeDateString, isPastDate } from '../../../utils/date'
@@ -435,11 +457,18 @@ function localDateStr(d = new Date()) {
 const drivers = ref([])
 const rawOrders = ref([])
 const selectedOrderIds = ref([])
+const selectedClientId = ref('')
 const existingRoutes = ref([])
 const routesLoading = ref(false)
 const initializingRoutes = ref(true)
 const clientMap = ref({})  // clientId -> client object
 const assignQueue = ref('pickup')
+
+function setAssignQueue(queue) {
+  if (assignQueue.value === queue) return
+  assignQueue.value = queue
+  selectedOrderIds.value = []
+}
 
 const reassignTargets = reactive({})
 const reassigning = reactive({})
@@ -625,13 +654,16 @@ const assignableOrders = computed(() => {
     const mapped = mapOrderForList(o)
     // If client name is empty (client was just an ID), resolve from client map
     let clientName = mapped.client
-    if (!clientName && typeof o.client === 'string' && clientMap.value[o.client]) {
+    let clientId = mapped.clientId || String(o.client_id ?? '')
+    if (typeof o.client === 'string' && clientMap.value[o.client]) {
       const c = clientMap.value[o.client]
-      clientName = c.name ?? ''
+      if (!clientName) clientName = c.name ?? ''
+      if (!clientId) clientId = String(c.user_id ?? c._id ?? c.id ?? o.client)
     }
     return {
       ...mapped,
       client: clientName,
+      clientId: String(clientId || ''),
       _id: o._id ?? mapped._id,
       address: resolveAddress(o),
       areaOrProperty: resolveAreaOrProperty(o),
@@ -650,10 +682,26 @@ const pendingOrders = computed(() => {
   const targetType = assignQueue.value === 'delivery' ? 'Delivery' : 'Pickup'
   return assignableOrders.value.filter(o => {
     if (o.routeType !== targetType) return false
-    if (targetType === 'Pickup') return normalizeStatus(o.status) === 'pending'
+    if (targetType === 'Pickup' && normalizeStatus(o.status) !== 'pending') return false
+    if (selectedClientId.value && String(o.clientId) !== String(selectedClientId.value)) return false
     return true
   })
 })
+
+const isAllPendingSelected = computed(() => {
+  if (!pendingOrders.value.length) return false
+  return pendingOrders.value.every(o => selectedOrderIds.value.includes(o._id))
+})
+
+function toggleSelectAllPending() {
+  const currentPendingIds = pendingOrders.value.map(o => o._id)
+  if (isAllPendingSelected.value) {
+    selectedOrderIds.value = selectedOrderIds.value.filter(id => !currentPendingIds.includes(id))
+  } else {
+    const combined = new Set([...selectedOrderIds.value, ...currentPendingIds])
+    selectedOrderIds.value = Array.from(combined)
+  }
+}
 
 /* ─────────────────────────────────────────────
    Auto-Assign Logic

@@ -56,7 +56,11 @@
     "categoryAsc": "Categoría (A-Z)",
     "categoryDesc": "Categoría (Z-A)",
     "nameAsc": "Nombre (A-Z)",
-    "nameDesc": "Nombre (Z-A)"
+    "nameDesc": "Nombre (Z-A)",
+    "selectAll": "Seleccionar todo",
+    "deselectAll": "Deseleccionar todo",
+    "filterClient": "Cliente",
+    "filterAllClients": "Todos los clientes"
   },
   "auth": {
     "loginHeading": "Iniciar sesión en {brand} gestión de lavandería",
@@ -325,12 +329,9 @@
     "filterPending": "Pendientes",
     "filterOverdue": "Vencidas",
     "filterPaid": "Pagadas",
-    "filterAllClients": "Todos los clientes",
-    "filterClient": "Cliente",
     "exportExcel": "Descargar Excel ({count})",
     "exportExcelAll": "Descargar Excel",
-    "exportSelectRequired": "Selecciona al menos una orden para descargar.",
-    "selectAll": "Seleccionar todo"
+    "exportSelectRequired": "Selecciona al menos una orden para descargar."
   },
   "excel": {
     "invoicesSheet": "Facturas",
