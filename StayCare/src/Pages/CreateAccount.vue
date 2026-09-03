@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { registerUser } from '../api/auth'
@@ -8,6 +8,11 @@ import AuthSplitLayout from '../Components/layout/AuthSplitLayout.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
+
+onMounted(() => {
+  router.replace('/LogorCreate')
+})
+
 const auth = useAuthStore()
 const email = ref('')
 const password = ref('')

@@ -86,7 +86,9 @@
     "resetPassword": "Restablecer contraseña",
     "newPassword": "Nueva contraseña",
     "passwordResetSuccess": "¡Tu contraseña se ha restablecido correctamente!",
-    "redirectingToLogin": "Redirigiendo al inicio de sesión..."
+    "redirectingToLogin": "Redirigiendo al inicio de sesión...",
+    "registrationDisabledHint": "El registro está deshabilitado temporalmente",
+    "registrationDisabledMessage": "El registro público está temporalmente deshabilitado. Para crear una cuenta, por favor comuníquese con el administrador."
   },
   "nav": {
     "dashboard": "Panel",

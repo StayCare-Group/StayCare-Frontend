@@ -9,10 +9,6 @@ const { t } = useI18n()
 const goToLogin = () => {
   router.push('/login')
 }
-
-const goToCreateAccount = () => {
-  router.push('/createaccount')
-}
 </script>
 
 <template>
@@ -25,7 +21,16 @@ const goToCreateAccount = () => {
   >
     <div class="auth-choice">
       <button @click="goToLogin" class="auth-choice-btn">{{ t('common.signIn') }}</button>
-      <button @click="goToCreateAccount" class="auth-choice-btn auth-choice-btn-secondary">{{ t('common.signUp') }}</button>
+      <button
+        disabled
+        class="auth-choice-btn auth-choice-btn-disabled"
+        :title="t('auth.registrationDisabledHint')"
+      >
+        {{ t('common.signUp') }}
+      </button>
+      <div class="registration-disabled-notice">
+        <p>{{ t('auth.registrationDisabledMessage') }}</p>
+      </div>
     </div>
   </AuthSplitLayout>
 </template>
@@ -48,12 +53,27 @@ const goToCreateAccount = () => {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.auth-choice-btn:hover {
+.auth-choice-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 10px 20px rgba(12, 22, 89, 0.28);
 }
 
-.auth-choice-btn-secondary {
-  background: linear-gradient(135deg, #63a3d8, #194b8e);
+.auth-choice-btn-disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.registration-disabled-notice {
+  margin-top: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.6rem;
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: center;
 }
 </style>

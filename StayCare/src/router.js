@@ -33,12 +33,13 @@ const routes = [
   {
     path: '/createaccount',
     name: 'CreateAccount',
-    component: CreateAccount,
-    meta: {
-      guest: true,
-      titleKey: 'seo.createAccountTitle',
-      descriptionKey: 'seo.createAccountDescription'
-    }
+    redirect: '/LogorCreate'
+    // component: CreateAccount,
+    // meta: {
+    //   guest: true,
+    //   titleKey: 'seo.createAccountTitle',
+    //   descriptionKey: 'seo.createAccountDescription'
+    // }
   },
   {
     path: '/logorcreate',

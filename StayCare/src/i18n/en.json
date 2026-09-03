@@ -86,7 +86,9 @@
     "resetPassword": "Reset Password",
     "newPassword": "New Password",
     "passwordResetSuccess": "Your password has been reset successfully!",
-    "redirectingToLogin": "Redirecting you to login..."
+    "redirectingToLogin": "Redirecting you to login...",
+    "registrationDisabledHint": "Registration is temporarily disabled",
+    "registrationDisabledMessage": "Public registration is temporarily disabled. To create an account, please contact the administrator."
   },
   "nav": {
     "dashboard": "Dashboard",
