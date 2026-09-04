@@ -512,6 +512,7 @@
     "loadingOrder": "Cargando pedido...",
     "orderNotFound": "Pedido no encontrado.",
     "cannotEditInvoicedOrder": "No se puede editar una orden facturada.",
+    "cannotEditReceivedOrder": "No se puede editar una orden que ya ha sido recibida en planta.",
     "selectDateAndWindow": "Seleccione una fecha y una ventana horaria.",
     "rescheduleFailed": "No se pudo reprogramar el pedido.",
     "noItems": "Sin artículos registrados.",
@@ -537,6 +538,8 @@
     "confirmPickup": "Confirmar recogida",
     "confirmDelivery": "Confirmar entrega",
     "history": "Historial de entregas",
+    "routeDate": "Fecha de ruta",
+    "reset15Days": "Restablecer a 15 días",
     "noHistory": "No se encontraron rutas pasadas.",
     "stops": "paradas",
     "bags": "bolsas",
@@ -578,7 +581,12 @@
     "noActiveRoutes": "No hay rutas activas asignadas.",
     "hideMap": "Ocultar mapa",
     "showMap": "Ver ruta en el mapa",
-    "stopsCompleted": "{completed}/{total} paradas completadas"
+    "stopsCompleted": "{completed}/{total} paradas completadas",
+    "allStopsCompleted": "¡Todas las paradas han sido completadas!",
+    "allStopsCompletedHint": "Has finalizado todas las entregas y recogidas de esta ruta.",
+    "showCompleted": "Mostrar completadas ({count})",
+    "hideCompleted": "Ocultar completadas",
+    "pendingStopsCount": "{count} pendientes"
   },
   "facility": {
     "processingBoard": "Tablero de procesamiento",

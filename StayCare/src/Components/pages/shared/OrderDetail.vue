@@ -26,8 +26,8 @@
         v-if="order && isAdminOrStaff"
         variant="secondary"
         size="sm"
-        :disabled="order.isInvoiced"
-        :title="order.isInvoiced ? t('orderDetail.cannotEditInvoicedOrder') : ''"
+        :disabled="!canEditOrder"
+        :title="cannotEditTooltip"
         @click="openEditModal"
       >
         <svg class="w-3.5 h-3.5 mr-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,6 +51,9 @@
 
     <p v-if="order && isAdminOrStaff && order.isInvoiced" class="text-xs text-amber-600">
       {{ $t('orderDetail.cannotEditInvoicedOrder') }}
+    </p>
+    <p v-else-if="order && isAdminOrStaff && !isEditableStatus(order.status)" class="text-xs text-amber-600">
+      {{ $t('orderDetail.cannotEditReceivedOrder') }}
     </p>
 
     <div v-if="order" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -209,7 +212,7 @@ import { fetchOrderById, updateOrder } from '../../../api/orders'
 import { mapOrderForDetail } from '@/utils/orderMappers'
 import { fetchClientById } from '../../../api/clients'
 import { generateOrderPdf } from '../../../utils/generateOrderPdf.js'
-import { isCancelableStatus } from '../../../utils/orderFlow'
+import { isCancelableStatus, isEditableStatus } from '../../../utils/orderFlow'
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
 import OrderItemsPicker from '../../forms/OrderItemsPicker.vue'
 import { getTodayDateString, normalizeDateString, isPastDate } from '../../../utils/date'
@@ -228,6 +231,18 @@ const showCancelModal = ref(false)
 
 const isAdmin = computed(() => authStore.isAdmin)
 const isAdminOrStaff = computed(() => authStore.isInternal)
+
+const canEditOrder = computed(() => {
+  if (!order.value) return false
+  if (order.value.isInvoiced) return false
+  return isEditableStatus(order.value.status)
+})
+
+const cannotEditTooltip = computed(() => {
+  if (order.value?.isInvoiced) return t('orderDetail.cannotEditInvoicedOrder')
+  if (!isEditableStatus(order.value?.status)) return t('orderDetail.cannotEditReceivedOrder')
+  return ''
+})
 
 const orderInfoItems = computed(() => {
   if (!order.value) return []
@@ -311,6 +326,11 @@ function openEditModal() {
     showEditModal.value = false
     return
   }
+  if (!isEditableStatus(order.value.status)) {
+    editError.value = t('orderDetail.cannotEditReceivedOrder')
+    showEditModal.value = false
+    return
+  }
   editError.value = ''
 
   // Pre-populate form from current order
@@ -329,6 +349,10 @@ async function submitEdit() {
   if (editSubmitting.value) return
   if (order.value?.isInvoiced) {
     editError.value = t('orderDetail.cannotEditInvoicedOrder')
+    return
+  }
+  if (!isEditableStatus(order.value?.status)) {
+    editError.value = t('orderDetail.cannotEditReceivedOrder')
     return
   }
 

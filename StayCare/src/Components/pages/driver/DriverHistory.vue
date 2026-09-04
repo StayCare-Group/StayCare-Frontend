@@ -1,15 +1,30 @@
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <h2 class="text-lg font-semibold text-brand-700">{{ $t('driver.history') }}</h2>
-      <input
-        v-model="dateFilter"
-        type="date"
-        class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-      />
+      <div class="flex flex-wrap items-center gap-2">
+        <DateRangeFilter
+          id-prefix="driver-history"
+          :from="dateFrom"
+          :to="dateTo"
+          :label="$t('driver.routeDate')"
+          @update:from="onDateFromChange"
+          @update:to="onDateToChange"
+          @clear="clearDateFilter"
+        />
+        <button
+          v-if="!isDefault15Days"
+          type="button"
+          data-testid="reset-15-days"
+          @click="resetToLast15Days"
+          class="text-xs text-brand-700 hover:text-brand-800 font-medium underline px-1"
+        >
+          {{ $t('driver.reset15Days') }}
+        </button>
+      </div>
     </div>
 
-    <p v-if="loading" class="text-sm text-gray-400">{{ $t('common.loading') }}</p>
+    <LoadingPanel v-if="loading" />
 
     <p v-else-if="!pastRoutes.length" class="text-sm text-gray-400 bg-white rounded-xl shadow-sm p-5">
       {{ $t('driver.noHistory') }}
@@ -28,7 +43,7 @@
             'bg-blue-100 text-blue-700': route.status === 'in_progress',
             'bg-gray-100 text-gray-600': route.status === 'planned',
           }"
-        >{{ route.status }}</span>
+        >{{ getRouteStatusLabel(route.status) }}</span>
       </div>
 
       <div class="divide-y divide-gray-50">
@@ -49,7 +64,7 @@
           <span
             class="text-xs font-medium shrink-0"
             :class="stop.status === 'Completed' ? 'text-green-600' : 'text-gray-400'"
-          >{{ stop.status }}</span>
+          >{{ stop.status === 'Completed' ? $t('common.done') : $t('orderStatuses.pending') }}</span>
         </div>
       </div>
     </div>
@@ -57,40 +72,77 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchAllRoutes, mapRouteForDriver } from '../../../api/routes'
+import DateRangeFilter from '../../ui/DateRangeFilter.vue'
+import LoadingPanel from '../../ui/LoadingPanel.vue'
+import { getDefaultDateRange, getTodayDateString } from '../../../utils/date'
 
-function localDateStr(d = new Date()) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-}
+const { t } = useI18n()
+
+const defaultRange = getDefaultDateRange(15)
+const dateFrom = ref(defaultRange.from)
+const dateTo = ref(defaultRange.to)
 
 const loading = ref(true)
-const pastRoutes = ref([])
-const dateFilter = ref(localDateStr())
+const allRoutes = ref([])
+
+const isDefault15Days = computed(() => {
+  const current = getDefaultDateRange(15)
+  return dateFrom.value === current.from && dateTo.value === current.to
+})
+
+function onDateFromChange(val) {
+  dateFrom.value = val
+}
+
+function onDateToChange(val) {
+  dateTo.value = val
+}
+
+function clearDateFilter() {
+  dateFrom.value = ''
+  dateTo.value = ''
+}
+
+function resetToLast15Days() {
+  const range = getDefaultDateRange(15)
+  dateFrom.value = range.from
+  dateTo.value = range.to
+}
+
+function getRouteStatusLabel(status) {
+  const map = {
+    completed: t('routePlanner.statusCompleted'),
+    in_progress: t('routePlanner.statusInProgress'),
+    planned: t('routePlanner.statusPlanned'),
+  }
+  return map[status] ?? status
+}
+
+const pastRoutes = computed(() => {
+  const today = getTodayDateString()
+  return allRoutes.value.filter(r => {
+    const isHistory = r.status === 'completed' || (r.date && r.date < today)
+    if (!isHistory) return false
+    if (dateFrom.value && r.date < dateFrom.value) return false
+    if (dateTo.value && r.date > dateTo.value) return false
+    return true
+  })
+})
 
 async function loadHistory() {
   loading.value = true
   try {
-    const params = {}
-    if (dateFilter.value) {
-      params.date = dateFilter.value
-    }
-    const data = await fetchAllRoutes(params).catch(() => [])
-    const all = (data ?? []).map(mapRouteForDriver)
-    if (dateFilter.value) {
-      pastRoutes.value = all
-    } else {
-      const _d = new Date()
-      const today = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`
-      pastRoutes.value = all.filter(r => r.date < today || r.status === 'completed')
-    }
+    const data = await fetchAllRoutes().catch(() => [])
+    allRoutes.value = (data ?? []).map(mapRouteForDriver)
   } catch {
-    pastRoutes.value = []
+    allRoutes.value = []
   } finally {
     loading.value = false
   }
 }
 
 onMounted(loadHistory)
-watch(dateFilter, loadHistory)
 </script>

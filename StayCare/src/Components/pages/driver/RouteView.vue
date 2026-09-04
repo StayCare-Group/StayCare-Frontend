@@ -44,10 +44,40 @@
           <MiniMap v-if="showMap" :markers="routeMarkers" height="260px" class="mb-2" />
         </div>
 
+        <!-- Stops control / Toggle completed -->
+        <div v-if="driverRoute.completedStops > 0" class="flex items-center justify-between flex-wrap gap-2 pt-1">
+          <span class="text-xs text-gray-500 font-medium">
+            {{ showCompleted ? $t('driver.stopsCompleted', { completed: driverRoute.completedStops, total: driverRoute.totalStops }) : $t('driver.pendingStopsCount', { count: displayedStops.length }) }}
+          </span>
+          <button
+            type="button"
+            @click="showCompleted = !showCompleted"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 hover:border-brand-700 hover:text-brand-700 transition"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path v-if="showCompleted" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            {{ showCompleted ? $t('driver.hideCompleted') : $t('driver.showCompleted', { count: driverRoute.completedStops }) }}
+          </button>
+        </div>
+
+        <div v-if="!displayedStops.length && driverRoute.stops.length" class="text-center py-8 bg-green-50 rounded-xl border border-green-100 p-5 space-y-2">
+          <p class="text-sm font-semibold text-green-800">{{ $t('driver.allStopsCompleted') }}</p>
+          <p class="text-xs text-green-600">{{ $t('driver.allStopsCompletedHint') }}</p>
+          <button
+            type="button"
+            @click="showCompleted = true"
+            class="mt-2 text-xs font-medium text-brand-700 hover:underline inline-block"
+          >
+            {{ $t('driver.showCompleted', { count: driverRoute.completedStops }) }}
+          </button>
+        </div>
+
         <!-- Stops list sorted chronologically from oldest to newest -->
-        <div class="space-y-3">
+        <div v-else class="space-y-3">
           <div
-            v-for="stop in driverRoute.stops"
+            v-for="stop in displayedStops"
             :key="stop.viewKey"
             class="bg-white rounded-xl shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow border border-gray-100"
             :class="{ 'opacity-60': stop.status === 'Completed' }"
@@ -202,9 +232,20 @@ async function loadActiveRoutes() {
 
 onMounted(loadActiveRoutes)
 
+const showCompleted = ref(false)
+
+const displayedStops = computed(() => {
+  if (showCompleted.value) return driverRoute.value.stops
+  return driverRoute.value.stops.filter((s) => s.status !== 'Completed')
+})
+
 const routeMarkers = computed(() => {
   const markers = []
-  for (const stop of driverRoute.value.stops) {
+  const stopsToMark = showCompleted.value
+    ? driverRoute.value.stops
+    : driverRoute.value.stops.filter((s) => s.status !== 'Completed')
+
+  for (const stop of stopsToMark) {
     if (stop.lat !== null && stop.lng !== null && !isNaN(Number(stop.lat)) && !isNaN(Number(stop.lng))) {
       markers.push({
         lat: Number(stop.lat),

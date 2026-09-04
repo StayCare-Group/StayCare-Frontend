@@ -21,15 +21,23 @@
       <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
         <div class="flex items-center justify-between flex-wrap gap-3">
           <h3 class="text-base font-semibold text-gray-800">{{ $t('driver.assignedStops') }}</h3>
+          <span v-if="driverStops.length && activeStops.length" class="text-xs text-gray-500 font-medium">
+            {{ $t('driver.pendingStopsCount', { count: activeStops.length }) }}
+          </span>
         </div>
 
         <p v-if="!driverStops.length" class="text-sm text-gray-400 py-6 text-center">
           {{ $t('driver.noActiveRoutes') }}
         </p>
 
+        <div v-else-if="!activeStops.length" class="text-center py-8 bg-green-50 rounded-xl border border-green-100 p-5 space-y-1">
+          <p class="text-sm font-semibold text-green-800">{{ $t('driver.allStopsCompleted') }}</p>
+          <p class="text-xs text-green-600">{{ $t('driver.allStopsCompletedHint') }}</p>
+        </div>
+
         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <div
-            v-for="stop in driverStops"
+            v-for="stop in activeStops"
             :key="stop.id"
             class="border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col justify-between"
           >
@@ -177,6 +185,10 @@ const driverStops = computed(() => {
       type: s.type,
     }))
   )
+})
+
+const activeStops = computed(() => {
+  return driverStops.value.filter((s) => s.status !== 'Completed')
 })
 
 const driverKPIs = computed(() => {

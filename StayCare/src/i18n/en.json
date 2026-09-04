@@ -512,6 +512,7 @@
     "loadingOrder": "Loading order...",
     "orderNotFound": "Order not found.",
     "cannotEditInvoicedOrder": "An invoiced order cannot be edited.",
+    "cannotEditReceivedOrder": "An order cannot be edited once it has been received at the facility.",
     "selectDateAndWindow": "Please select a date and time window.",
     "rescheduleFailed": "Failed to reschedule order.",
     "noItems": "No items recorded.",
@@ -537,6 +538,8 @@
     "confirmPickup": "Confirm Pickup",
     "confirmDelivery": "Confirm Delivery",
     "history": "Delivery History",
+    "routeDate": "Route Date",
+    "reset15Days": "Reset to 15 days",
     "noHistory": "No past routes found.",
     "stops": "stops",
     "bags": "bags",
@@ -578,7 +581,12 @@
     "noActiveRoutes": "No active routes assigned.",
     "hideMap": "Hide Map",
     "showMap": "Show Route on Map",
-    "stopsCompleted": "{completed}/{total} stops completed"
+    "stopsCompleted": "{completed}/{total} stops completed",
+    "allStopsCompleted": "All stops have been completed!",
+    "allStopsCompletedHint": "You have completed all pickups and deliveries for this route.",
+    "showCompleted": "Show completed ({count})",
+    "hideCompleted": "Hide completed",
+    "pendingStopsCount": "{count} pending"
   },
   "facility": {
     "processingBoard": "Processing Board",

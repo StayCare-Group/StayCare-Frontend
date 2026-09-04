@@ -30,6 +30,11 @@ export function isCancelableStatus(status?: string): boolean {
   return norm === 'pending' || norm === 'assigned'
 }
 
+export function isEditableStatus(status?: string): boolean {
+  const norm = normalizeStatus(status)
+  return norm === 'pending' || norm === 'assigned' || norm === 'rescheduled' || norm === 'transit'
+}
+
 export function isPickupAssignableStatus(status: string): boolean {
   const norm = normalizeStatus(status)
   return norm === 'pending' || norm === 'assigned' || norm === 'transit'

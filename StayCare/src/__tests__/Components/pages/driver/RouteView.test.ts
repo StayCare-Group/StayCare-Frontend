@@ -194,4 +194,54 @@ describe('RouteView.vue', () => {
 
     expect(wrapper.text()).toContain('No active routes assigned.')
   })
+
+  it('hides completed stops by default and reveals them when toggle is clicked', async () => {
+    mockFetchRoutesByDriver.mockResolvedValue([
+      {
+        id: 'route-1',
+        _id: 'route-1',
+        route_date: '2026-09-03',
+        status: 'in_progress',
+        stops: [
+          {
+            id: 'stop-1',
+            _id: 'stop-1',
+            client: 'Client Finished',
+            address: '100 Ocean Dr',
+            status: 'Completed',
+            type: 'Delivery',
+            estimatedBags: 2,
+            actualBags: 2,
+          },
+          {
+            id: 'stop-2',
+            _id: 'stop-2',
+            client: 'Client Waiting',
+            address: '200 Mountain Rd',
+            status: 'Pending',
+            type: 'Pickup',
+            estimatedBags: 1,
+            actualBags: null,
+          },
+        ],
+      },
+    ])
+
+    const wrapper = mountComponent()
+    await flushPromises()
+
+    // By default, completed stops are hidden
+    expect(wrapper.text()).toContain('Client Waiting')
+    expect(wrapper.text()).not.toContain('Client Finished')
+    expect(wrapper.text()).toContain('Show completed (1)')
+
+    // Click toggle button
+    const toggleBtn = wrapper.find('button.inline-flex')
+    await toggleBtn.trigger('click')
+
+    // Now both should be displayed
+    expect(wrapper.text()).toContain('Client Waiting')
+    expect(wrapper.text()).toContain('Client Finished')
+    expect(wrapper.text()).toContain('Hide completed')
+  })
 })

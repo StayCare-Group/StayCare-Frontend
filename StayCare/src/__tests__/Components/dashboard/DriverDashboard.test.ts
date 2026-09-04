@@ -143,6 +143,27 @@ describe('DriverDashboard.vue', () => {
     expect(headings[1].text()).toBe('Client Today')
   })
 
+  it('hides completed stops from the dashboard list while keeping them in KPIs', async () => {
+    mockFetchRoutesByDriver.mockResolvedValue([
+      {
+        id: 'route-1',
+        route_date: '2026-09-02',
+        stops: [
+          { id: 's1', type: 'Pickup', status: 'Completed', client: 'Client Completed' },
+          { id: 's2', type: 'Pickup', status: 'Pending', client: 'Client Pending' },
+        ],
+      },
+    ])
+
+    const wrapper = mountComponent()
+    await flushPromises()
+
+    const headings = wrapper.findAll('h4')
+    expect(headings).toHaveLength(1)
+    expect(headings[0].text()).toBe('Client Pending')
+    expect(wrapper.text()).not.toContain('Client Completed')
+  })
+
   it('renders sub-pages when currentPage is not dashboard', async () => {
     const navStore = useNavStore()
     navStore.currentPage = 'route'
