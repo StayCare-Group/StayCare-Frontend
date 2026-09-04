@@ -443,6 +443,8 @@
     "moveTo": "Move to {status}",
     "noOrders": "No orders",
     "inUse": "{used}/{total} in use",
+    "inUseCount": "In use ({count} orders)",
+    "inUseSingle": "In use (1 order)",
     "noMachinesConfigured": "No machines configured yet.",
     "seeding": "Seeding...",
     "seedDefaultMachines": "Seed Default Machines",

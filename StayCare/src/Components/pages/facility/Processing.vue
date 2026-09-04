@@ -49,7 +49,7 @@
             <div v-if="col.assignable" class="mt-2">
               <div v-if="getAssignedMachine(getOrderId(order))" class="flex items-center justify-between bg-green-50 rounded px-2 py-1">
                 <span class="text-xs text-green-700 font-medium">{{ getAssignedMachine(getOrderId(order)).name }}</span>
-                <button @click="handleRelease(getMachineId(getAssignedMachine(getOrderId(order))))"
+                <button @click="handleRelease(getMachineId(getAssignedMachine(getOrderId(order))), getOrderId(order))"
                   class="text-xs text-red-500 hover:text-red-700">{{ $t('facilityProcessing.release') }}</button>
               </div>
               <div v-else class="flex gap-1">
@@ -57,7 +57,7 @@
                   class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-400 outline-none">
                   <option value="">{{ $t('facilityProcessing.assignMachine') }}</option>
                   <option v-for="m in availableMachines(col.machineType)" :key="getMachineId(m)" :value="getMachineId(m)">
-                    {{ m.name }} ({{ m.capacity }})
+                    {{ m.name }} ({{ m.capacity }}){{ getMachineOccupancyLabel(m) }}
                   </option>
                 </select>
                 <AppButton
@@ -223,6 +223,7 @@ async function loadData() {
     machines.value = (machinesData ?? []).map(raw => ({
       ...raw,
       _id: raw._id ?? raw.id,
+      current_orders: raw.current_orders ?? [],
       current_order:
         raw.current_order ??
         (raw.current_order_id
@@ -251,15 +252,28 @@ const columns = computed(() =>
 )
 
 function getAssignedMachine(orderId) {
+  if (!orderId) return null
   return machines.value.find(m => {
+    if (Array.isArray(m.current_orders) && m.current_orders.length > 0) {
+      return m.current_orders.some(o => {
+        const id = o.order_id ?? o._id ?? o.id
+        return id && id.toString() === orderId.toString()
+      })
+    }
     const mOrderId = m.current_order?._id ?? m.current_order
-    return mOrderId && mOrderId.toString() === orderId?.toString()
+    return mOrderId && mOrderId.toString() === orderId.toString()
   }) ?? null
 }
 
 function availableMachines(machineType) {
   if (!machineType) return []
-  return machines.value.filter(m => m.type === machineType && m.status === 'available')
+  return machines.value.filter(m => m.type === machineType && m.status !== 'maintenance')
+}
+
+function getMachineOccupancyLabel(m) {
+  const count = m.current_orders?.length ?? (m.current_order_id ? 1 : 0)
+  if (count === 0) return ` — ${t('facilityProcessing.statusAvailable')}`
+  return ` — ${t('facilityProcessing.inUseCount', { count })}`
 }
 
 async function handleAssign(machineId, orderId) {
@@ -279,9 +293,9 @@ async function handleAssign(machineId, orderId) {
   }
 }
 
-async function handleRelease(machineId) {
+async function handleRelease(machineId, orderId = null) {
   try {
-    await releaseMachine(machineId)
+    await releaseMachine(machineId, orderId)
     await loadData()
   } catch (err) {
     ui.showError(t('facilityProcessing.releaseFailed') + ': ' + (err?.message ?? t('facilityProcessing.unknownError')))
@@ -336,12 +350,12 @@ async function advanceOrder(orderId, nextStatus) {
 async function doAdvanceOrder(orderId, normalizedNextStatus, machineIdToAssign = null) {
   advancing.value = orderId
   try {
-    // Release existing machine if the order was on one.
+    // Release existing machine for THIS order only.
     const assignedMachine = getAssignedMachine(orderId)
     if (assignedMachine) {
       const assignedMachineId = getMachineId(assignedMachine)
       if (assignedMachineId) {
-        await releaseMachine(assignedMachineId)
+        await releaseMachine(assignedMachineId, orderId)
       }
     }
 

@@ -95,7 +95,19 @@
         <StatusBadge :status="machineStatusLabel(value)" />
       </template>
       <template #cell-currentOrder="{ item }">
-        <span class="text-gray-700">{{ item.current_order?.order_number ?? '—' }}</span>
+        <div v-if="item.current_orders && item.current_orders.length > 0" class="flex flex-wrap gap-1">
+          <span
+            v-for="co in item.current_orders"
+            :key="co.id || co.order_id"
+            class="inline-block px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-medium"
+          >
+            {{ co.order_number }}
+          </span>
+        </div>
+        <span v-else-if="item.current_order?.order_number" class="inline-block px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-medium">
+          {{ item.current_order.order_number }}
+        </span>
+        <span v-else class="text-gray-400">—</span>
       </template>
       <template #cell-runningSince="{ item }">
         <span class="text-gray-500">{{ item.started_at ? formatTime(item.started_at) : '—' }}</span>

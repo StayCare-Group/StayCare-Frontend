@@ -248,12 +248,13 @@ describe('Processing — apertura del MachineSelectModal al avanzar a etapa con 
     expect(stageLabel).toBeTruthy()
   })
 
-  it('pasa solo las máquinas disponibles del tipo correcto (washers) al modal', async () => {
-    const order    = makeOrder('arrived', 'ord-1')
-    const washer1  = makeMachine('washer', 'mach-w1', 'available')
-    const washer2  = makeMachine('washer', 'mach-w2', 'running', 'other-ord')  // en uso
-    const dryer1   = makeMachine('dryer',  'mach-d1', 'available')
-    const wrapper  = await mountProcessing({ orders: [order], machines: [washer1, washer2, dryer1] })
+  it('pasa las máquinas operativas del tipo correcto (washers) al modal excluyendo otros tipos y mantenimiento', async () => {
+    const order           = makeOrder('arrived', 'ord-1')
+    const washer1         = makeMachine('washer', 'mach-w1', 'available')
+    const washer2         = makeMachine('washer', 'mach-w2', 'running', 'other-ord')  // en uso (compartible)
+    const washerMaint     = makeMachine('washer', 'mach-wm', 'maintenance')           // en mantenimiento (excluida)
+    const dryer1          = makeMachine('dryer',  'mach-d1', 'available')             // otro tipo (excluida)
+    const wrapper         = await mountProcessing({ orders: [order], machines: [washer1, washer2, washerMaint, dryer1] })
 
     const advanceBtn = wrapper.findAll('button').find(b =>
       b.text().toLowerCase().includes('washing')
@@ -261,9 +262,9 @@ describe('Processing — apertura del MachineSelectModal al avanzar a etapa con 
     await advanceBtn?.trigger('click')
     await flushPromises()
 
-    // Solo washer1 está disponible; washer2 está running y dryer1 es dryer
+    // washer1 y washer2 están operativas; dryer1 es secadora y washerMaint está en mantenimiento
     const machCount = wrapper.find('[data-testid="msm-machine-count"]').text()
-    expect(machCount).toBe('1')
+    expect(machCount).toBe('2')
   })
 })
 
@@ -416,7 +417,7 @@ describe('Processing — liberar máquina anterior al avanzar', () => {
     await advanceBtn?.trigger('click')
     await flushPromises()
 
-    expect(mockReleaseMachine).toHaveBeenCalledWith('mach-iron-1')
+    expect(mockReleaseMachine).toHaveBeenCalledWith('mach-iron-1', 'ord-iron-1')
     expect(mockUpdateOrderStatus).toHaveBeenCalledWith('ord-iron-1', 'quality_check')
   })
 })
@@ -469,7 +470,7 @@ describe('Processing — asignación y liberación manual en la tarjeta', () => 
     await releaseBtn?.trigger('click')
     await flushPromises()
 
-    expect(mockReleaseMachine).toHaveBeenCalledWith('mach-w1')
+    expect(mockReleaseMachine).toHaveBeenCalledWith('mach-w1', 'ord-wash-1')
   })
 })
 

@@ -31,8 +31,17 @@
             {{ $t('facility.capacity') }}: {{ machine.capacity }}
           </span>
         </span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium shrink-0">
+        <span
+          v-if="getMachineOrdersCount(machine) === 0"
+          class="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium shrink-0"
+        >
           {{ $t('facilityProcessing.statusAvailable') }}
+        </span>
+        <span
+          v-else
+          class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium shrink-0"
+        >
+          {{ getMachineOrdersCount(machine) === 1 ? $t('facilityProcessing.inUseSingle') : $t('facilityProcessing.inUseCount', { count: getMachineOrdersCount(machine) }) }}
         </span>
       </label>
     </div>
@@ -108,6 +117,12 @@ watch(() => props.show, (visible) => {
   submitting.value        = false
   error.value             = ''
 })
+
+function getMachineOrdersCount(m) {
+  if (!m) return 0
+  if (Array.isArray(m.current_orders)) return m.current_orders.length
+  return m.current_order_id ? 1 : 0
+}
 
 function handleClose() {
   if (submitting.value) return

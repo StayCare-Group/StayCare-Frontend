@@ -11,8 +11,9 @@ export async function assignMachine(machineId: string, orderId: string) {
   })
 }
 
-export async function releaseMachine(machineId: string) {
+export async function releaseMachine(machineId: string, orderId?: string) {
   return apiFetch(`/api/machines/${machineId}/release`, {
     method: 'POST',
+    ...(orderId ? { body: JSON.stringify({ order_id: orderId }) } : {}),
   })
 }

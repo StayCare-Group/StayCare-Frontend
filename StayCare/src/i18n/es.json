@@ -443,6 +443,8 @@
     "moveTo": "Mover a {status}",
     "noOrders": "Sin pedidos",
     "inUse": "{used}/{total} en uso",
+    "inUseCount": "En uso ({count} pedidos)",
+    "inUseSingle": "En uso (1 pedido)",
     "noMachinesConfigured": "Aún no hay máquinas configuradas.",
     "seeding": "Cargando...",
     "seedDefaultMachines": "Cargar Máquinas por Defecto",
