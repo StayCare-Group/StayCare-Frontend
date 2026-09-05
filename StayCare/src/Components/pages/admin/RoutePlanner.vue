@@ -327,13 +327,13 @@
             >
               {{ showRouteMap[route._id] ? $t('routePlanner.hideMap') : $t('routePlanner.showMap') }}
             </button>
-            <button
+            <!-- <button
               @click="handleDeleteRoute(route._id)"
               :disabled="deleting[route._id]"
               class="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-40"
             >
               {{ deleting[route._id] ? $t('routePlanner.deleting') : $t('admin.delete') }}
-            </button>
+            </button> -->
           </div>
         </div>
 
