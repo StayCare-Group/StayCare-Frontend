@@ -121,6 +121,8 @@
       <template v-if="!loading">
         <ClientPropertiesManager :client-id="String(client._id ?? client.id ?? client.user_id ?? '')" />
 
+        <ClientPriceListManager :client-id="String(client._id ?? client.id ?? client.user_id ?? '')" />
+
         <!-- Client Orders -->
         <div class="bg-white rounded-xl shadow-sm p-5 space-y-3">
           <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('clientDetail.ordersCount', { count: clientOrders.length }) }}</h3>
@@ -166,6 +168,7 @@ import { mapOrderForList } from '@/utils/orderMappers'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import ClientPropertiesManager from '../shared/ClientPropertiesManager.vue'
+import ClientPriceListManager from '../shared/ClientPriceListManager.vue'
 import { useUiStore } from '../../../stores/ui.js'
 
 const { t } = useI18n()

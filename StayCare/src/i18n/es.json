@@ -771,5 +771,30 @@
     "selectPickupTimeWindowRequired": "Por favor selecciona el horario de recogida.",
     "estimatedBagsRequired": "Por favor ingresa una cantidad válida de bolsas estimadas.",
     "fieldRequired": "Este campo es requerido."
+  },
+  "priceList": {
+    "title": "Precios personalizados ({count})",
+    "empty": "No hay precios personalizados configurados. Todos los artículos utilizan los precios estándar del catálogo.",
+    "addCta": "Agregar precio personalizado",
+    "item": "Servicio / Artículo",
+    "basePrice": "Precio base",
+    "customPrice": "Precio personalizado",
+    "actions": "Acciones",
+    "selectItem": "Seleccionar artículo del catálogo",
+    "searchItem": "Buscar artículos...",
+    "noItemsAvailable": "No hay artículos disponibles en el catálogo",
+    "itemAlreadyAdded": "Este artículo ya tiene un precio personalizado",
+    "save": "Guardar",
+    "edit": "Editar",
+    "saving": "Guardando...",
+    "deleteConfirm": "¿Eliminar este precio personalizado? El artículo usará el precio estándar del catálogo.",
+    "addFailed": "Error al agregar el precio personalizado",
+    "deleteFailed": "Error al eliminar el precio personalizado",
+    "saveFailed": "Error al guardar el precio personalizado",
+    "loadFailed": "Error al cargar los precios personalizados",
+    "priceRequired": "El precio es requerido",
+    "priceInvalid": "El precio debe ser 0 o mayor",
+    "itemRequired": "Por favor selecciona un artículo",
+    "priceLabel": "Precio (€)"
   }
 }

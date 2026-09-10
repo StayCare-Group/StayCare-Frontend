@@ -771,5 +771,30 @@
     "selectPickupTimeWindowRequired": "Please select a pickup time window.",
     "estimatedBagsRequired": "Please enter a valid estimated bag count.",
     "fieldRequired": "This field is required."
+  },
+  "priceList": {
+    "title": "Custom Prices ({count})",
+    "empty": "No custom prices configured. All items use standard catalog prices.",
+    "addCta": "Add custom price",
+    "item": "Service / Item",
+    "basePrice": "Base price",
+    "customPrice": "Custom price",
+    "actions": "Actions",
+    "selectItem": "Select item from catalog",
+    "searchItem": "Search items...",
+    "noItemsAvailable": "No items available in catalog",
+    "itemAlreadyAdded": "This item already has a custom price",
+    "save": "Save",
+    "edit": "Edit",
+    "saving": "Saving...",
+    "deleteConfirm": "Remove this custom price? The item will use the standard catalog price.",
+    "addFailed": "Failed to add custom price",
+    "deleteFailed": "Failed to remove custom price",
+    "saveFailed": "Failed to save custom price",
+    "loadFailed": "Failed to load custom prices",
+    "priceRequired": "Price is required",
+    "priceInvalid": "Price must be 0 or greater",
+    "itemRequired": "Please select an item",
+    "priceLabel": "Price (€)"
   }
 }
