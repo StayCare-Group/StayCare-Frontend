@@ -112,8 +112,20 @@
       <template #cell-createdAt="{ value }">
         <span class="text-gray-500">{{ value }}</span>
       </template>
-      <template #cell-serviceType="{ value }">
-        <span class="text-gray-500">{{ value }}</span>
+      <template #cell-specialNotes="{ item }">
+        <AppTooltip
+          v-if="item.specialNotes"
+          :text="item.specialNotes"
+          :title="$t('common.specialNotes')"
+        >
+          <span class="cursor-help px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60 inline-flex items-center gap-1 hover:bg-amber-100 transition-colors">
+            <svg class="w-3 h-3 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span>{{ $t('facility.notes') }}</span>
+          </span>
+        </AppTooltip>
+        <span v-else class="text-gray-400 text-xs">—</span>
       </template>
       <template #cell-bags="{ item }">
         <span class="text-gray-700">{{ item.actualBags ?? item.estimatedBags }}</span>
@@ -159,6 +171,7 @@ import LoadingPanel from '../../ui/LoadingPanel.vue'
 import CancelOrderModal from '../../ui/CancelOrderModal.vue'
 import ClientFilterSelect from '../../ui/ClientFilterSelect.vue'
 import DateRangeFilter from '../../ui/DateRangeFilter.vue'
+import AppTooltip from '../../ui/AppTooltip.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
@@ -339,7 +352,7 @@ const orderHeaders = computed(() => [
   { key: 'id', label: t('client.orderId') },
   { key: 'client', label: t('common.client') },
   { key: 'createdAt', label: t('client.date') },
-  { key: 'serviceType', label: t('client.service') },
+  { key: 'specialNotes', label: t('facility.notes') },
   { key: 'bags', label: t('client.bagsLabel') },
   { key: 'status', label: t('common.status') },
   { key: 'total', label: t('client.total') },
