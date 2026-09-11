@@ -4,7 +4,7 @@
     :title="$t('facilityProcessing.qualityCheckModalTitle')"
     size="xl"
     :close-on-backdrop="false"
-    :loading="submitting"
+    :loading="isProcessing"
     @close="handleClose"
   >
     <p class="text-sm text-gray-500">{{ $t('facilityProcessing.qualityCheckInstructions') }}</p>
@@ -100,18 +100,30 @@
       <AppButton
         variant="secondary"
         size="sm"
-        :disabled="submitting || loadingItems"
+        :disabled="isProcessing || loadingItems"
         @click="handleClose"
       >
         {{ $t('common.cancel') }}
       </AppButton>
       <AppButton
+        variant="secondary"
         size="sm"
         :loading="submitting"
-        :disabled="hasMismatch || submitting || loadingItems"
-        @click="confirm"
+        :disabled="hasMismatch || isProcessing || loadingItems"
+        @click="confirm(false)"
       >
         {{ $t('facilityProcessing.qualityCheckContinue') }}
+      </AppButton>
+      <AppButton
+        size="sm"
+        :loading="submittingAndPrinting"
+        :disabled="hasMismatch || isProcessing || loadingItems"
+        @click="confirm(true)"
+      >
+        <svg v-if="!submittingAndPrinting" class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        {{ $t('facilityProcessing.qualityCheckConfirmAndPrint') }}
       </AppButton>
     </template>
   </AppModal>
@@ -125,6 +137,7 @@ import AppButton from './AppButton.vue'
 import { useUiStore } from '../../stores/ui.js'
 import { fetchOrderById, updateOrder, updateOrderStatus } from '../../api/orders'
 import { mapOrderForDetail } from '@/utils/orderMappers'
+import { printOrderPdf } from '@/utils/generateOrderPdf.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -140,6 +153,9 @@ const qualityItems = ref([])
 const internalNote = ref('')
 const loadingItems = ref(false)
 const submitting = ref(false)
+const submittingAndPrinting = ref(false)
+const isProcessing = computed(() => submitting.value || submittingAndPrinting.value)
+const orderDetail = ref(null)
 const error = ref('')
 
 function itemTotal(item) {
@@ -171,6 +187,8 @@ watch(
       error.value = ''
       loadingItems.value = false
       submitting.value = false
+      submittingAndPrinting.value = false
+      orderDetail.value = null
       return
     }
     if (!props.order) return
@@ -197,6 +215,7 @@ async function initItems() {
   try {
     const rawData = await fetchOrderById(orderId)
     const detail = mapOrderForDetail(rawData)
+    orderDetail.value = detail
 
     qualityItems.value = (detail.items ?? []).map(i => {
       const good    = i.qtyGood    ?? i.qty ?? 0
@@ -223,14 +242,18 @@ async function initItems() {
 }
 
 function handleClose() {
-  if (submitting.value) return
+  if (isProcessing.value) return
   emit('close')
 }
 
-async function confirm() {
-  if (!props.order || submitting.value || hasMismatch.value) return
+async function confirm(withPrint = false) {
+  if (!props.order || isProcessing.value || hasMismatch.value) return
 
-  submitting.value = true
+  if (withPrint) {
+    submittingAndPrinting.value = true
+  } else {
+    submitting.value = true
+  }
   error.value = ''
 
   try {
@@ -251,6 +274,26 @@ async function confirm() {
       special_notes: internalNote.value?.trim() || undefined,
     })
 
+    if (withPrint) {
+      const baseDetail = orderDetail.value || mapOrderForDetail(props.order)
+      const printData = {
+        ...baseDetail,
+        status: 'ready_to_delivery',
+        statusLabel: t('orderStatus.ready_to_delivery', 'Ready for Delivery'),
+        specialNotes: internalNote.value?.trim() || baseDetail?.specialNotes || '',
+        items: qualityItems.value.map(i => ({
+          itemId:     i.itemId,
+          code:       i.code,
+          name:       i.name,
+          qty:        i.qty,
+          qtyGood:    i.qtyGood,
+          qtyBad:     i.qtyBad,
+          qtyStained: i.qtyStained,
+        })),
+      }
+      printOrderPdf(printData, t)
+    }
+
     uiStore.showSuccess(t('facilityProcessing.qualityCheckSuccess'))
     emit('success')
     emit('close')
@@ -258,6 +301,7 @@ async function confirm() {
     error.value = err?.message || t('common.error')
   } finally {
     submitting.value = false
+    submittingAndPrinting.value = false
   }
 }
 </script>

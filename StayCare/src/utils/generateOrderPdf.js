@@ -12,13 +12,13 @@ const LIGHT_GRAY = [242, 242, 242]
 const WHITE = [255, 255, 255]
 
 /**
- * Generates and downloads a PDF for a single order.
- * Compact single-page layout optimized for 102 mm x 152 mm (4" x 6") print size in B&W.
+ * Builds a jsPDF document for a single order in compact 102 mm x 152 mm format.
  *
  * @param {object} order  - Mapped order object from mapOrderForDetail
  * @param {object} t      - vue-i18n t() function (optional — falls back to English)
+ * @returns {import('jspdf').jsPDF}
  */
-export function generateOrderPdf(order, t) {
+export function buildOrderPdfDoc(order, t) {
   const _ = (key, fallback) => (t ? t(key) : fallback)
 
   // Custom 102 mm x 152 mm format (portrait label/ticket size)
@@ -240,8 +240,74 @@ export function generateOrderPdf(order, t) {
   doc.text(`StayFresh — ${generatedOn}`, margin, footerY)
   doc.text(_('orderPdf.confidential', 'Internal Use Only'), pageW - margin, footerY, { align: 'right' })
 
-  /* ── SAVE ── */
-  doc.save(`order-${order.id}.pdf`)
+  return doc
 }
+
+/**
+ * Generates and downloads a PDF for a single order.
+ *
+ * @param {object} order - Mapped order object
+ * @param {object} [t]   - vue-i18n t() function
+ * @returns {import('jspdf').jsPDF}
+ */
+export function generateOrderPdf(order, t) {
+  const doc = buildOrderPdfDoc(order, t)
+  doc.save(`order-${order.id}.pdf`)
+  return doc
+}
+
+/**
+ * Prepares the order PDF with auto-print action and prints it via an invisible iframe
+ * without requiring the user to download the file.
+ *
+ * @param {object} order - Mapped order object
+ * @param {object} [t]   - vue-i18n t() function
+ * @returns {import('jspdf').jsPDF}
+ */
+export function printOrderPdf(order, t) {
+  const doc = buildOrderPdfDoc(order, t)
+
+  if (typeof doc.autoPrint === 'function') {
+    doc.autoPrint()
+  }
+
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    const blob = doc.output('blob')
+    const pdfUrl = URL.createObjectURL(blob)
+
+    const iframe = document.createElement('iframe')
+    iframe.style.position = 'fixed'
+    iframe.style.right = '0'
+    iframe.style.bottom = '0'
+    iframe.style.width = '0'
+    iframe.style.height = '0'
+    iframe.style.border = '0'
+    iframe.src = pdfUrl
+    document.body.appendChild(iframe)
+
+    iframe.onload = () => {
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus()
+          iframe.contentWindow?.print()
+        } catch (e) {
+          console.error('Print iframe error:', e)
+        }
+      }, 150)
+    }
+
+    setTimeout(() => {
+      try {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe)
+        }
+        URL.revokeObjectURL(pdfUrl)
+      } catch {}
+    }, 60000)
+  }
+
+  return doc
+}
+
 
 

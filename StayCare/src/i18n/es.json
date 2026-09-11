@@ -490,7 +490,8 @@
     "qualityCheckConditionChanged": "Condición actualizada.",
     "qualityCheckNoteLabel": "Nota interna (opcional)",
     "qualityCheckNotePlaceholder": "ej: 2 prendas desmanchadas exitosamente",
-    "qualityCheckContinue": "Confirmar y Liberar"
+    "qualityCheckContinue": "Confirmar y Liberar",
+    "qualityCheckConfirmAndPrint": "Confirmar e Imprimir"
   },
   "machineSelectModal": {
     "title": "Asignar Máquina",

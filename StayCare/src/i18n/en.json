@@ -490,7 +490,8 @@
     "qualityCheckConditionChanged": "Condition updated.",
     "qualityCheckNoteLabel": "Internal note (optional)",
     "qualityCheckNotePlaceholder": "e.g. 2 items successfully de-stained",
-    "qualityCheckContinue": "Confirm & Release"
+    "qualityCheckContinue": "Confirm & Release",
+    "qualityCheckConfirmAndPrint": "Confirm & Print"
   },
   "machineSelectModal": {
     "title": "Assign Machine",
