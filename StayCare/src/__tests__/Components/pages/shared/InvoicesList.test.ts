@@ -7,7 +7,9 @@ import en from '@/i18n/en.json'
 
 // ─── Mocks de servicios y composables ────────────────────────────────────────
 
-const mockExportInvoicesDetailed = vi.fn()
+const { mockDownloadInvoicesCsv } = vi.hoisted(() => ({
+  mockDownloadInvoicesCsv: vi.fn().mockResolvedValue(undefined),
+}))
 
 vi.mock('@/router', () => ({
   default: {
@@ -25,12 +27,7 @@ vi.mock('@/api/clients', () => ({
 
 vi.mock('@/api/invoices', () => ({
   fetchInvoices: vi.fn(),
-}))
-
-vi.mock('@/composables/useExcelExporter.js', () => ({
-  useExcelExporter: () => ({
-    exportInvoicesDetailed: mockExportInvoicesDetailed,
-  }),
+  downloadInvoicesCsv: mockDownloadInvoicesCsv,
 }))
 
 let mockIsAdmin = true
@@ -249,122 +246,58 @@ describe('InvoicesList.vue', () => {
     })
   })
 
-  // ─── 5. Selección múltiple y Exportación a Excel ────────────────────────────
+  // ─── 5. Exportación a CSV ──────────────────────────────────────────────────
 
-  describe('Selección y Exportación Excel', () => {
-    it('selecciona y deselecciona todas las facturas con el checkbox maestro', async () => {
+  describe('Exportación a CSV', () => {
+    it('llama a downloadInvoicesCsv con los parámetros y filtros activos al pulsar Descargar CSV', async () => {
       const { wrapper } = await mountInvoicesList()
 
-      const masterCheckbox = wrapper.find('thead input[type="checkbox"]')
-      expect(masterCheckbox.exists()).toBe(true)
+      const exportBtn = wrapper.findAll('button').find(b => b.text().includes(en.invoices.exportCsv))
+      expect(exportBtn?.exists()).toBe(true)
 
-      // Marcar checkbox maestro
-      await masterCheckbox.setValue(true)
-      await flushPromises()
-
-      const rowCheckboxes = wrapper.findAll('tbody input[type="checkbox"]')
-      rowCheckboxes.forEach(cb => {
-        expect((cb.element as HTMLInputElement).checked).toBe(true)
-      })
-
-      // El botón de exportación debe indicar 3 seleccionadas
-      const exportBtn = wrapper.find('button')
-      expect(exportBtn.text()).toContain('3')
-
-      // Desmarcar checkbox maestro
-      await masterCheckbox.setValue(false)
-      await flushPromises()
-
-      rowCheckboxes.forEach(cb => {
-        expect((cb.element as HTMLInputElement).checked).toBe(false)
-      })
-    })
-
-    it('muestra error y NO exporta cuando no hay ninguna factura seleccionada', async () => {
-      const { wrapper } = await mountInvoicesList()
-
-      const exportBtn = wrapper.findAll('button').find(b => b.text().includes(en.invoices.exportExcelAll))
       await exportBtn?.trigger('click')
+      await flushPromises()
 
-      expect(mockShowError).toHaveBeenCalledWith(en.invoices.exportSelectRequired)
-      expect(mockExportInvoicesDetailed).not.toHaveBeenCalled()
+      expect(mockDownloadInvoicesCsv).toHaveBeenCalledOnce()
+      const params = mockDownloadInvoicesCsv.mock.calls[0][0]
+      expect(params.from).toBeDefined()
+      expect(params.to).toBeDefined()
     })
 
-    it('exporta únicamente las facturas seleccionadas cuando se marcan checkboxes individuales', async () => {
-      const { wrapper } = await mountInvoicesList()
-
-      const rowCheckboxes = wrapper.findAll('tbody input[type="checkbox"]')
-      // Seleccionar solo la primera factura
-      await rowCheckboxes[0].setValue(true)
-      await flushPromises()
-
-      const exportBtn = wrapper.findAll('button').find(b => b.text().includes('1'))
-      await exportBtn?.trigger('click')
-
-      expect(mockExportInvoicesDetailed).toHaveBeenCalledOnce()
-      const exportedItems = mockExportInvoicesDetailed.mock.calls[0][0]
-      expect(exportedItems).toHaveLength(1)
-      expect(exportedItems[0]._id).toBe('INV-001')
-      expect(mockShowError).not.toHaveBeenCalled()
-    })
-
-    it('resetea la selección de facturas al cambiar el filtro de fecha o limpiarlo', async () => {
-      const { wrapper } = await mountInvoicesList()
-
-      // 1. Seleccionar facturas
-      const masterCheckbox = wrapper.find('thead input[type="checkbox"]')
-      ;(masterCheckbox.element as HTMLInputElement).checked = true
-      await masterCheckbox.trigger('change')
-      await flushPromises()
-      expect(wrapper.find('button').text()).toContain('3')
-
-      // 2. Simular cambio en DateRangeFilter (update:from)
-      const dateRangeComp = wrapper.findComponent({ name: 'DateRangeFilter' })
-      dateRangeComp.vm.$emit('update:from', '2026-08-01')
-      await flushPromises()
-
-      // La selección debe haberse reseteado
-      expect(wrapper.find('button').text()).toContain(en.invoices.exportExcelAll)
-
-      // 3. Volver a seleccionar y simular clear
-      ;(masterCheckbox.element as HTMLInputElement).checked = true
-      await masterCheckbox.trigger('change')
-      await flushPromises()
-      expect(wrapper.find('button').text()).toContain('3')
-
-      dateRangeComp.vm.$emit('clear')
-      await flushPromises()
-      expect(wrapper.find('button').text()).toContain(en.invoices.exportExcelAll)
-    })
-
-    it('resetea la selección de facturas al cambiar el filtro de cliente o de estado', async () => {
+    it('incluye el filtro de cliente y status al exportar cuando están seleccionados', async () => {
       const { wrapper } = await mountInvoicesList({ isAdmin: true })
 
-      // 1. Seleccionar facturas
-      const masterCheckbox = wrapper.find('thead input[type="checkbox"]')
-      ;(masterCheckbox.element as HTMLInputElement).checked = true
-      await masterCheckbox.trigger('change')
-      await flushPromises()
-      expect(wrapper.find('button').text()).toContain('3')
-
-      // 2. Cambiar filtro de estado
+      // 1. Filtrar por status 'pending'
       const pendingBtn = wrapper.findAll('button').find(b => b.text() === en.invoices.filterPending)
       await pendingBtn?.trigger('click')
       await flushPromises()
 
-      expect(wrapper.find('button').text()).toContain(en.invoices.exportExcelAll)
-
-      // 3. Volver a seleccionar y cambiar filtro de cliente
-      ;(masterCheckbox.element as HTMLInputElement).checked = true
-      await masterCheckbox.trigger('change')
-      await flushPromises()
-      expect(wrapper.find('button').text()).toContain('3')
-
+      // 2. Filtrar por cliente
       const clientSelectComp = wrapper.findComponent({ name: 'ClientFilterSelect' })
-      clientSelectComp.vm.$emit('change', 'client-2')
+      clientSelectComp.vm.$emit('update:modelValue', 'client-1')
+      clientSelectComp.vm.$emit('change', 'client-1')
       await flushPromises()
 
-      expect(wrapper.find('button').text()).toContain(en.invoices.exportExcelAll)
+      // 3. Exportar
+      const exportBtn = wrapper.findAll('button').find(b => b.text().includes(en.invoices.exportCsv))
+      await exportBtn?.trigger('click')
+      await flushPromises()
+
+      expect(mockDownloadInvoicesCsv).toHaveBeenCalledOnce()
+      const params = mockDownloadInvoicesCsv.mock.calls[0][0]
+      expect(params.status).toBe('pending')
+      expect(params.client_id).toBe('client-1')
+    })
+
+    it('muestra error usando uiStore cuando falla la descarga del CSV', async () => {
+      mockDownloadInvoicesCsv.mockRejectedValueOnce(new Error('Network export error'))
+      const { wrapper } = await mountInvoicesList()
+
+      const exportBtn = wrapper.findAll('button').find(b => b.text().includes(en.invoices.exportCsv))
+      await exportBtn?.trigger('click')
+      await flushPromises()
+
+      expect(mockShowError).toHaveBeenCalledWith('Network export error')
     })
   })
 })

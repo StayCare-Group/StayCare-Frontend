@@ -1,6 +1,5 @@
 import * as XLSX from 'xlsx'
 import { useI18n } from 'vue-i18n'
-import { fetchInvoiceById } from '../api/invoices'
 import { fetchOrderById } from '../api/orders'
 import { fetchAllItems } from '../api/items'
 
@@ -26,110 +25,6 @@ function findMachine(statusHistory, statusName) {
 
 export function useExcelExporter() {
   const { t } = useI18n()
-
-  async function exportInvoicesDetailed(invoicesList) {
-    if (!invoicesList || !invoicesList.length) return
-
-    const wb = XLSX.utils.book_new()
-
-    const kNum = t('excel.invoiceNumber')
-    const kOrders = t('excel.orders')
-    const kClient = t('excel.client')
-    const kContact = t('excel.contact')
-    const kIssue = t('excel.issueDate')
-    const kDue = t('excel.dueDate')
-    const kStatus = t('excel.status')
-    const kTotal = t('excel.total')
-    const kSubtotal = t('excel.subtotal')
-    const kVat = t('excel.vat')
-    const kGrandTotal = t('excel.grandTotal')
-    const kInvoicesSheet = t('excel.invoicesSheet')
-
-    // 1. Summary sheet
-    const summaryHeaders = [kNum, kOrders, kClient, kIssue, kDue, kStatus, kTotal]
-    const summaryRows = invoicesList.map(inv => ({
-      [kNum]: inv.id,
-      [kOrders]: inv.orderId || '—',
-      [kClient]: inv.client || '—',
-      [kIssue]: inv.issueDate || '—',
-      [kDue]: inv.dueDate || '—',
-      [kStatus]: inv.status || '—',
-      [kTotal]: inv.grandTotal ?? 0,
-    }))
-    const wsSummary = XLSX.utils.json_to_sheet(summaryRows, { header: summaryHeaders })
-    XLSX.utils.book_append_sheet(wb, wsSummary, kInvoicesSheet)
-
-    // 2. Fetch full details for each invoice & add individual sheets
-    const details = await Promise.all(
-      invoicesList.map(async inv => {
-        try {
-          const raw = await fetchInvoiceById(inv._id)
-          return { listInv: inv, fullData: raw }
-        } catch {
-          return { listInv: inv, fullData: null }
-        }
-      })
-    )
-
-    const usedSheetNames = new Set([kInvoicesSheet])
-
-    for (const { listInv, fullData } of details) {
-      let sheetName = sanitizeSheetName(listInv.id || 'Invoice')
-      let count = 1
-      while (usedSheetNames.has(sheetName)) {
-        sheetName = `${sanitizeSheetName(listInv.id).slice(0, 28)}_${count++}`
-      }
-      usedSheetNames.add(sheetName)
-
-      const invData = fullData?.invoice ?? fullData ?? {}
-      const lineItems = fullData?.line_items ?? invData.line_items ?? fullData?.items ?? invData.items ?? listInv?.items ?? []
-      const clientName = fullData?.user?.name ?? fullData?.client_profile?.contact_person ?? listInv.client ?? '—'
-      const contactPerson = fullData?.client_profile?.contact_person ?? '—'
-
-      const sheetData = [
-        [t('excel.invoiceDetailTitle')],
-        [`${kNum}:`, listInv.id || invData.invoice_number || '—'],
-        [`${kClient}:`, clientName],
-        [`${kContact}:`, contactPerson],
-        [`${kIssue}:`, listInv.issueDate || invData.issue_date || '—'],
-        [`${kDue}:`, listInv.dueDate || invData.due_date || '—'],
-        [`${kStatus}:`, listInv.status || invData.status || '—'],
-        [],
-        [t('excel.lineItemsTitle')],
-        [t('excel.description'), t('excel.quantity'), t('excel.unitPrice'), t('excel.totalPrice')],
-      ]
-
-      if (lineItems.length > 0) {
-        lineItems.forEach(item => {
-          const description = item.description || item.name || item.item_name || item.name_snapshot || 'Item'
-          const qty = Number(item.quantity ?? item.qty ?? 1)
-          const unitPrice = Number(item.unit_price ?? item.unitPrice ?? 0)
-          const totalPrice = Number(item.total_price ?? item.total ?? (qty * unitPrice) ?? 0)
-          sheetData.push([
-            description,
-            qty,
-            unitPrice,
-            totalPrice,
-          ])
-        })
-      } else {
-        sheetData.push([t('excel.noLineItems'), 1, Number(listInv.grandTotal ?? 0), Number(listInv.grandTotal ?? 0)])
-      }
-
-      sheetData.push(
-        [],
-        ['', '', `${kSubtotal}:`, Number(invData.subtotal ?? listInv.grandTotal ?? 0)],
-        ['', '', `${kVat}:`, Number(invData.vat_amount ?? 0)],
-        ['', '', `${kGrandTotal}:`, Number(invData.total ?? listInv.grandTotal ?? 0)]
-      )
-
-      const ws = XLSX.utils.aoa_to_sheet(sheetData)
-      XLSX.utils.book_append_sheet(wb, ws, sheetName)
-    }
-
-    const dateStr = new Date().toISOString().slice(0, 10)
-    XLSX.writeFile(wb, `Facturas-StayCare-${dateStr}.xlsx`)
-  }
 
   async function exportOrdersDetailed(ordersList) {
     if (!ordersList || !ordersList.length) return
@@ -412,7 +307,6 @@ export function useExcelExporter() {
   }
 
   return {
-    exportInvoicesDetailed,
     exportOrdersDetailed,
     exportOrdersFlat,
   }

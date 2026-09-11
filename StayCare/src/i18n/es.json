@@ -334,7 +334,9 @@
     "filterPaid": "Pagadas",
     "exportExcel": "Descargar Excel ({count})",
     "exportExcelAll": "Descargar Excel",
-    "exportSelectRequired": "Selecciona al menos una orden para descargar."
+    "exportSelectRequired": "Selecciona al menos una orden para descargar.",
+    "exportCsv": "Descargar CSV",
+    "exportError": "No se pudo exportar las facturas. Por favor inténtalo de nuevo."
   },
   "excel": {
     "invoicesSheet": "Facturas",

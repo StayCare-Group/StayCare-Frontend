@@ -334,7 +334,9 @@
     "filterPaid": "Paid",
     "exportExcel": "Download Excel ({count})",
     "exportExcelAll": "Download Excel",
-    "exportSelectRequired": "Select at least one order to download."
+    "exportSelectRequired": "Select at least one order to download.",
+    "exportCsv": "Download CSV",
+    "exportError": "Failed to export invoices. Please try again."
   },
   "excel": {
     "invoicesSheet": "Invoices",
