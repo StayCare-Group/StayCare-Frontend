@@ -139,7 +139,7 @@
                   </button>
                   <button
                     class="text-xs text-red-500 hover:text-red-700"
-                    @click="removePrice(entry.item_id)"
+                    @click="openDeleteModal(entry)"
                   >
                     {{ $t('admin.delete') }}
                   </button>
@@ -155,6 +155,44 @@
         {{ $t('priceList.empty') }}
       </p>
     </template>
+
+    <!-- Delete custom price confirmation modal -->
+    <AppModal
+      :show="Boolean(itemToDelete)"
+      :title="$t('admin.delete')"
+      size="sm"
+      :loading="deletingPrice"
+      @close="itemToDelete = null"
+    >
+      <p class="text-sm text-gray-600">
+        {{ $t('priceList.deleteConfirm') }}
+      </p>
+      <div v-if="itemToDelete" class="mt-2 p-3 bg-gray-50 rounded-lg text-xs space-y-1">
+        <p class="font-medium text-gray-800">{{ itemToDelete.item_name }}</p>
+        <p class="text-gray-500">
+          {{ $t('priceList.customPrice') }}: <span class="font-semibold text-brand-700">&euro;{{ Number(itemToDelete.price).toFixed(2) }}</span>
+        </p>
+      </div>
+
+      <template #footer>
+        <AppButton
+          variant="secondary"
+          size="sm"
+          :disabled="deletingPrice"
+          @click="itemToDelete = null"
+        >
+          {{ $t('common.cancel') }}
+        </AppButton>
+        <AppButton
+          variant="danger"
+          size="sm"
+          :loading="deletingPrice"
+          @click="confirmDeletePrice"
+        >
+          {{ $t('admin.delete') }}
+        </AppButton>
+      </template>
+    </AppModal>
   </div>
 </template>
 
@@ -170,6 +208,7 @@ import {
 import { fetchAllItems } from '../../../api/items'
 import { formatApiErrorMessage } from '../../../utils/errors'
 import AppButton from '../../ui/AppButton.vue'
+import AppModal from '../../ui/AppModal.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 
 const { t } = useI18n()
@@ -191,6 +230,8 @@ const loading = ref(true)
 const saving = ref(false)
 const customPrices = ref([])
 const catalogItems = ref([])
+const itemToDelete = ref(null)
+const deletingPrice = ref(false)
 
 // Add form
 const showAddForm = ref(false)
@@ -329,13 +370,21 @@ async function saveEditPrice(itemId) {
   }
 }
 
-async function removePrice(itemId) {
-  if (!confirm(t('priceList.deleteConfirm'))) return
+function openDeleteModal(entry) {
+  itemToDelete.value = entry
+}
+
+async function confirmDeletePrice() {
+  if (!itemToDelete.value) return
+  deletingPrice.value = true
   try {
-    await deleteClientPriceItems(props.clientId, [itemId])
+    await deleteClientPriceItems(props.clientId, [itemToDelete.value.item_id])
+    itemToDelete.value = null
     await loadPriceList()
   } catch (err) {
     ui.showError(formatApiErrorMessage(err, t('priceList.deleteFailed'), t))
+  } finally {
+    deletingPrice.value = false
   }
 }
 

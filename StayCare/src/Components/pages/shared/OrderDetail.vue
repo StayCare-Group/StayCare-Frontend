@@ -1,11 +1,10 @@
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex items-center gap-3">
-      <button @click="navStore.goBack('orders')" class="text-brand-700 hover:text-gray-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h2 class="text-lg font-semibold text-brand-700">{{ order?.id }}</h2>
+    <TitleHeader
+      :title="order?.id || ''"
+      :on-back="() => navStore.goBack('orders')"
+    >
       <StatusBadge v-if="order" :status="order.status" />
       <!-- PDF download -->
       <AppButton
@@ -47,7 +46,7 @@
         </svg>
         {{ $t('admin.cancelOrder') }}
       </AppButton>
-    </div>
+    </TitleHeader>
 
     <p v-if="order && isAdminOrStaff && order.isInvoiced" class="text-xs text-amber-600">
       {{ $t('orderDetail.cannotEditInvoicedOrder') }}
@@ -200,6 +199,7 @@ import { ref, computed, reactive, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppModal from '../../ui/AppModal.vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import TitleHeader from '../../ui/TitleHeader.vue'
 import OrderTimeline from '../../ui/OrderTimeline.vue'
 import AppButton from '../../ui/AppButton.vue'
 import DataTable from '../../ui/DataTable.vue'

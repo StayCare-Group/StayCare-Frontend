@@ -328,11 +328,11 @@
               {{ showRouteMap[route._id] ? $t('routePlanner.hideMap') : $t('routePlanner.showMap') }}
             </button>
             <!-- <button
-              @click="handleDeleteRoute(route._id)"
-              :disabled="deleting[route._id]"
-              class="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-40"
+              v-if="route.status === 'planned'"
+              @click="openDeleteRouteModal(route)"
+              class="text-xs text-red-500 hover:text-red-700 font-medium"
             >
-              {{ deleting[route._id] ? $t('routePlanner.deleting') : $t('admin.delete') }}
+              {{ $t('admin.delete') }}
             </button> -->
           </div>
         </div>
@@ -390,6 +390,42 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete route confirmation modal -->
+    <AppModal
+      :show="Boolean(routeToDelete)"
+      :title="$t('admin.delete')"
+      size="sm"
+      :loading="deletingRoute"
+      @close="routeToDelete = null"
+    >
+      <p class="text-sm text-gray-600">
+        {{ $t('routePlanner.confirmDeleteRoute') }}
+      </p>
+      <div v-if="routeToDelete" class="mt-2 p-3 bg-gray-50 rounded-lg text-xs space-y-1">
+        <p class="font-medium text-gray-800">{{ routeToDelete.driverName || 'Unassigned' }}</p>
+        <p class="text-gray-500">{{ routeToDelete.date }} &middot; {{ routeToDelete.totalStops }} {{ $t('routePlanner.stops') }}</p>
+      </div>
+
+      <template #footer>
+        <AppButton
+          variant="secondary"
+          size="sm"
+          :disabled="deletingRoute"
+          @click="routeToDelete = null"
+        >
+          {{ $t('common.cancel') }}
+        </AppButton>
+        <AppButton
+          variant="danger"
+          size="sm"
+          :loading="deletingRoute"
+          @click="confirmDeleteRoute"
+        >
+          {{ $t('admin.delete') }}
+        </AppButton>
+      </template>
+    </AppModal>
   </div>
 </template>
 
@@ -411,6 +447,7 @@ import {
 } from '../../../utils/orderFlow'
 import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
+import AppModal from '../../ui/AppModal.vue'
 import ClientFilterSelect from '../../ui/ClientFilterSelect.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
@@ -473,6 +510,8 @@ function setAssignQueue(queue) {
 const reassignTargets = reactive({})
 const reassigning = reactive({})
 const deleting = reactive({})
+const routeToDelete = ref(null)
+const deletingRoute = ref(false)
 
 /* ── Auto-assign state ── */
 const autoDate = ref(localDateStr())
@@ -1028,12 +1067,17 @@ function getRouteMarkers(route) {
   return markers
 }
 
-async function handleDeleteRoute(routeId) {
-  if (!routeId) return
-  if (!confirm(t('routePlanner.confirmDeleteRoute'))) return
-  deleting[routeId] = true
+function openDeleteRouteModal(route) {
+  routeToDelete.value = route
+}
+
+async function confirmDeleteRoute() {
+  if (!routeToDelete.value) return
+  const routeId = routeToDelete.value._id
+  deletingRoute.value = true
   try {
     await deleteRoute(routeId)
+    routeToDelete.value = null
     await loadRoutes()
     // Refresh orders so they reappear in pending list
     const ordersData = await fetchAllOrders({ status: ROUTE_ORDER_STATUSES }).catch(() => [])
@@ -1041,28 +1085,7 @@ async function handleDeleteRoute(routeId) {
   } catch (err) {
     ui.showError(err?.message || err?.error || t('admin.errorDeleteRoute'))
   } finally {
-    deleting[routeId] = false
-  }
-}
-
-
-async function continueWithoutDriver(order) {
-  console.log(order)
-  const confirmed = window.confirm(
-    'This order will continue without a driver. The facility must still confirm when the order arrives.'
-  )
-
-  if (!confirmed) return
-
-  try {
-    await apiConfirmPickup(order._id)
-  } catch (error) {
-    console.error(error)
-    window.alert(
-      error?.message || 'The order could not be updated.'
-    )
-  } finally {
-    processingOrderId.value = null
+    deletingRoute.value = false
   }
 }
 

@@ -1,12 +1,9 @@
 <template>
   <div class="space-y-6 max-w-3xl">
-    <!-- Header -->
-    <div class="flex items-center gap-3">
-      <button @click="navStore.goBack('invoices')" class="text-brand-700 hover:text-gray-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h2 class="text-lg font-semibold text-brand-700">{{ $t('admin.newInvoice') }}</h2>
-    </div>
+    <TitleHeader
+      :title="$t('admin.newInvoice')"
+      :on-back="() => navStore.goBack('invoices')"
+    />
 
     <form @submit.prevent="submitInvoice" class="space-y-6">
       <!-- Client & Orders -->
@@ -138,6 +135,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import PricingSummaryCard from '../../ui/PricingSummaryCard.vue'
+import TitleHeader from '../../ui/TitleHeader.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchClients } from '../../../api/clients'
 import { fetchOrders } from '../../../api/orders'

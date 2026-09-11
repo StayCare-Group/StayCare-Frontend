@@ -11,6 +11,7 @@
     "cancel": "Cancelar",
     "done": "Hecho",
     "clear": "Limpiar",
+    "retry": "Reintentar",
     "error": "Error",
     "welcomeBack": "Bienvenido de nuevo",
     "dashboard": "Panel",
@@ -412,7 +413,15 @@
     "ordersCount": "Pedidos ({count})",
     "noOrders": "No se encontraron pedidos.",
     "noClientSelected": "No se seleccionó cliente.",
-    "loadFailed": "No se pudo cargar el detalle del cliente."
+    "loadFailed": "No se pudo cargar el detalle del cliente. Por favor, intente nuevamente o contacte al administrador.",
+    "editProfile": "Editar Perfil",
+    "updateSuccess": "Cliente actualizado correctamente.",
+    "changePassword": "Cambiar Contraseña",
+    "newPassword": "Nueva Contraseña",
+    "confirmNewPassword": "Confirmar Nueva Contraseña",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "passwordTooShort": "La contraseña debe tener al menos 6 caracteres.",
+    "passwordUpdated": "Contraseña actualizada correctamente."
   },
   "reports": {
     "title": "Informes",

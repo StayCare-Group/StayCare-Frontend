@@ -4,31 +4,10 @@
 
     <template v-else>
       <!-- Header -->
-      <div class="flex items-center gap-3">
-        <button
-          type="button"
-          class="text-brand-700 hover:text-gray-400"
-          @click="goBack"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-
-        <h2 class="text-lg font-semibold text-brand-700">
-          {{ $t('driver.confirmDelivery') }}
-        </h2>
-      </div>
+      <TitleHeader
+        :title="$t('driver.confirmDelivery')"
+        :on-back="goBack"
+      />
 
       <!-- Manual flow information -->
       <div
@@ -223,10 +202,12 @@ import {
 import { useI18n } from 'vue-i18n'
 
 import { useNavStore } from '../../../stores/nav.js'
+import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import InfoGridCard from '../../ui/InfoGridCard.vue'
+import TitleHeader from '../../ui/TitleHeader.vue'
 
 import {
   fetchRouteById,
@@ -240,6 +221,7 @@ import {
 
 const { t } = useI18n()
 const navStore = useNavStore()
+const authStore = useAuthStore()
 const ui = useUiStore()
 
 const stop = ref(null)
@@ -728,7 +710,11 @@ async function confirmDelivery() {
   }
 }
 
+const targetRoutePage = computed(() => {
+  return authStore.isDriver ? 'route' : 'routes'
+})
+
 function goBack() {
-  navStore.goBack('route')
+  navStore.goBack(targetRoutePage.value)
 }
 </script>

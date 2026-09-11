@@ -84,7 +84,7 @@
               class="text-xs text-brand-700 hover:underline"
             >{{ $t('admin.edit') }}</button>
             <button
-              @click="deleteProperty(propertyIdOf(p))"
+              @click="openDeleteModal(p)"
               class="text-xs text-red-500 hover:text-red-700"
             >{{ $t('admin.delete') }}</button>
           </div>
@@ -93,6 +93,41 @@
       </div>
     </div>
     <p v-else class="text-xs text-gray-400">{{ $t('properties.empty') }}</p>
+
+    <!-- Delete property confirmation modal -->
+    <AppModal
+      :show="Boolean(propertyToDelete)"
+      :title="$t('admin.delete')"
+      size="sm"
+      :loading="deletingProperty"
+      @close="propertyToDelete = null"
+    >
+      <p class="text-sm text-gray-600">
+        {{ $t('properties.deleteConfirm') }}
+      </p>
+      <p v-if="propertyToDelete" class="text-sm font-semibold text-gray-800 mt-1">
+        {{ propertyToDelete.property_name }}
+      </p>
+
+      <template #footer>
+        <AppButton
+          variant="secondary"
+          size="sm"
+          :disabled="deletingProperty"
+          @click="propertyToDelete = null"
+        >
+          {{ $t('common.cancel') }}
+        </AppButton>
+        <AppButton
+          variant="danger"
+          size="sm"
+          :loading="deletingProperty"
+          @click="confirmDeleteProperty"
+        >
+          {{ $t('admin.delete') }}
+        </AppButton>
+      </template>
+    </AppModal>
   </div>
 </template>
 
@@ -109,6 +144,7 @@ import {
 import MapPicker from '../../ui/MapPicker.vue'
 import MiniMap from '../../ui/MiniMap.vue'
 import AppButton from '../../ui/AppButton.vue'
+import AppModal from '../../ui/AppModal.vue'
 import { formatApiErrorMessage } from '../../../utils/errors'
 
 const { t } = useI18n()
@@ -127,6 +163,8 @@ const addingProp = ref(false)
 const propError = ref('')
 const expandedMap = ref(null)
 const editingPropertyId = ref(null)
+const propertyToDelete = ref(null)
+const deletingProperty = ref(false)
 const newProp = ref({
   property_name: '',
   address: '',
@@ -231,14 +269,22 @@ async function saveProperty() {
   }
 }
 
-async function deleteProperty(propertyId) {
+function openDeleteModal(property) {
+  propertyToDelete.value = property
+}
+
+async function confirmDeleteProperty() {
+  const propertyId = propertyIdOf(propertyToDelete.value)
   if (!propertyId) return
-  if (!confirm(t('properties.deleteConfirm'))) return
+  deletingProperty.value = true
   try {
     await deletePropertyById(propertyId)
+    propertyToDelete.value = null
     await loadClientProperties()
   } catch (err) {
     ui.showError(err?.message || t('properties.deleteFailed'))
+  } finally {
+    deletingProperty.value = false
   }
 }
 

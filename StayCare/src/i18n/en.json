@@ -11,6 +11,7 @@
     "cancel": "Cancel",
     "done": "Done",
     "clear": "Clear",
+    "retry": "Retry",
     "error": "Error",
     "welcomeBack": "Welcome back",
     "dashboard": "Dashboard",
@@ -412,7 +413,15 @@
     "ordersCount": "Orders ({count})",
     "noOrders": "No orders found.",
     "noClientSelected": "No client selected.",
-    "loadFailed": "Failed to load client details."
+    "loadFailed": "Failed to load client details. Please try again or contact the administrator.",
+    "editProfile": "Edit Profile",
+    "updateSuccess": "Client updated successfully.",
+    "changePassword": "Change Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "passwordUpdated": "Password updated successfully."
   },
   "reports": {
     "title": "Reports",

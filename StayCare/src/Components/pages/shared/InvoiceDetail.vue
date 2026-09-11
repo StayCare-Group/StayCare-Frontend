@@ -1,13 +1,12 @@
 <template>
   <div class="space-y-6 max-w-3xl">
     <!-- Header -->
-    <div class="flex items-center gap-3">
-      <button @click="navStore.goBack('invoices')" class="text-brand-700 hover:text-gray-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <h2 class="text-lg font-semibold text-brand-700">{{ invoice?.id }}</h2>
+    <TitleHeader
+      :title="invoice?.id || ''"
+      :on-back="() => navStore.goBack('invoices')"
+    >
       <StatusBadge v-if="invoice" :status="invoice.status" type="invoice" />
-    </div>
+    </TitleHeader>
 
     <div v-if="invoice" class="space-y-6">
       <!-- Invoice Meta -->
@@ -72,6 +71,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import TitleHeader from '../../ui/TitleHeader.vue'
 import AppButton from '../../ui/AppButton.vue'
 import PricingSummaryCard from '../../ui/PricingSummaryCard.vue'
 import InfoGridCard from '../../ui/InfoGridCard.vue'
