@@ -17,6 +17,11 @@ vi.mock('@/api/orders', () => ({
   updateOrderStatus: (...args: any[]) => mockUpdateOrderStatus(...args),
 }))
 
+vi.mock('@/api/items', () => ({
+  fetchAllItems: () => Promise.resolve([]),
+  mapItemForCatalog: (raw: any) => raw,
+}))
+
 vi.mock('@/utils/generateOrderPdf.js', () => ({
   printOrderPdf: (...args: any[]) => mockPrintOrderPdf(...args),
   generateOrderPdf: vi.fn(),

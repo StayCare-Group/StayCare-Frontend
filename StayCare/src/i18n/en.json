@@ -524,7 +524,7 @@
     "loadingOrder": "Loading order...",
     "orderNotFound": "Order not found.",
     "cannotEditInvoicedOrder": "An invoiced order cannot be edited.",
-    "cannotEditReceivedOrder": "An order cannot be edited once it has been received at the facility.",
+    "cannotEditReceivedOrder": "An order cannot be edited once it is ready for delivery or completed.",
     "selectDateAndWindow": "Please select a date and time window.",
     "rescheduleFailed": "Failed to reschedule order.",
     "noItems": "No items recorded.",

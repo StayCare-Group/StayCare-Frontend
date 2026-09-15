@@ -1,27 +1,40 @@
 export type RouteType = 'Pickup' | 'Delivery'
 export type RouteStopStatus = 'Pending' | 'In Transit' | 'Completed'
 
+export type OrderStatus =
+  | 'pending'
+  | 'assigned'
+  | 'rescheduled'
+  | 'transit'
+  | 'arrived'
+  | 'washing'
+  | 'drying'
+  | 'ironing'
+  | 'quality_check'
+  | 'ready_to_delivery'
+  | 'collected'
+  | 'delivered'
+  | 'completed'
+  | 'cancelled'
+
+export const NON_EDITABLE_STATUSES = new Set<string>([
+  'ready_to_delivery',
+  'collected',
+  'delivered',
+  'completed',
+  'cancelled',
+])
+
 /**
- * Normalizes any status string to the canonical snake_case format used
- * by the OrderStatus enum and the backend API.
- *
- * The backend already returns canonical values (e.g. "pending", "quality_check")
- * after the repository-level normalization. This function is kept as a safety
- * net for any legacy or edge-case values that may appear from other sources
- * (e.g. mock data, route-stop statuses, local state).
+ * Normalizes any status string to canonical snake_case.
+ * Handles casing (e.g. MySQL PascalCase "QualityCheck", "ReadyToDeliver") and spaces/hyphens.
  */
 export function normalizeStatus(status?: string): string {
   if (!status) return ''
   const lower = String(status).trim().toLowerCase().replace(/[\s-]+/g, '_')
-  // Handle legacy display-label or PascalCase variants that may still appear
-  // from mock data, route stops, or other non-order sources.
-  if (lower === 'pending_pickup') return 'pending'
   if (lower === 'in_transit') return 'transit'
-  if (lower === 'received_at_facility') return 'arrived'
-  if (lower === 'qualitycheck' || lower === 'quality_control') return 'quality_check'
-  if (lower === 'readytodeliver' || lower === 'ready_to_deliver' || lower === 'ready_for_delivery') return 'ready_to_delivery'
-  if (lower === 'out_for_delivery') return 'collected'
-  if (lower === 'cancelado') return 'cancelled'
+  if (lower === 'qualitycheck') return 'quality_check'
+  if (lower === 'readytodeliver') return 'ready_to_delivery'
   return lower
 }
 
@@ -32,7 +45,8 @@ export function isCancelableStatus(status?: string): boolean {
 
 export function isEditableStatus(status?: string): boolean {
   const norm = normalizeStatus(status)
-  return norm === 'pending' || norm === 'assigned' || norm === 'rescheduled' || norm === 'transit'
+  if (!norm) return false
+  return !NON_EDITABLE_STATUSES.has(norm)
 }
 
 export function isPickupAssignableStatus(status: string): boolean {
@@ -48,7 +62,7 @@ export function isDeliveryAssignableStatus(status: string): boolean {
 export function getRouteTypeFromOrderStatus(status: string): RouteType {
   if (isDeliveryAssignableStatus(status)) return 'Delivery'
   const norm = normalizeStatus(status)
-  if (norm === 'delivered' || norm === 'completed' || norm === 'invoiced') {
+  if (norm === 'delivered' || norm === 'completed') {
     return 'Delivery'
   }
   return 'Pickup'
@@ -56,7 +70,7 @@ export function getRouteTypeFromOrderStatus(status: string): RouteType {
 
 export function getRouteStopProgressStatus(status: string): RouteStopStatus {
   const norm = normalizeStatus(status)
-  if (norm === 'delivered' || norm === 'completed' || norm === 'invoiced') {
+  if (norm === 'delivered' || norm === 'completed') {
     return 'Completed'
   }
   if (norm === 'transit' || norm === 'collected') {

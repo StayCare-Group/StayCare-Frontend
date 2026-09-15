@@ -524,7 +524,7 @@
     "loadingOrder": "Cargando pedido...",
     "orderNotFound": "Pedido no encontrado.",
     "cannotEditInvoicedOrder": "No se puede editar una orden facturada.",
-    "cannotEditReceivedOrder": "No se puede editar una orden que ya ha sido recibida en planta.",
+    "cannotEditReceivedOrder": "No se puede editar una orden a partir de que está lista para entrega o finalizada.",
     "selectDateAndWindow": "Seleccione una fecha y una ventana horaria.",
     "rescheduleFailed": "No se pudo reprogramar el pedido.",
     "noItems": "Sin artículos registrados.",

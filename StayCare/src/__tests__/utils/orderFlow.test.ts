@@ -9,14 +9,14 @@ import {
 
 describe('orderFlow utils', () => {
   describe('normalizeStatus', () => {
-    it('normaliza valores con guiones, espacios y variantes legadas', () => {
-      expect(normalizeStatus('pending_pickup')).toBe('pending')
-      expect(normalizeStatus('in_transit')).toBe('transit')
-      expect(normalizeStatus('received_at_facility')).toBe('arrived')
-      expect(normalizeStatus('quality_control')).toBe('quality_check')
-      expect(normalizeStatus('ready_to_deliver')).toBe('ready_to_delivery')
-      expect(normalizeStatus('out_for_delivery')).toBe('collected')
-      expect(normalizeStatus('cancelado')).toBe('cancelled')
+    it('normaliza strings a snake_case y mapea PascalCase de MySQL', () => {
+      expect(normalizeStatus('pending')).toBe('pending')
+      expect(normalizeStatus('transit')).toBe('transit')
+      expect(normalizeStatus('arrived')).toBe('arrived')
+      expect(normalizeStatus('QualityCheck')).toBe('quality_check')
+      expect(normalizeStatus('ReadyToDeliver')).toBe('ready_to_delivery')
+      expect(normalizeStatus('quality_check')).toBe('quality_check')
+      expect(normalizeStatus('ready_to_delivery')).toBe('ready_to_delivery')
       expect(normalizeStatus('')).toBe('')
       expect(normalizeStatus(undefined)).toBe('')
     })
@@ -34,21 +34,19 @@ describe('orderFlow utils', () => {
   })
 
   describe('isEditableStatus', () => {
-    it('permite editar ordenes antes de la recepcion en planta (pending, assigned, rescheduled, transit)', () => {
+    it('permite editar ordenes desde pending hasta quality_check', () => {
       expect(isEditableStatus('pending')).toBe(true)
       expect(isEditableStatus('assigned')).toBe(true)
       expect(isEditableStatus('rescheduled')).toBe(true)
       expect(isEditableStatus('transit')).toBe(true)
-      expect(isEditableStatus('in_transit')).toBe(true)
+      expect(isEditableStatus('arrived')).toBe(true)
+      expect(isEditableStatus('washing')).toBe(true)
+      expect(isEditableStatus('drying')).toBe(true)
+      expect(isEditableStatus('ironing')).toBe(true)
+      expect(isEditableStatus('quality_check')).toBe(true)
     })
 
-    it('bloquea la edicion a partir del receive y estados posteriores', () => {
-      expect(isEditableStatus('arrived')).toBe(false)
-      expect(isEditableStatus('received_at_facility')).toBe(false)
-      expect(isEditableStatus('washing')).toBe(false)
-      expect(isEditableStatus('drying')).toBe(false)
-      expect(isEditableStatus('ironing')).toBe(false)
-      expect(isEditableStatus('quality_check')).toBe(false)
+    it('bloquea la edicion a partir de ready_to_delivery y estados posteriores', () => {
       expect(isEditableStatus('ready_to_delivery')).toBe(false)
       expect(isEditableStatus('collected')).toBe(false)
       expect(isEditableStatus('delivered')).toBe(false)

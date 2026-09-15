@@ -13,72 +13,16 @@
       {{ $t('common.loading') }}
     </div>
 
-    <div v-else-if="qualityItems.length" class="divide-y divide-gray-100">
-      <div
-        v-for="(item, idx) in qualityItems"
-        :key="`${item.itemId}-${idx}`"
-        class="py-4 space-y-2"
-      >
-        <div>
-          <p class="text-sm font-medium text-gray-800">
-            {{ item.name }}
-            <span class="text-xs text-gray-400">({{ item.code }})</span>
-          </p>
-          <p class="text-xs text-gray-500">
-            {{ $t('facility.totalReceived') }}: {{ item.qty }}
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <label class="text-xs text-gray-600">
-            {{ $t('facility.goodQty') }}
-            <input
-              v-model.number="item.qtyGood"
-              type="number"
-              min="0"
-              :max="item.qty"
-              class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-            />
-          </label>
-          <label class="text-xs text-gray-600">
-            {{ $t('facility.badQty') }}
-            <input
-              v-model.number="item.qtyBad"
-              type="number"
-              min="0"
-              :max="item.qty"
-              class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-            />
-          </label>
-          <label class="text-xs text-gray-600">
-            {{ $t('facility.stainedQty') }}
-            <input
-              v-model.number="item.qtyStained"
-              type="number"
-              min="0"
-              :max="item.qty"
-              class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
-            />
-          </label>
-        </div>
-
-        <div class="flex items-center gap-3 min-h-[1.25rem]">
-          <span
-            v-if="itemTotal(item) !== item.qty"
-            class="text-xs text-orange-500 font-medium"
-          >
-            {{ $t('facilityProcessing.qualityCheckQuantityMismatch') }}
-            ({{ itemTotal(item) }}/{{ item.qty }})
-          </span>
-          <span
-            v-else-if="hasChanged(item)"
-            class="text-xs text-green-600 font-medium"
-          >
-            ✓ {{ $t('facilityProcessing.qualityCheckConditionChanged') }}
-          </span>
-        </div>
-      </div>
-    </div>
+    <OrderItemsConditionPicker
+      v-else-if="qualityItems.length"
+      v-model="qualityItems"
+      :title="$t('facilityProcessing.qualityCheckModalTitle')"
+      :subtitle="$t('facilityProcessing.qualityCheckInstructions')"
+      :allow-add="false"
+      :allow-remove="false"
+      :show-prices="false"
+      :expected-qty-map="expectedQtyMap"
+    />
 
     <p v-else class="text-sm text-gray-400">{{ $t('facility.noCheckInItems') }}</p>
 
@@ -134,6 +78,7 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppModal from './AppModal.vue'
 import AppButton from './AppButton.vue'
+import OrderItemsConditionPicker from '../forms/OrderItemsConditionPicker.vue'
 import { useUiStore } from '../../stores/ui.js'
 import { fetchOrderById, updateOrder, updateOrderStatus } from '../../api/orders'
 import { mapOrderForDetail } from '@/utils/orderMappers'
@@ -169,6 +114,14 @@ function hasChanged(item) {
     item.qtyStained !== item._origStained
   )
 }
+
+const expectedQtyMap = computed(() => {
+  const map = {}
+  for (const item of qualityItems.value) {
+    map[item.code] = item.qty
+  }
+  return map
+})
 
 const hasMismatch = computed(() =>
   qualityItems.value.some(item => itemTotal(item) !== item.qty)

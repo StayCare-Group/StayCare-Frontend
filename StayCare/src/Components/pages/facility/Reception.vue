@@ -91,55 +91,16 @@
 
       <!-- Check-in form -->
       <form @submit.prevent="checkIn" class="space-y-5">
-        <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
-          <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">{{ $t('facility.itemCheckIn') }}</h3>
+        <OrderItemsConditionPicker
+          v-model="checkinItems"
+          :expected-qty-map="expectedQtyMap"
+        />
 
-          <div class="divide-y divide-gray-100">
-            <div v-for="(item, idx) in checkinItems" :key="`${item.code}-${idx}`"
-              class="py-3 space-y-2">
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-800">{{ item.name }} <span class="text-xs text-gray-400">({{ item.code }})</span></p>
-                <p class="text-xs text-gray-400">
-                  {{ $t('facility.expected') }}: {{ expectedQtyMap[item.code] ?? 0 }}
-                </p>
-                <p class="text-xs text-gray-500">
-                  {{ $t('facility.totalReceived') }}: {{ itemTotal(item) }}
-                </p>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <label class="text-xs text-gray-600">
-                  {{ $t('facility.goodQty') }}
-                  <input
-                    v-model.number="item.qtyGood" type="number" min="0"
-                    class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
-                </label>
-                <label class="text-xs text-gray-600">
-                  {{ $t('facility.badQty') }}
-                  <input
-                    v-model.number="item.qtyBad" type="number" min="0"
-                    class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
-                </label>
-                <label class="text-xs text-gray-600">
-                  {{ $t('facility.stainedQty') }}
-                  <input
-                    v-model.number="item.qtyStained" type="number" min="0"
-                    class="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none" />
-                </label>
-              </div>
-              <div class="flex items-center gap-2">
-                <span v-if="itemTotal(item) !== (expectedQtyMap[item.code] ?? 0)" class="text-xs text-orange-500 font-medium">Qty mismatch!</span>
-              </div>
-            </div>
-          </div>
-
-          <p v-if="!checkinItems.length" class="text-xs text-gray-400">{{ $t('facility.noCheckInItems') }}</p>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.specialNotes') }}</label>
-            <textarea v-model="specialNotes" rows="2"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
-              :placeholder="$t('facility.damageNotesPlaceholder')"></textarea>
-          </div>
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('common.specialNotes') }}</label>
+          <textarea v-model="specialNotes" rows="2"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
+            :placeholder="$t('facility.damageNotesPlaceholder')"></textarea>
         </div>
 
         <div class="flex gap-3">
@@ -172,9 +133,9 @@ import AppButton from '../../ui/AppButton.vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import InfoGridCard from '../../ui/InfoGridCard.vue'
+import OrderItemsConditionPicker from '../../forms/OrderItemsConditionPicker.vue'
 import { fetchOrderById, fetchAllOrders, receiveAtFacility } from '../../../api/orders'
 import { mapOrderForDetail } from '@/utils/orderMappers'
-import { fetchAllItems, mapItemForCatalog } from '../../../api/items'
 import { useUiStore } from '../../../stores/ui.js'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 
@@ -186,8 +147,6 @@ const foundOrder = ref(null)
 const specialNotes = ref('')
 const showSuccess = ref(false)
 const checkinItems = ref([])
-const itemCatalog = ref([])
-const selectedCatalogCode = ref('')
 
 const foundOrderInfoItems = computed(() => {
   if (!foundOrder.value) return []
@@ -220,12 +179,8 @@ const RECEPTION_STATUSES = 'transit,arrived'
 
 onMounted(async () => {
   try {
-    const [data, catalogData] = await Promise.all([
-      fetchAllOrders({ status: RECEPTION_STATUSES }).catch(() => []),
-      fetchAllItems().catch(() => []),
-    ])
+    const data = await fetchAllOrders({ status: RECEPTION_STATUSES }).catch(() => [])
     allOrders.value = data ?? []
-    itemCatalog.value = (catalogData ?? []).map(mapItemForCatalog)
   } catch { /* stays empty */ } finally {
     loading.value = false
   }
@@ -295,30 +250,16 @@ function normalizeQty(value) {
   return Math.floor(parsed)
 }
 
-function itemTotal(item) {
-  return normalizeQty(item.qtyGood) + normalizeQty(item.qtyBad) + normalizeQty(item.qtyStained)
-}
-
 function seedCheckinItems(mappedOrder) {
-  // Create a map of items from the order
-  const orderItemMap = {}
-  for (const item of (mappedOrder.items ?? [])) {
-    orderItemMap[item.code] = item
-  }
-  
-  // Precload all items from catalog
-  checkinItems.value = itemCatalog.value.map((catItem) => {
-    const orderItem = orderItemMap[catItem.code]
-    return {
-      itemId: orderItem?.itemId ?? catItem.id ?? null,
-      code: catItem.code,
-      name: catItem.name,
-      qtyGood: orderItem ? normalizeQty(orderItem.qty) : 0,
-      qtyBad: 0,
-      qtyStained: 0,
-      unitPrice: Number(catItem.unitPrice) || Number(orderItem?.unitPrice) || 0,
-    }
-  })
+  checkinItems.value = (mappedOrder.items ?? []).map((item) => ({
+    itemId: item.itemId ?? null,
+    code: item.code,
+    name: item.name,
+    qtyGood: normalizeQty(item.qtyGood != null ? item.qtyGood : item.qty),
+    qtyBad: normalizeQty(item.qtyBad ?? 0),
+    qtyStained: normalizeQty(item.qtyStained ?? 0),
+    unitPrice: Number(item.unitPrice) || 0,
+  }))
 }
 
 async function lookupOrder() {
@@ -357,7 +298,6 @@ async function openRawOrder(raw) {
   if (!raw) return
 
   try {
-    // Use detail endpoint to guarantee order item identifiers for reception payload.
     const detail = await fetchOrderById(String(raw._id ?? raw.id))
     const mapped = mapOrderForDetail(detail ?? raw)
     foundOrder.value = mapped
@@ -375,32 +315,6 @@ async function selectOrderFromList(order) {
   const raw = allOrders.value.find(o => (o._id ?? o.id) === order._id)
   if (!raw) return
   await openRawOrder(raw)
-}
-
-function addCatalogItem() {
-  if (!selectedCatalogCode.value) return
-  const selected = itemCatalog.value.find(i => i.code === selectedCatalogCode.value)
-  if (!selected) return
-
-  const existing = checkinItems.value.find(i => i.code === selected.code)
-  if (existing) {
-    existing.qtyGood = normalizeQty(existing.qtyGood) + 1
-  } else {
-    checkinItems.value.push({
-      itemId: selected.id ?? null,
-      code: selected.code,
-      name: selected.name,
-      qtyGood: 1,
-      qtyBad: 0,
-      qtyStained: 0,
-      unitPrice: Number(selected.unitPrice) || 0,
-    })
-  }
-  selectedCatalogCode.value = ''
-}
-
-function removeCheckinItem(index) {
-  checkinItems.value.splice(index, 1)
 }
 
 async function startScanner() {
