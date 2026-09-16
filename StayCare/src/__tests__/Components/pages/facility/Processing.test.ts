@@ -90,6 +90,7 @@ const MachineSelectModalStub = {
 const COMPONENT_STUBS = {
   AppButton:          { template: '<button><slot /></button>', props: ['disabled', 'loading'] },
   AppTooltip:         { template: '<div><slot /></div>' },
+  OrderNotesBadge:    { template: '<div data-testid="order-notes-badge"><slot /></div>', props: ['notes', 'title', 'label', 'fallback'] },
   QualityCheckModal:  { template: '<div />', props: ['show', 'order'], emits: ['close', 'success'] },
   MachineSelectModal: MachineSelectModalStub,
   MachineManagement:  {

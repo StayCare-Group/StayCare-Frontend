@@ -24,18 +24,7 @@
               </div>
               <div class="flex flex-col items-end gap-1 shrink-0">
                 <span class="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">{{ order.serviceType }}</span>
-                <AppTooltip
-                  v-if="order.specialNotes"
-                  :text="order.specialNotes"
-                  :title="$t('common.specialNotes')"
-                >
-                  <span class="cursor-help px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center gap-1 hover:bg-amber-100 transition-colors">
-                    <svg class="w-3 h-3 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    <span>{{ $t('facility.notes') }}</span>
-                  </span>
-                </AppTooltip>
+                <OrderNotesBadge :notes="order.specialNotes" />
               </div>
             </div>
             <div class="mt-2 text-xs text-gray-400">
@@ -111,7 +100,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
-import AppTooltip from '../../ui/AppTooltip.vue'
+import OrderNotesBadge from '../../ui/OrderNotesBadge.vue'
 import QualityCheckModal from '../../ui/QualityCheckModal.vue'
 import MachineSelectModal from '../../ui/MachineSelectModal.vue'
 import MachineManagement from '../../ui/MachineManagement.vue'

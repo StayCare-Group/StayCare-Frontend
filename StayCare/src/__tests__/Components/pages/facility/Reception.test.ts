@@ -123,4 +123,36 @@ describe('Reception.vue', () => {
       },
     ])
   })
+
+  it('renders notes badge when an order in transit has special notes', async () => {
+    mockFetchAllOrders.mockResolvedValueOnce([
+      {
+        _id: 'ord-transit-notes',
+        id: 'ord-transit-notes',
+        order_number: 'ORD-999',
+        status: 'transit',
+        client: { name: 'Grand Luxury Hotel' },
+        service_type: 'express',
+        pickup_date: '2026-10-16',
+        estimated_bags: 1,
+        special_notes: 'Urgent: low-temp delicate wash only',
+        items: [],
+      },
+    ])
+
+    const wrapper = mount(Reception, {
+      global: {
+        plugins: [createTestI18n()],
+        stubs: { Teleport: true },
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('ORD-999')
+    expect(wrapper.text()).toContain('Grand Luxury Hotel')
+    const badge = wrapper.findComponent({ name: 'OrderNotesBadge' })
+    expect(badge.exists()).toBe(true)
+    expect(badge.props('notes')).toBe('Urgent: low-temp delicate wash only')
+  })
 })
+

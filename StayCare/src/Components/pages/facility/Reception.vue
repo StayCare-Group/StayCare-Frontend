@@ -61,7 +61,10 @@
       <div v-if="receivableOrders.length" class="divide-y divide-gray-100">
         <div v-for="order in receivableOrders" :key="order._id" class="px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <p class="text-sm font-medium text-gray-800">{{ order.id }} - {{ order.client }}</p>
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="text-sm font-medium text-gray-800">{{ order.id }} - {{ order.client }}</p>
+              <OrderNotesBadge :notes="order.specialNotes" />
+            </div>
             <p class="text-xs text-gray-500">{{ order.serviceType }} · {{ order.pickupDate }}</p>
           </div>
           <button
@@ -80,9 +83,12 @@
     <div v-if="foundOrder" class="space-y-5">
       <InfoGridCard :items="foundOrderInfoItems">
         <template #header>
-          <h3 class="text-sm font-semibold text-gray-700">
-            {{ foundOrder.id }} — {{ foundOrder.client }}
-          </h3>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-sm font-semibold text-gray-700">
+              {{ foundOrder.id }} — {{ foundOrder.client }}
+            </h3>
+            <OrderNotesBadge :notes="foundOrder.specialNotes" />
+          </div>
         </template>
         <template #header-extra>
           <StatusBadge :status="foundOrder.status" />
@@ -131,6 +137,7 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
+import OrderNotesBadge from '../../ui/OrderNotesBadge.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import InfoGridCard from '../../ui/InfoGridCard.vue'
 import OrderItemsConditionPicker from '../../forms/OrderItemsConditionPicker.vue'
@@ -232,6 +239,7 @@ const receivableOrders = computed(() => {
         client: mapped.client,
         serviceType: mapped.serviceType,
         pickupDate: mapped.pickupDate,
+        specialNotes: mapped.specialNotes || o.special_notes || o.specialNotes || '',
       }
     })
     .filter((order) => {
