@@ -48,7 +48,7 @@ describe('Reception.vue', () => {
         pickup_date: '2026-10-15',
         estimated_bags: 2,
         items: [
-          { item_id: 'item-1', item_code: 'SHT', name: 'Shirt', quantity: 3, unit_price: 5.0 },
+          { item_id: 'item-1', item_code_snapshot: 'SHT', name_snapshot: 'Shirt', quantity: 3, unit_price: 5.0, qty_good: 3, qty_bad: 0, qty_stained: 0 },
         ],
       },
     ])
@@ -62,7 +62,7 @@ describe('Reception.vue', () => {
       pickup_date: '2026-10-15',
       estimated_bags: 2,
       items: [
-        { item_id: 'item-1', item_code: 'SHT', name: 'Shirt', quantity: 3, unit_price: 5.0 },
+        { item_id: 'item-1', item_code_snapshot: 'SHT', name_snapshot: 'Shirt', quantity: 3, unit_price: 5.0, qty_good: 3, qty_bad: 0, qty_stained: 0 },
       ],
     })
     mockReceiveAtFacility.mockResolvedValue({})
@@ -78,7 +78,7 @@ describe('Reception.vue', () => {
     expect(wrapper.text()).toContain('Sunset Resort')
   })
 
-  it('opens order check-in with OrderItemsConditionPicker when Receive button is clicked', async () => {
+  it('opens order check-in with OrderItemsConditionPicker and pre-fills created order quantities in qtyGood', async () => {
     const wrapper = mount(Reception, {
       global: { plugins: [createTestI18n()] },
     })
@@ -93,9 +93,16 @@ describe('Reception.vue', () => {
     expect(conditionPicker.exists()).toBe(true)
     expect(wrapper.text()).toContain('Item Check-In')
     expect(wrapper.text()).toContain('Shirt')
+
+    // Verify condition picker received qtyGood initialized to 3 (matching quantity from creation)
+    const pickerModel = conditionPicker.props('modelValue') as any[]
+    expect(pickerModel).toHaveLength(1)
+    expect(pickerModel[0].qtyGood).toBe(3)
+    expect(pickerModel[0].qtyBad).toBe(0)
+    expect(pickerModel[0].qtyStained).toBe(0)
   })
 
-  it('submits reception payload with staff confirmed bags and items', async () => {
+  it('submits reception payload with staff confirmed bags and pre-filled items', async () => {
     const wrapper = mount(Reception, {
       global: { plugins: [createTestI18n()] },
     })
@@ -122,6 +129,35 @@ describe('Reception.vue', () => {
         qty_stained: 0,
       },
     ])
+  })
+
+  it('allows adding new items from catalog during reception', async () => {
+    const wrapper = mount(Reception, {
+      global: { plugins: [createTestI18n()] },
+    })
+    await flushPromises()
+
+    const receiveBtn = wrapper.findAll('button').find(b => b.text().includes('Receive'))
+    await receiveBtn!.trigger('click')
+    await flushPromises()
+
+    const conditionPicker = wrapper.findComponent({ name: 'OrderItemsConditionPicker' })
+    expect(conditionPicker.exists()).toBe(true)
+
+    // Select Pants from catalog dropdown in condition picker
+    const select = conditionPicker.find('select')
+    await select.setValue('PNT')
+
+    const addItemBtn = conditionPicker.findComponent({ name: 'AppButton' })
+    expect(addItemBtn.exists()).toBe(true)
+    await addItemBtn.trigger('click')
+    await flushPromises()
+
+    const updatedPickerModel = conditionPicker.props('modelValue') as any[]
+    expect(updatedPickerModel).toHaveLength(2)
+    expect(updatedPickerModel[0].code).toBe('SHT')
+    expect(updatedPickerModel[1].code).toBe('PNT')
+    expect(updatedPickerModel[1].qtyGood).toBe(1)
   })
 
   it('renders notes badge when an order in transit has special notes', async () => {

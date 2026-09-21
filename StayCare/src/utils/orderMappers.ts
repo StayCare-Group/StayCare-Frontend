@@ -93,18 +93,16 @@ export function mapOrderForList(o: any) {
 
 export function mapOrderForDetail(o: any) {
   const clientObj = typeof o.client === 'object' && o.client ? o.client : null
-  const clientId = clientObj?._id ?? clientObj?.id ?? o.client_id ?? (typeof o.client === 'string' ? o.client : '')
-  const driverObj = typeof o.driver === 'object' ? o.driver : (typeof o.assigned_driver === 'object' ? o.assigned_driver : null)
+  const clientId = o.client_id ?? clientObj?._id ?? clientObj?.id ?? (typeof o.client === 'string' ? o.client : '')
+  const clientName = o.client_name ?? (clientObj ? getClientDisplayName(clientObj) : (o.client ?? ''))
+  const driverName = o.driver_name ?? (typeof o.driver === 'object' ? o.driver.name : null) ?? (typeof o.assigned_driver === 'object' ? o.assigned_driver.name : null)
 
-  const property = resolveProperty(clientObj, o.property_id ?? o.property)
+  const address = o.property_address
+    ? `${o.property_address}${o.property_city ? ', ' + o.property_city : ''}`
+    : o.property_name || (clientObj ? getClientAddress(clientObj) : '') || o.pickup_address || o.delivery_address || ''
 
-  const clientName = clientObj ? getClientDisplayName(clientObj) : (o.client_name ?? '')
-  const address = property?.address
-    ? `${property.address}, ${property.city ?? ''}`
-    : o.property_name || (clientObj ? getClientAddress(clientObj) : '') || o.pickup_address || ''
-
-  const pickupWindowStart = o.pickup_window?.start_time ?? o.pickup_window_start
-  const pickupWindowEnd = o.pickup_window?.end_time ?? o.pickup_window_end
+  const pickupWindowStart = o.pickup_window_start ?? o.pickup_window?.start_time
+  const pickupWindowEnd = o.pickup_window_end ?? o.pickup_window?.end_time
   const subtotal = Number(
     o.subtotal ??
     o.pricing_snapshot?.subtotal ??
@@ -117,20 +115,32 @@ export function mapOrderForDetail(o: any) {
     Math.max(total - subtotal, 0)
   )
 
-  const propertyContactPerson = property?.contact_person ?? property?.contact_name ?? ''
-  const propertyPhone = property?.phone ?? property?.contact_phone ?? ''
+  const contactPerson =
+    o.client_contact_person ??
+    o.client_contact ??
+    clientObj?.contact_person ??
+    clientObj?.contact_name ??
+    ''
+
+  const contactPhone =
+    o.client_phone ??
+    clientObj?.phone ??
+    clientObj?.contact_phone ??
+    ''
 
   const canonicalStatus = normalizeStatus(o.status)
 
   return {
-    id: o.order_number ?? o._id ?? o.id,
-    _id: o._id ?? o.id,
+    id: o.order_number ?? o.id ?? o._id,
+    _id: o.id ?? o._id ?? o.order_number,
     client: clientName,
     clientId: String(clientId ?? ''),
     isInvoiced: Boolean(o.is_invoiced),
-    propertyName: property?.name ?? o.property_name ?? '',
-    propertyContactPerson,
-    propertyPhone,
+    propertyName: o.property_name ?? '',
+    propertyContactPerson: contactPerson,
+    propertyPhone: contactPhone,
+    contactPerson,
+    contactPhone,
     pickupAddress: address,
     deliveryAddress: address,
     serviceType: o.service_type === 'express' ? 'Express (24h)' : 'Standard (48h)',
@@ -144,22 +154,22 @@ export function mapOrderForDetail(o: any) {
     estimatedBags: o.estimated_bags ?? 0,
     actualBags: o.actual_bags ?? null,
     specialNotes: o.special_notes ?? '',
-    driverPickup: driverObj?.name ?? o.driver_name ?? null,
-    driverDelivery: driverObj?.name ?? o.driver_name ?? null,
+    driverPickup: driverName,
+    driverDelivery: driverName,
     items: (o.items ?? []).map((i: any) => ({
-      itemId: i.item_id ?? i.itemId ?? null,
-      code: i.item_code ?? i.item_code_snapshot ?? '',
+      itemId: i.item_id ?? i.itemId ?? i.id ?? null,
+      code: i.item_code ?? i.item_code_snapshot ?? i.code ?? '',
       name: i.name ?? i.name_snapshot ?? '',
-      qty: i.quantity ?? 0,
-      unitPrice: Number(i.unit_price ?? 0),
-      qtyGood: i.qty_good ?? null,
-      qtyBad: i.qty_bad ?? null,
-      qtyStained: i.qty_stained ?? null,
+      qty: Number(i.quantity ?? i.qty ?? 0),
+      unitPrice: Number(i.unit_price ?? i.unitPrice ?? 0),
+      qtyGood: i.qty_good ?? i.qtyGood ?? null,
+      qtyBad: i.qty_bad ?? i.qtyBad ?? null,
+      qtyStained: i.qty_stained ?? i.qtyStained ?? null,
     })),
     timeline: (o.status_history ?? []).map((h: any) => ({
       status: STATUS_LABELS[h.status] ?? h.status,
       date: formatDateTime(h.timestamp ?? h.changed_at),
-      note: formatTimelineNote(h.note ?? '', driverObj?.name ?? o.driver_name ?? ''),
+      note: formatTimelineNote(h.note ?? '', driverName ?? ''),
       changedByName: h.changed_by_user_name ?? null,
       changedByRole: h.changed_by_user_role ?? null,
       isSystem: Boolean(h.is_system),

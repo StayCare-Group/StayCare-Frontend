@@ -1,6 +1,8 @@
 {
   "common": {
     "laundryManagement": "Laundry Management",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
     "login": "Login",
     "logout": "Logout",
     "signIn": "Sign In",
@@ -491,7 +493,16 @@
     "qualityCheckNoteLabel": "Internal note (optional)",
     "qualityCheckNotePlaceholder": "e.g. 2 items successfully de-stained",
     "qualityCheckContinue": "Confirm & Release",
-    "qualityCheckConfirmAndPrint": "Confirm & Print"
+    "qualityCheckConfirmAndPrint": "Confirm & Print",
+    "rollbackTitle": "Roll back to previous stage",
+    "rollbackSelectStage": "Select target stage",
+    "rollbackNoteLabel": "Reason for rollback (optional)",
+    "rollbackNotePlaceholder": "e.g. item still stained, re-wash needed",
+    "rollbackConfirm": "Confirm Rollback",
+    "rollbackRollingBack": "Rolling back...",
+    "rollbackSuccess": "Order has been rolled back to the previous stage.",
+    "rollbackFailed": "Failed to roll back the order.",
+    "rollbackInvoicedBlocked": "Cannot roll back an invoiced order."
   },
   "machineSelectModal": {
     "title": "Assign Machine",

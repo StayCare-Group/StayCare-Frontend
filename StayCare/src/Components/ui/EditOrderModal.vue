@@ -176,9 +176,9 @@ function populateForm() {
       code: oi.code,
       name: oi.name,
       unitPrice: oi.unitPrice,
-      qtyGood: oi.qtyGood != null ? Number(oi.qtyGood) : Number(oi.qty ?? 0),
-      qtyBad: oi.qtyBad != null ? Number(oi.qtyBad) : 0,
-      qtyStained: oi.qtyStained != null ? Number(oi.qtyStained) : 0,
+      qtyGood: Number(oi.qtyGood ?? 0),
+      qtyBad: Number(oi.qtyBad ?? 0),
+      qtyStained: Number(oi.qtyStained ?? 0),
     }))
   }
 }

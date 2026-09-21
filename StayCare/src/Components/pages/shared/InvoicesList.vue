@@ -15,7 +15,7 @@
           <span v-if="exportLoading">{{ $t('excel.exportGenerating') }}</span>
           <span v-else>{{ $t('invoices.exportCsv') }}</span>
         </AppButton>
-        <AppButton v-if="isAdmin" @click="navStore.setPage('create-invoice')">{{ $t('admin.createInvoice') }}</AppButton>
+        <AppButton v-if="isAdmin" size="sm" @click="navStore.setPage('create-invoice')">{{ $t('admin.createInvoice') }}</AppButton>
       </div>
     </div>
 
@@ -57,7 +57,7 @@
         <span class="font-medium text-gray-800">{{ value }}</span>
       </template>
       <template #cell-orderId="{ value }">
-        <span class="text-gray-500">{{ value }}</span>
+        <span class="text-gray-500 text-xs break-words leading-relaxed inline-block">{{ value }}</span>
       </template>
       <template #cell-client="{ value }">
         <span class="text-gray-700">{{ value }}</span>
@@ -75,10 +75,12 @@
         <span class="font-semibold text-gray-800">{{ formatCurrency(value) }}</span>
       </template>
       <template #cell-actions="{ item }">
-        <button
-          @click.stop="navStore.goToDetail('invoice-detail', item._id)"
-          class="text-brand-700 hover:underline text-sm font-medium"
-        >{{ $t('common.viewDetails') }}</button>
+        <div class="flex items-center justify-center whitespace-nowrap">
+          <button
+            @click.stop="navStore.goToDetail('invoice-detail', item._id)"
+            class="text-brand-700 hover:underline text-xs font-medium"
+          >{{ $t('common.viewDetails') }}</button>
+        </div>
       </template>
     </DataTable>
   </div>
@@ -210,13 +212,13 @@ onMounted(() => {
 })
 
 const invoiceHeaders = computed(() => [
-  { key: 'id',         label: t('client.invoiceId') },
-  { key: 'orderId',    label: t('common.order') },
-  { key: 'client',     label: t('common.client') },
-  { key: 'issueDate',  label: t('client.issueDate') },
-  { key: 'dueDate',    label: t('client.dueDate') },
-  { key: 'status',     label: t('common.status') },
-  { key: 'grandTotal', label: t('client.total') },
-  { key: 'actions',    label: t('admin.actions') },
+  { key: 'id',         label: t('client.invoiceId'), thClass: 'whitespace-nowrap', tdClass: 'whitespace-nowrap' },
+  { key: 'orderId',    label: t('common.order'), thClass: 'whitespace-nowrap', tdClass: 'max-w-[220px]' },
+  { key: 'client',     label: t('common.client'), thClass: 'whitespace-nowrap', tdClass: 'whitespace-nowrap' },
+  { key: 'issueDate',  label: t('client.issueDate'), thClass: 'whitespace-nowrap', tdClass: 'whitespace-nowrap' },
+  { key: 'dueDate',    label: t('client.dueDate'), thClass: 'whitespace-nowrap', tdClass: 'whitespace-nowrap' },
+  { key: 'status',     label: t('common.status'), thClass: 'whitespace-nowrap', tdClass: 'whitespace-nowrap' },
+  { key: 'grandTotal', label: t('client.total'), thClass: 'whitespace-nowrap text-right', tdClass: 'whitespace-nowrap text-right' },
+  { key: 'actions',    label: t('admin.actions'), thClass: 'whitespace-nowrap text-center', tdClass: 'whitespace-nowrap text-center' },
 ])
 </script>

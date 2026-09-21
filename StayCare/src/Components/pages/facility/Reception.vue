@@ -263,9 +263,9 @@ function seedCheckinItems(mappedOrder) {
     itemId: item.itemId ?? null,
     code: item.code,
     name: item.name,
-    qtyGood: normalizeQty(item.qtyGood != null ? item.qtyGood : item.qty),
-    qtyBad: normalizeQty(item.qtyBad ?? 0),
-    qtyStained: normalizeQty(item.qtyStained ?? 0),
+    qtyGood: normalizeQty(item.qtyGood),
+    qtyBad: normalizeQty(item.qtyBad),
+    qtyStained: normalizeQty(item.qtyStained),
     unitPrice: Number(item.unitPrice) || 0,
   }))
 }

@@ -101,8 +101,7 @@ function formatTime(dateStr: string): string {
 }
 
 export function mapRouteForDriver(route: any) {
-  const driverObj = typeof route.driver === 'object' ? route.driver : null
-  const routeId = route._id ?? route.id
+  const routeId = route.id ?? route._id
   const orders = Array.isArray(route.orders) ? route.orders : []
   const completedCount = orders.filter(
     (o: any) => {
@@ -114,12 +113,12 @@ export function mapRouteForDriver(route: any) {
   const deliveryCount = orders.length - pickupCount
 
   return {
-    _id: routeId,
     id: routeId,
-    driverId: route.driver_id ?? driverObj?._id ?? driverObj?.id ?? null,
-    driverName: route.driver_name ?? driverObj?.name ?? '',
-    driverEmail: route.driver_email ?? driverObj?.email ?? '',
-    driverPhone: route.driver_phone ?? driverObj?.phone ?? '',
+    _id: routeId,
+    driverId: route.driver_id ?? route.driver?.id ?? route.driver?._id ?? null,
+    driverName: route.driver_name ?? route.driver?.name ?? '',
+    driverEmail: route.driver_email ?? route.driver?.email ?? '',
+    driverPhone: route.driver_phone ?? route.driver?.phone ?? '',
     date: formatDate(route.route_date ?? route.date),
     vehiclePlate: '',
     totalStops: orders.length,
@@ -130,33 +129,34 @@ export function mapRouteForDriver(route: any) {
     stops: orders.map((o: any, idx: number) => {
       const clientObj = typeof o.client === 'object' ? o.client : null
       const property = resolveProperty(clientObj, o.property)
-      const addr = property?.address
-        ? `${property.address}${property.city ? ', ' + property.city : ''}`
-        : (o.property_address
-            ? `${o.property_address}${o.property_city ? ', ' + o.property_city : ''}`
-            : '') ||
-          (clientObj ? getClientAddress(clientObj) : '') ||
-          o.pickup_address ||
-          o.delivery_address ||
-          ''
+
+      const addr = o.property_address
+        ? `${o.property_address}${o.property_city ? ', ' + o.property_city : ''}`
+        : property?.address
+          ? `${property.address}${property.city ? ', ' + property.city : ''}`
+          : (clientObj ? getClientAddress(clientObj) : '') ||
+            o.pickup_address ||
+            o.delivery_address ||
+            ''
+
       const fallbackClient = o.client_name ?? o.client_company ?? o.client_contact ?? ''
-      const company = clientObj?.company_name ?? clientObj?.company ?? o.client_company ?? o.client_name ?? ''
-      const contactPerson = clientObj?.contact_name ?? clientObj?.contact_person ?? o.client_contact ?? o.client_name ?? ''
-      const clientPhone = clientObj?.phone ?? clientObj?.contact_phone ?? o.client_phone ?? ''
-      const area = property?.area ?? o.property_area ?? o.area ?? ''
-      const startWindow = o.pickup_window?.start_time ?? o.pickup_window_start
-      const endWindow = o.pickup_window?.end_time ?? o.pickup_window_end
-      const rawLat = property?.lat ?? o.property_lat ?? o.lat ?? null
-      const rawLng = property?.lng ?? o.property_lng ?? o.lng ?? null
+      const company = o.client_company ?? clientObj?.company_name ?? clientObj?.company ?? o.client_name ?? ''
+      const contactPerson = o.client_contact ?? o.client_contact_person ?? clientObj?.contact_person ?? clientObj?.contact_name ?? o.client_name ?? ''
+      const clientPhone = o.client_phone ?? clientObj?.phone ?? clientObj?.contact_phone ?? ''
+      const area = o.property_area ?? property?.area ?? o.area ?? ''
+      const startWindow = o.pickup_window_start ?? o.pickup_window?.start_time
+      const endWindow = o.pickup_window_end ?? o.pickup_window?.end_time
+      const rawLat = o.property_lat ?? property?.lat ?? o.lat ?? null
+      const rawLng = o.property_lng ?? property?.lng ?? o.lng ?? null
       const lat = rawLat !== null && rawLat !== undefined && rawLat !== '' && !isNaN(Number(rawLat)) ? Number(rawLat) : null
       const lng = rawLng !== null && rawLng !== undefined && rawLng !== '' && !isNaN(Number(rawLng)) ? Number(rawLng) : null
 
       return {
         id: idx + 1,
-        orderId: o.order_number ?? o.order_id ?? o._id ?? o.id,
-        _id: o._id ?? o.id ?? o.order_id ?? `${routeId}-stop-${idx + 1}`,
+        orderId: o.order_number ?? o.order_id ?? o.id ?? o._id,
+        _id: o.order_id ?? o.id ?? o._id ?? `${routeId}-stop-${idx + 1}`,
         routeId,
-        client: clientObj ? getClientDisplayName(clientObj) : fallbackClient,
+        client: o.client_name ?? (clientObj ? getClientDisplayName(clientObj) : fallbackClient),
         company,
         contactPerson,
         clientPhone,

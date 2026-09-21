@@ -40,7 +40,7 @@
             </button>
           </div>
         </div>
-        <AppButton :disabled="isClient && !canCreateOrder" @click="navStore.goToDetail('create-order', null)">{{ $t('client.newOrder') }}</AppButton>
+        <AppButton size="sm" :disabled="isClient && !canCreateOrder" @click="navStore.goToDetail('create-order', null)">{{ $t('client.newOrder') }}</AppButton>
       </div>
     </div>
     <p v-if="isClient && !canCreateOrder" class="text-sm text-amber-700">
@@ -84,7 +84,7 @@
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
 
     <!-- Orders table -->
-    <DataTable v-else :headers="orderHeaders" :items="filteredOrders" min-width="700px">
+    <DataTable v-else :headers="orderHeaders" :items="filteredOrders" min-width="850px">
       <template #header-select>
         <input
           type="checkbox"
@@ -104,36 +104,36 @@
         />
       </template>
       <template #cell-id="{ value }">
-        <span class="font-medium text-gray-800">{{ value }}</span>
+        <span class="font-medium text-gray-800 whitespace-nowrap">{{ value }}</span>
       </template>
       <template #cell-client="{ value }">
-        <span class="text-gray-700">{{ value }}</span>
+        <span class="text-gray-700 break-words leading-snug inline-block">{{ value }}</span>
       </template>
       <template #cell-createdAt="{ value }">
-        <span class="text-gray-500">{{ value }}</span>
+        <span class="text-gray-500 whitespace-nowrap">{{ value }}</span>
       </template>
       <template #cell-specialNotes="{ item }">
         <OrderNotesBadge :notes="item.specialNotes" fallback="—" />
       </template>
       <template #cell-bags="{ item }">
-        <span class="text-gray-700">{{ item.actualBags ?? item.estimatedBags }}</span>
+        <span class="text-gray-700 whitespace-nowrap">{{ item.actualBags ?? item.estimatedBags }}</span>
       </template>
       <template #cell-status="{ value }">
         <StatusBadge :status="value" />
       </template>
       <template #cell-total="{ value }">
-        <span class="font-semibold text-gray-800">&euro;{{ value.toFixed(2) }}</span>
+        <span class="font-semibold text-gray-800 whitespace-nowrap">&euro;{{ value.toFixed(2) }}</span>
       </template>
       <template #cell-actions="{ item }">
-        <div class="flex items-center gap-3">
+        <div class="flex flex-col items-center gap-1 whitespace-nowrap">
           <button
             @click.stop="navStore.goToDetail('order-detail', item._id)"
-            class="text-brand-700 hover:underline text-sm font-medium"
+            class="text-brand-700 hover:underline text-xs font-medium leading-tight"
           >{{ $t('common.viewDetails') }}</button>
           <button
             v-if="isAdmin && isCancelableStatus(item.status)"
             @click.stop="promptCancelOrder(item)"
-            class="text-red-600 hover:underline text-sm font-medium"
+            class="text-red-600 hover:underline text-[11px] font-medium leading-tight"
           >{{ $t('admin.cancelOrder') }}</button>
         </div>
       </template>
@@ -337,13 +337,13 @@ const filteredOrders = computed(() => {
 
 const orderHeaders = computed(() => [
   { key: 'select', label: '', thClass: 'w-10 text-center', tdClass: 'text-center' },
-  { key: 'id', label: t('client.orderId') },
-  { key: 'client', label: t('common.client') },
-  { key: 'createdAt', label: t('client.date') },
-  { key: 'specialNotes', label: t('facility.notes') },
-  { key: 'bags', label: t('client.bagsLabel') },
-  { key: 'status', label: t('common.status') },
-  { key: 'total', label: t('client.total') },
-  { key: 'actions', label: t('admin.actions') },
+  { key: 'id', label: t('client.orderId'), thClass: 'whitespace-nowrap', tdClass: 'whitespace-nowrap' },
+  { key: 'client', label: t('common.client'), thClass: 'whitespace-nowrap', tdClass: 'max-w-[180px]' },
+  { key: 'createdAt', label: t('client.date'), thClass: 'whitespace-nowrap', tdClass: 'whitespace-nowrap' },
+  { key: 'specialNotes', label: t('facility.notes'), thClass: 'whitespace-nowrap text-center', tdClass: 'whitespace-nowrap text-center' },
+  { key: 'bags', label: t('client.bagsLabel'), thClass: 'whitespace-nowrap text-center', tdClass: 'whitespace-nowrap text-center' },
+  { key: 'status', label: t('common.status'), thClass: 'whitespace-nowrap', tdClass: 'whitespace-nowrap' },
+  { key: 'total', label: t('client.total'), thClass: 'whitespace-nowrap text-right', tdClass: 'whitespace-nowrap text-right' },
+  { key: 'actions', label: t('admin.actions'), thClass: 'whitespace-nowrap text-center', tdClass: 'whitespace-nowrap text-center' },
 ])
 </script>

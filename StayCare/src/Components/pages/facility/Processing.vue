@@ -6,68 +6,32 @@
     <div class="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">
       <div
         v-for="col in columns" :key="col.status"
-        class="min-w-[240px] flex-shrink-0 bg-gray-50 rounded-xl p-3"
+        class="w-[260px] min-w-[260px] max-w-[260px] flex-shrink-0 bg-gray-50 rounded-xl p-3 flex flex-col"
       >
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ col.label }}</h3>
           <span class="text-xs text-gray-400 bg-white px-2 py-0.5 rounded-full">{{ col.orders.length }}</span>
         </div>
         <div class="space-y-2">
-          <div
-            v-for="order in col.orders" :key="order.id"
-            class="bg-white rounded-lg p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-          >
-            <div class="flex items-start justify-between gap-2 mb-1">
-              <div class="min-w-0 flex-1">
-                <p class="text-xs font-semibold text-gray-700 truncate" :title="order.client">{{ order.client || '—' }}</p>
-                <span class="text-xs font-bold text-gray-800">{{ order.id }}</span>
-              </div>
-              <div class="flex flex-col items-end gap-1 shrink-0">
-                <span class="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">{{ order.serviceType }}</span>
-                <OrderNotesBadge :notes="order.specialNotes" />
-              </div>
-            </div>
-            <div class="mt-2 text-xs text-gray-400">
-              <span v-for="item in order.items.slice(0, 3)" :key="item.code" class="mr-1">
-                {{ item.code }}&times;{{ item.qty }}
-              </span>
-              <span v-if="order.items.length > 3" class="text-gray-300">+{{ order.items.length - 3 }} more</span>
-            </div>
-
-            <!-- Machine assignment (for Washing, Drying, Ironing columns) -->
-            <div v-if="col.assignable" class="mt-2">
-              <div v-if="getAssignedMachine(getOrderId(order))" class="flex items-center justify-between bg-green-50 rounded px-2 py-1">
-                <span class="text-xs text-green-700 font-medium">{{ getAssignedMachine(getOrderId(order)).name }}</span>
-                <button @click="handleRelease(getMachineId(getAssignedMachine(getOrderId(order))), getOrderId(order))"
-                  class="text-xs text-red-500 hover:text-red-700">{{ $t('facilityProcessing.release') }}</button>
-              </div>
-              <div v-else class="flex gap-1">
-                <select v-model="machineSelections[getOrderId(order)]"
-                  class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-400 outline-none">
-                  <option value="">{{ $t('facilityProcessing.assignMachine') }}</option>
-                  <option v-for="m in availableMachines(col.machineType)" :key="getMachineId(m)" :value="getMachineId(m)">
-                    {{ m.name }} ({{ m.capacity }}){{ getMachineOccupancyLabel(m) }}
-                  </option>
-                </select>
-                <AppButton
-                  v-if="machineSelections[getOrderId(order)]"
-                  size="sm"
-                  @click="handleAssign(machineSelections[getOrderId(order)], getOrderId(order))"
-                  :disabled="assigning === getOrderId(order)"
-                >{{ assigning === getOrderId(order) ? $t('facilityProcessing.assigning') : $t('facilityProcessing.go') }}</AppButton>
-              </div>
-            </div>
-
-            <AppButton
-              v-if="col.nextStatus"
-              size="sm"
-              :disabled="advancing === getOrderId(order)"
-              class="mt-2 w-full"
-              @click="advanceOrder(getOrderId(order), col.nextStatus)"
-            >
-              {{ advancing === getOrderId(order) ? $t('facilityProcessing.moving') : $t('facilityProcessing.moveTo', { status: nextLabel(col.nextStatus) }) }}
-            </AppButton>
-          </div>
+          <ProcessingOrderCard
+            v-for="order in col.orders"
+            :key="getOrderId(order)"
+            :order="order"
+            :col="col"
+            :assigned-machine="getAssignedMachine(getOrderId(order))"
+            :available-machines="availableMachines(col.machineType)"
+            v-model:machine-selection="machineSelections[getOrderId(order)]"
+            :is-assigning="assigning === getOrderId(order)"
+            :is-advancing="advancing === getOrderId(order)"
+            :is-rolling-back="rollingBack === getOrderId(order)"
+            :is-admin-or-staff="isAdminOrStaff"
+            :has-rollback-options="getRollbackOptions(col.status).length > 0"
+            :next-status-label="col.nextStatus ? nextLabel(col.nextStatus) : ''"
+            @assign="machineId => handleAssign(machineId, getOrderId(order))"
+            @release="machineId => handleRelease(machineId, getOrderId(order))"
+            @advance="advanceOrder(getOrderId(order), col.nextStatus)"
+            @rollback="openRollback(getOrderId(order), col.status)"
+          />
           <div v-if="col.orders.length === 0" class="text-xs text-gray-300 text-center py-4">{{ $t('facilityProcessing.noOrders') }}</div>
         </div>
       </div>
@@ -94,25 +58,86 @@
     @confirm="onMachineSelectConfirm"
     @skip="onMachineSelectSkip"
   />
+
+  <!-- Rollback modal: opened when the user clicks the rollback button on an order card -->
+  <AppModal
+    :show="showRollbackModal"
+    :title="$t('facilityProcessing.rollbackTitle')"
+    size="sm"
+    :close-on-backdrop="false"
+    :loading="Boolean(rollingBack)"
+    @close="closeRollbackModal"
+  >
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">
+          {{ $t('facilityProcessing.rollbackSelectStage') }}
+        </label>
+        <select
+          v-model="rollbackTarget.targetStatus"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none"
+        >
+          <option
+            v-for="stg in rollbackOptions"
+            :key="stg.status"
+            :value="stg.status"
+          >
+            {{ stg.label }}
+          </option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">
+          {{ $t('facilityProcessing.rollbackNoteLabel') }}
+        </label>
+        <textarea
+          v-model="rollbackNote"
+          rows="2"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none resize-none"
+          :placeholder="$t('facilityProcessing.rollbackNotePlaceholder')"
+        />
+      </div>
+    </div>
+    <template #footer>
+      <AppButton
+        variant="secondary"
+        size="sm"
+        :disabled="Boolean(rollingBack)"
+        @click="closeRollbackModal"
+      >
+        {{ $t('common.cancel') }}
+      </AppButton>
+      <AppButton
+        variant="danger"
+        size="sm"
+        :loading="Boolean(rollingBack)"
+        :disabled="!rollbackTarget.targetStatus"
+        @click="doRollback"
+      >
+        {{ $t('facilityProcessing.rollbackConfirm') }}
+      </AppButton>
+    </template>
+  </AppModal>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
-import OrderNotesBadge from '../../ui/OrderNotesBadge.vue'
+import AppModal from '../../ui/AppModal.vue'
 import QualityCheckModal from '../../ui/QualityCheckModal.vue'
 import MachineSelectModal from '../../ui/MachineSelectModal.vue'
 import MachineManagement from '../../ui/MachineManagement.vue'
+import ProcessingOrderCard from './ProcessingOrderCard.vue'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
 import { fetchAllOrders, updateOrderStatus } from '../../../api/orders'
 import { fetchMachineStatus, assignMachine, releaseMachine } from '../../../api/facility'
+import { normalizeStatus } from '../../../utils/orderFlow'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
 const ui = useUiStore()
-const isAdmin = computed(() => authStore.isAdmin)
 const isAdminOrStaff = computed(() => authStore.isAdminOrStaff)
 
 const allOrders = ref([])
@@ -131,6 +156,70 @@ const showMachineSelectModal = ref(false)
 const machineSelectStage     = ref(null)   // { orderId, nextStatus, stageLabel, machineType }
 const machineSelectAdvancing = ref(false)
 
+// ── Rollback state ─────────────────────────────────────────────────────────────
+// Map of current stage → list of stages the order can be rolled back to.
+// Only stages within the processing pipeline and strictly earlier are listed.
+const ROLLBACK_MAP = {
+  washing:       ['arrived'],
+  drying:        ['washing', 'arrived'],
+  ironing:       ['drying', 'washing', 'arrived'],
+  quality_check: ['ironing', 'drying', 'washing', 'arrived'],
+}
+
+const showRollbackModal = ref(false)
+const rollingBack       = ref(null)   // orderId currently being rolled back
+const rollbackNote      = ref('')
+const rollbackTarget    = reactive({ orderId: '', currentStatus: '', targetStatus: '' })
+
+// Derived list of selectable rollback stages for the open modal
+const rollbackOptions = computed(() => {
+  const targets = ROLLBACK_MAP[rollbackTarget.currentStatus] ?? []
+  return targets.map(st => ({ status: st, label: LABEL_MAP.value[st] ?? st }))
+})
+
+function getRollbackOptions(currentStatus) {
+  return ROLLBACK_MAP[currentStatus] ?? []
+}
+
+function openRollback(orderId, currentStatus) {
+  const opts = getRollbackOptions(currentStatus)
+  if (!opts.length) return
+  rollbackTarget.orderId        = orderId
+  rollbackTarget.currentStatus  = currentStatus
+  rollbackTarget.targetStatus   = opts[0] // default to first (nearest) option
+  rollbackNote.value            = ''
+  showRollbackModal.value       = true
+}
+
+function closeRollbackModal() {
+  showRollbackModal.value      = false
+  rollbackTarget.orderId       = ''
+  rollbackTarget.currentStatus = ''
+  rollbackTarget.targetStatus  = ''
+  rollbackNote.value           = ''
+}
+
+async function doRollback() {
+  const { orderId, targetStatus } = rollbackTarget
+  if (!orderId || !targetStatus) return
+
+  rollingBack.value = orderId
+  try {
+    await updateOrderStatus(orderId, targetStatus, {
+      note: rollbackNote.value.trim() || undefined,
+    })
+    ui.showSuccess(t('facilityProcessing.rollbackSuccess'))
+    closeRollbackModal()
+    await loadData()
+  } catch (err) {
+    const msg = err?.message ?? t('facilityProcessing.unknownError')
+    ui.showError(`${t('facilityProcessing.rollbackFailed')}: ${msg}`)
+  } finally {
+    rollingBack.value = null
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const PIPELINE = computed(() => [
   { status: 'arrived',           label: t('facilityProcessing.received'),      nextStatus: 'washing',            assignable: false, machineType: null },
   { status: 'washing',           label: t('facility.washing'),                 nextStatus: 'drying',             assignable: true,  machineType: 'washer' },
@@ -146,12 +235,6 @@ function nextLabel(backendStatus) {
   return LABEL_MAP.value[backendStatus] ?? backendStatus
 }
 
-function machineStatusLabel(status) {
-  if (status === 'running') return 'Running'
-  if (status === 'maintenance') return 'Maintenance'
-  return 'Available'
-}
-
 function getOrderId(order) {
   return order?._id ?? order?.id ?? ''
 }
@@ -160,28 +243,6 @@ function getMachineId(machine) {
   return machine?._id ?? machine?.id ?? ''
 }
 
-function formatTime(dateStr) {
-  if (!dateStr) return ''
-  return new Date(dateStr).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-}
-
-function normalizeProcessingStatus(status) {
-  const raw = String(status ?? '').trim()
-  if (!raw) return ''
-
-  const compact = raw.replace(/[\s-]+/g, '_').toLowerCase()
-  if (compact === 'qualitycheck') return 'quality_check'
-  if (compact === 'readytodelivery' || compact === 'readytodeliver') return 'ready_to_delivery'
-
-  if (compact === 'arrived') return 'arrived'
-  if (compact === 'washing') return 'washing'
-  if (compact === 'drying') return 'drying'
-  if (compact === 'ironing') return 'ironing'
-  if (compact === 'quality_check') return 'quality_check'
-  if (compact === 'ready_to_delivery') return 'ready_to_delivery'
-
-  return compact
-}
 
 async function loadData() {
   try {
@@ -195,7 +256,7 @@ async function loadData() {
       id: raw.order_number ?? raw._id ?? raw.id,
       _id: raw._id ?? raw.id,
       client: raw.client?.name ?? raw.client ?? raw.client_name ?? '',
-      status: normalizeProcessingStatus(raw.status),
+      status: normalizeStatus(raw.status),
       serviceType: raw.service_type === 'express' ? 'Express' : 'Standard',
       specialNotes: raw.specialNotes ?? raw.special_notes ?? '',
       items: (raw.items ?? []).map(i => ({
@@ -259,11 +320,7 @@ function availableMachines(machineType) {
   return machines.value.filter(m => m.type === machineType && m.status !== 'maintenance')
 }
 
-function getMachineOccupancyLabel(m) {
-  const count = m.current_orders?.length ?? (m.current_order_id ? 1 : 0)
-  if (count === 0) return ` — ${t('facilityProcessing.statusAvailable')}`
-  return ` — ${t('facilityProcessing.inUseCount', { count })}`
-}
+
 
 async function handleAssign(machineId, orderId) {
   if (!machineId || !orderId) {
@@ -297,10 +354,9 @@ async function advanceOrder(orderId, nextStatus) {
     return
   }
 
-  const normalizedNext = normalizeProcessingStatus(nextStatus)
+  const normalizedNext = normalizeStatus(nextStatus)
 
   // When advancing from quality_check to ready_to_delivery, open the
-  // quality-check modal instead of advancing directly.
   if (normalizedNext === 'ready_to_delivery') {
     const order = allOrders.value.find(o => getOrderId(o) === orderId)
     if (order) {
@@ -311,7 +367,6 @@ async function advanceOrder(orderId, nextStatus) {
   }
 
   // When entering a machine-driven stage, open the machine-select modal
-  // instead of auto-assigning the first available machine.
   const nextStage = PIPELINE.value.find(stage => stage.status === normalizedNext)
   if (nextStage?.assignable && nextStage.machineType) {
     machineSelectStage.value = {

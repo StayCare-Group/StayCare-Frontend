@@ -27,7 +27,7 @@
       </template>
       <template #cell-actions="{ item }">
         <AppButton variant="ghost" size="sm" @click="openModal(item)" class="mr-2">{{ $t('admin.edit') }}</AppButton>
-        <button @click="handleDelete(item)" class="text-red-400 hover:text-red-600 hover:underline text-sm font-medium">{{ $t('admin.delete') }}</button>
+        <button @click="handleDelete(item)" class="text-red-400 hover:text-red-600 hover:underline text-xs font-medium">{{ $t('admin.delete') }}</button>
       </template>
     </DataTable>
 

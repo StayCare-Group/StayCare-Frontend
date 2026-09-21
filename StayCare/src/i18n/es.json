@@ -1,6 +1,8 @@
 {
   "common": {
     "laundryManagement": "Gestión de Lavandería",
+    "collapseSidebar": "Colapsar menú",
+    "expandSidebar": "Expandir menú",
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
     "signIn": "Iniciar sesión",
@@ -491,7 +493,16 @@
     "qualityCheckNoteLabel": "Nota interna (opcional)",
     "qualityCheckNotePlaceholder": "ej: 2 prendas desmanchadas exitosamente",
     "qualityCheckContinue": "Confirmar y Liberar",
-    "qualityCheckConfirmAndPrint": "Confirmar e Imprimir"
+    "qualityCheckConfirmAndPrint": "Confirmar e Imprimir",
+    "rollbackTitle": "Devolver a etapa anterior",
+    "rollbackSelectStage": "Seleccionar etapa de destino",
+    "rollbackNoteLabel": "Motivo del retroceso (opcional)",
+    "rollbackNotePlaceholder": "ej: prenda aún manchada, se requiere re-lavado",
+    "rollbackConfirm": "Confirmar Retroceso",
+    "rollbackRollingBack": "Devolviendo...",
+    "rollbackSuccess": "La orden fue devuelta a la etapa anterior.",
+    "rollbackFailed": "No se pudo devolver la orden.",
+    "rollbackInvoicedBlocked": "No se puede devolver una orden ya facturada."
   },
   "machineSelectModal": {
     "title": "Asignar Máquina",

@@ -221,4 +221,26 @@ describe('mapOrderForDetail', () => {
     const result = mapOrderForDetail(raw)
     expect(result.timeline[0].note).toBe('Reassigned to driver Carlos Driver')
   })
+
+  it('mapea contactPerson y contactPhone desde client_contact_person y client_phone planos del backend', () => {
+    const raw = {
+      ...RAW_ORDER_BASE,
+      client_contact_person: 'María Gerente',
+      client_phone: '+34 600 111 222',
+    }
+    const result = mapOrderForDetail(raw)
+
+    expect(result.contactPerson).toBe('María Gerente')
+    expect(result.contactPhone).toBe('+34 600 111 222')
+    expect(result.propertyContactPerson).toBe('María Gerente')
+    expect(result.propertyPhone).toBe('+34 600 111 222')
+  })
+
+  it('devuelve strings vacíos para contactPerson y contactPhone cuando no están definidos', () => {
+    const result = mapOrderForDetail(RAW_ORDER_BASE)
+    expect(result.contactPerson).toBe('')
+    expect(result.contactPhone).toBe('')
+    expect(result.propertyContactPerson).toBe('')
+    expect(result.propertyPhone).toBe('')
+  })
 })

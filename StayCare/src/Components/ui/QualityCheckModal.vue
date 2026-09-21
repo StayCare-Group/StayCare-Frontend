@@ -171,14 +171,14 @@ async function initItems() {
     orderDetail.value = detail
 
     qualityItems.value = (detail.items ?? []).map(i => {
-      const good    = i.qtyGood    ?? i.qty ?? 0
-      const bad     = i.qtyBad     ?? 0
-      const stained = i.qtyStained ?? 0
+      const good    = Number(i.qtyGood ?? 0)
+      const bad     = Number(i.qtyBad ?? 0)
+      const stained = Number(i.qtyStained ?? 0)
       return {
         itemId:       i.itemId,
         code:         i.code,
         name:         i.name,
-        qty:          i.qty ?? 0,
+        qty:          Number(i.qty ?? 0),
         qtyGood:      good,
         qtyBad:       bad,
         qtyStained:   stained,

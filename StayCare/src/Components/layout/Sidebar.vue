@@ -3,23 +3,60 @@
   <div v-if="open" class="fixed inset-0 bg-brand-950/40 z-40 lg:hidden" @click="emit('update:open', false)" />
 
   <!-- Sidebar: drawer on mobile, static fixed column on lg+ -->
-  <aside class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#F8FAFC] border-r border-gray-100
-           flex flex-col transform transition-transform duration-300 ease-out lg:translate-x-0"
-    :class="open ? 'translate-x-0' : '-translate-x-full'">
-    <!-- Logo area -->
-    <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-h-[60px]">
-      <div>
-        <img src="/brand/logo.png" alt="StayCare" class="h-8 w-auto object-contain max-w-[9rem]"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+  <aside
+    class="fixed lg:static inset-y-0 left-0 z-50 bg-[#F8FAFC] border-r border-gray-100 flex flex-col transform transition-all duration-300 ease-in-out lg:translate-x-0 shrink-0"
+    :class="[
+      open ? 'translate-x-0' : '-translate-x-full',
+      isCollapsed ? 'lg:w-[68px] w-64' : 'w-64'
+    ]"
+  >
+    <!-- Logo area & toggle collapse -->
+    <div class="px-3 py-2.5 border-b border-gray-100 flex items-center justify-between min-h-[56px] gap-1">
+      <!-- Expanded brand -->
+      <div v-show="!isCollapsed" class="min-w-0 flex-1 pl-1">
+        <img
+          src="/brand/logo.png"
+          alt="StayCare"
+          class="h-8 w-auto object-contain max-w-[8.5rem]"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+        />
         <!-- Text fallback shown only when logo fails to load -->
         <span class="hidden items-center text-lg font-bold text-brand-900">StayCare</span>
-        <p class="text-xs text-gray-400 mt-0.5">{{ $t('common.laundryManagement') }}</p>
+        <p class="text-xs text-gray-400 mt-0.5 truncate">{{ $t('common.laundryManagement') }}</p>
       </div>
 
+      <!-- Collapsed expand trigger on top (desktop only) -->
+      <div v-show="isCollapsed" class="hidden lg:flex w-full items-center justify-center">
+        <button
+          type="button"
+          @click="toggleCollapsed"
+          class="w-9 h-9 rounded-lg text-[#194B8E] hover:bg-brand-100/40 hover:text-brand-900 flex items-center justify-center transition-colors group"
+          :title="$t('common.expandSidebar')"
+        >
+          <svg class="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
 
-      <!-- Close button – hidden on desktop -->
-      <button class="lg:hidden ml-auto shrink-0 text-brand-700 hover:text-brand-950 transition-colors"
-        @click="emit('update:open', false)">
+      <!-- Collapse toggle button on top (desktop only, when expanded) -->
+      <button
+        v-show="!isCollapsed"
+        type="button"
+        @click="toggleCollapsed"
+        class="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-[#194B8E] hover:bg-brand-100/40 hover:text-brand-900 transition-colors shrink-0"
+        :title="$t('common.collapseSidebar')"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <!-- Close button – mobile only -->
+      <button
+        class="lg:hidden ml-auto shrink-0 text-brand-700 hover:text-brand-950 transition-colors p-1"
+        @click="emit('update:open', false)"
+      >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -27,28 +64,37 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-      <button v-for="item in navItems" :key="item.label" @click="navigate(item.page)"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left"
-        :class="navStore.currentPage === item.page
-          ? 'bg-[#CCEBF6]/70 text-[#0D365F] font-semibold shadow-sm'
-          : 'text-[#194B8E] hover:bg-brand-100/40 hover:text-brand-900'">
+    <nav class="flex-1 px-2.5 py-1.5 space-y-0.5 overflow-y-auto">
+      <button
+        v-for="item in navItems"
+        :key="item.label"
+        @click="navigate(item.page)"
+        class="w-full flex items-center rounded-lg text-sm font-medium transition-all text-left group"
+        :class="[
+          isCollapsed ? 'justify-center py-2 px-1.5' : 'gap-3 px-3 py-2',
+          navStore.currentPage === item.page
+            ? 'bg-[#CCEBF6]/70 text-[#0D365F] font-semibold shadow-sm'
+            : 'text-[#194B8E] hover:bg-brand-100/40 hover:text-brand-900'
+        ]"
+        :title="isCollapsed ? item.label : undefined"
+      >
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
         </svg>
-        {{ item.label }}
+        <span v-show="!isCollapsed" class="truncate">{{ item.label }}</span>
       </button>
     </nav>
 
     <!-- Footer -->
-    <div class="p-4 border-t border-gray-100 text-xs text-gray-400">
-      &copy; 2026 StayFresh
+    <div class="px-3 py-2.5 border-t border-gray-100 text-xs text-gray-400 text-center truncate">
+      <span v-show="!isCollapsed">&copy; 2026 StayFresh</span>
+      <span v-show="isCollapsed">&copy;</span>
     </div>
   </aside>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useNavStore } from '../../stores/nav.js'
 import { useAuthStore } from '../../stores/auth.js'
@@ -63,6 +109,14 @@ const emit = defineEmits(['update:open'])
 const { t } = useI18n()
 const navStore = useNavStore()
 const auth = useAuthStore()
+
+const STORAGE_KEY = 'staycare_sidebar_collapsed'
+const isCollapsed = ref(localStorage.getItem(STORAGE_KEY) === 'true')
+
+function toggleCollapsed() {
+  isCollapsed.value = !isCollapsed.value
+  localStorage.setItem(STORAGE_KEY, String(isCollapsed.value))
+}
 
 const navigate = (page) => {
   navStore.setPage(page)
