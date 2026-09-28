@@ -63,7 +63,12 @@
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
     "filterClient": "Client",
-    "filterAllClients": "All clients"
+    "filterAllClients": "All clients",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activeUser": "Active user",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "auth": {
     "loginHeading": "Login for {brand} laundry management",
@@ -105,7 +110,8 @@
     "processing": "Processing",
     "routes": "Routes",
     "users": "Users",
-    "reports": "Reports"
+    "reports": "Reports",
+    "team": "My Team"
   },
   "settings": {
     "title": "Settings",
@@ -535,6 +541,7 @@
     "orderNotFound": "Order not found.",
     "cannotEditInvoicedOrder": "An invoiced order cannot be edited.",
     "cannotEditReceivedOrder": "An order cannot be edited once it is ready for delivery or completed.",
+    "cannotEditOnceReceivedClient": "An order cannot be edited once it has been received at the facility.",
     "selectDateAndWindow": "Please select a date and time window.",
     "rescheduleFailed": "Failed to reschedule order.",
     "noItems": "No items recorded.",
@@ -818,5 +825,44 @@
     "priceInvalid": "Price must be 0 or greater",
     "itemRequired": "Please select an item",
     "priceLabel": "Price (€)"
+  },
+  "subUsers": {
+    "pageTitle": "Team Management",
+    "rolesTitle": "Custom Roles ({count})",
+    "rolesEmpty": "No custom roles yet. Create a role before adding sub-users.",
+    "addRole": "New role",
+    "editRole": "Edit role",
+    "createRole": "Create role",
+    "roleName": "Role name",
+    "permissions": "Permissions",
+    "noPermissions": "No permissions assigned",
+    "roleCreated": "Role created successfully",
+    "roleUpdated": "Role updated successfully",
+    "roleDeleted": "Role deleted successfully",
+    "deleteRoleTitle": "Delete role",
+    "deleteRoleConfirm": "Delete role '{name}'? This action cannot be undone. You cannot delete it if users are still assigned to it.",
+    "permissionRequired": "You must select at least one permission",
+    "loadRolesFailed": "Failed to load roles",
+    "loadPermissionsFailed": "Failed to load permissions",
+    "usersTitle": "Sub-users ({count})",
+    "usersEmpty": "No sub-users created yet.",
+    "addUser": "New sub-user",
+    "editUser": "Edit sub-user",
+    "createUser": "Create sub-user",
+    "needRoleFirst": "Create at least one role before adding sub-users",
+    "role": "Role",
+    "selectRole": "Select a role",
+    "password": "Password",
+    "newPassword": "New password (leave blank to keep current)",
+    "searchPlaceholder": "Search sub-users...",
+    "page": "Page {page} of {total}",
+    "userCreated": "Sub-user created successfully",
+    "userUpdated": "Sub-user updated successfully",
+    "userDeleted": "Sub-user deleted successfully",
+    "deleteUserTitle": "Delete sub-user",
+    "deleteUserConfirm": "Delete user '{name}'? This action cannot be undone.",
+    "loadUsersFailed": "Failed to load sub-users",
+    "saveFailed": "Failed to save",
+    "deleteFailed": "Failed to delete"
   }
 }

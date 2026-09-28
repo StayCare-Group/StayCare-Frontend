@@ -18,10 +18,17 @@
           <span v-if="exportLoading">{{ $t('excel.exportGenerating') }}</span>
           <span v-else>{{ selectedOrderIds.length ? $t('invoices.exportCsvCount', { count: selectedOrderIds.length }) : $t('invoices.exportCsv') }}</span>
         </AppButton>
-        <AppButton size="sm" :disabled="isClient && !canCreateOrder" @click="navStore.goToDetail('create-order', null)">{{ $t('client.newOrder') }}</AppButton>
+        <AppButton
+          v-if="!isClient || auth.hasPermission('orders:create')"
+          size="sm"
+          :disabled="isClient && !canCreateOrder"
+          @click="navStore.goToDetail('create-order', null)"
+        >
+          {{ $t('client.newOrder') }}
+        </AppButton>
       </div>
     </div>
-    <p v-if="isClient && !canCreateOrder" class="text-sm text-amber-700">
+    <p v-if="isClient && auth.hasPermission('orders:create') && !canCreateOrder" class="text-sm text-amber-700">
       {{ $t('client.createOrderProfileRequired') }}
       <button type="button" class="font-semibold text-brand-700 hover:underline" @click="navStore.setPage('profile')">
         {{ $t('client.goToProfileCta') }}
@@ -109,7 +116,7 @@
             class="text-brand-700 hover:underline text-xs font-medium leading-tight"
           >{{ $t('common.viewDetails') }}</button>
           <button
-            v-if="isAdmin && isCancelableStatus(item.status)"
+            v-if="canCancel && isCancelableStatus(item.status)"
             @click.stop="promptCancelOrder(item)"
             class="text-red-600 hover:underline text-[11px] font-medium leading-tight"
           >{{ $t('admin.cancelOrder') }}</button>
@@ -160,6 +167,7 @@ const dateTo = ref(defaultDateRange.to)
 const isAdmin = computed(() => auth.isAdmin)
 const isAdminOrStaff = computed(() => auth.isAdminOrStaff)
 const isClient = computed(() => auth.isClient)
+const canCancel = computed(() => auth.hasPermission('orders:delete'))
 
 const orders = ref([])
 const loading = ref(true)

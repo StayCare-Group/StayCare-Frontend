@@ -63,7 +63,12 @@
     "selectAll": "Seleccionar todo",
     "deselectAll": "Deseleccionar todo",
     "filterClient": "Cliente",
-    "filterAllClients": "Todos los clientes"
+    "filterAllClients": "Todos los clientes",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "activeUser": "Usuario activo",
+    "edit": "Editar",
+    "delete": "Eliminar"
   },
   "auth": {
     "loginHeading": "Iniciar sesión en {brand} gestión de lavandería",
@@ -105,7 +110,8 @@
     "processing": "Procesamiento",
     "routes": "Rutas",
     "users": "Usuarios",
-    "reports": "Informes"
+    "reports": "Informes",
+    "team": "Mi Equipo"
   },
   "settings": {
     "title": "Configuración",
@@ -535,6 +541,7 @@
     "orderNotFound": "Pedido no encontrado.",
     "cannotEditInvoicedOrder": "No se puede editar una orden facturada.",
     "cannotEditReceivedOrder": "No se puede editar una orden a partir de que está lista para entrega o finalizada.",
+    "cannotEditOnceReceivedClient": "No se puede editar una orden una vez que ha sido recibida en planta.",
     "selectDateAndWindow": "Seleccione una fecha y una ventana horaria.",
     "rescheduleFailed": "No se pudo reprogramar el pedido.",
     "noItems": "Sin artículos registrados.",
@@ -818,5 +825,44 @@
     "priceInvalid": "El precio debe ser 0 o mayor",
     "itemRequired": "Por favor selecciona un artículo",
     "priceLabel": "Precio (€)"
+  },
+  "subUsers": {
+    "pageTitle": "Gestión de equipo",
+    "rolesTitle": "Roles personalizados ({count})",
+    "rolesEmpty": "No hay roles personalizados. Crea un rol para poder añadir sub-usuarios.",
+    "addRole": "Nuevo rol",
+    "editRole": "Editar rol",
+    "createRole": "Crear rol",
+    "roleName": "Nombre del rol",
+    "permissions": "Permisos",
+    "noPermissions": "Sin permisos asignados",
+    "roleCreated": "Rol creado correctamente",
+    "roleUpdated": "Rol actualizado correctamente",
+    "roleDeleted": "Rol eliminado correctamente",
+    "deleteRoleTitle": "Eliminar rol",
+    "deleteRoleConfirm": "¿Eliminar el rol '{name}'? Esta acción no se puede deshacer. No podrás eliminarlo si hay usuarios asignados.",
+    "permissionRequired": "Debes seleccionar al menos un permiso",
+    "loadRolesFailed": "Error al cargar los roles",
+    "loadPermissionsFailed": "Error al cargar los permisos",
+    "usersTitle": "Sub-usuarios ({count})",
+    "usersEmpty": "No hay sub-usuarios creados.",
+    "addUser": "Nuevo sub-usuario",
+    "editUser": "Editar sub-usuario",
+    "createUser": "Crear sub-usuario",
+    "needRoleFirst": "Crea al menos un rol antes de añadir sub-usuarios",
+    "role": "Rol",
+    "selectRole": "Selecciona un rol",
+    "password": "Contraseña",
+    "newPassword": "Nueva contraseña (dejar vacío para no cambiar)",
+    "searchPlaceholder": "Buscar sub-usuarios...",
+    "page": "Página {page} de {total}",
+    "userCreated": "Sub-usuario creado correctamente",
+    "userUpdated": "Sub-usuario actualizado correctamente",
+    "userDeleted": "Sub-usuario eliminado correctamente",
+    "deleteUserTitle": "Eliminar sub-usuario",
+    "deleteUserConfirm": "¿Eliminar al usuario '{name}'? Esta acción no se puede deshacer.",
+    "loadUsersFailed": "Error al cargar los sub-usuarios",
+    "saveFailed": "Error al guardar",
+    "deleteFailed": "Error al eliminar"
   }
 }

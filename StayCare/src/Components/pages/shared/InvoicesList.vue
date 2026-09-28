@@ -4,6 +4,7 @@
       <h2 class="text-lg font-semibold text-brand-700">{{ $t('nav.invoices') }}</h2>
       <div class="flex items-center gap-2">
         <AppButton
+          v-if="canExport"
           variant="secondary"
           size="sm"
           :disabled="exportLoading"
@@ -109,6 +110,7 @@ const authStore = useAuthStore()
 const uiStore = useUiStore()
 
 const isAdmin = computed(() => authStore.isAdmin)
+const canExport = computed(() => authStore.isAdminOrStaff || (typeof authStore.hasPermission === 'function' ? authStore.hasPermission('invoices:export') : true))
 
 const LOAD_LIMIT = '200'
 const exportLoading = ref(false)

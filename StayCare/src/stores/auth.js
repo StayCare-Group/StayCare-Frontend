@@ -59,11 +59,21 @@ export const useAuthStore = defineStore('auth', () => {
       language: raw.language ?? 'en',
       clientId: clientObj?._id ?? (typeof raw.client === 'string' ? raw.client : null),
       client: clientObj ?? null,
+      // Set for sub-users: the owning client's user id
+      parentClientId: raw.parent_client_id ?? null,
+      permissions: Array.isArray(data?.permissions) ? data.permissions : [],
     }
     clientProfile.value = data?.client_profile ?? null
 
     applyLanguage(user.value.language)
     return user.value
+  }
+
+  function hasPermission(perm) {
+    if (!user.value) return false
+    if (isAdmin.value || isStaff.value) return true
+    if (isClient.value && !user.value.parentClientId) return true
+    return Array.isArray(user.value.permissions) && user.value.permissions.includes(perm)
   }
 
   async function login(email, password) {
@@ -114,6 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
     isOperator,
     isAdminOrStaff,
     isInternal,
+    hasPermission,
     login,
     logout,
     tryRefresh,

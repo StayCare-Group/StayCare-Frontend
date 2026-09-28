@@ -34,26 +34,38 @@ describe('orderFlow utils', () => {
   })
 
   describe('isEditableStatus', () => {
-    it('permite editar ordenes desde pending hasta quality_check', () => {
-      expect(isEditableStatus('pending')).toBe(true)
-      expect(isEditableStatus('assigned')).toBe(true)
-      expect(isEditableStatus('rescheduled')).toBe(true)
-      expect(isEditableStatus('transit')).toBe(true)
-      expect(isEditableStatus('arrived')).toBe(true)
-      expect(isEditableStatus('washing')).toBe(true)
-      expect(isEditableStatus('drying')).toBe(true)
-      expect(isEditableStatus('ironing')).toBe(true)
-      expect(isEditableStatus('quality_check')).toBe(true)
+    it('permite a admin y staff editar ordenes desde pending hasta quality_check', () => {
+      expect(isEditableStatus('pending', true)).toBe(true)
+      expect(isEditableStatus('assigned', true)).toBe(true)
+      expect(isEditableStatus('rescheduled', true)).toBe(true)
+      expect(isEditableStatus('transit', true)).toBe(true)
+      expect(isEditableStatus('arrived', true)).toBe(true)
+      expect(isEditableStatus('washing', true)).toBe(true)
+      expect(isEditableStatus('drying', true)).toBe(true)
+      expect(isEditableStatus('ironing', true)).toBe(true)
+      expect(isEditableStatus('quality_check', true)).toBe(true)
     })
 
-    it('bloquea la edicion a partir de ready_to_delivery y estados posteriores', () => {
-      expect(isEditableStatus('ready_to_delivery')).toBe(false)
-      expect(isEditableStatus('collected')).toBe(false)
-      expect(isEditableStatus('delivered')).toBe(false)
-      expect(isEditableStatus('completed')).toBe(false)
-      expect(isEditableStatus('cancelled')).toBe(false)
-      expect(isEditableStatus('')).toBe(false)
-      expect(isEditableStatus(undefined)).toBe(false)
+    it('bloquea a clientes y subusuarios una vez recibida la orden en planta (arrived onwards)', () => {
+      expect(isEditableStatus('pending', false)).toBe(true)
+      expect(isEditableStatus('assigned', false)).toBe(true)
+      expect(isEditableStatus('rescheduled', false)).toBe(true)
+      expect(isEditableStatus('transit', false)).toBe(true)
+      expect(isEditableStatus('arrived', false)).toBe(false)
+      expect(isEditableStatus('washing', false)).toBe(false)
+      expect(isEditableStatus('drying', false)).toBe(false)
+      expect(isEditableStatus('ironing', false)).toBe(false)
+      expect(isEditableStatus('quality_check', false)).toBe(false)
+    })
+
+    it('bloquea la edicion a partir de ready_to_delivery y estados posteriores para todos los roles', () => {
+      expect(isEditableStatus('ready_to_delivery', true)).toBe(false)
+      expect(isEditableStatus('collected', true)).toBe(false)
+      expect(isEditableStatus('delivered', true)).toBe(false)
+      expect(isEditableStatus('completed', true)).toBe(false)
+      expect(isEditableStatus('cancelled', true)).toBe(false)
+      expect(isEditableStatus('', true)).toBe(false)
+      expect(isEditableStatus(undefined, true)).toBe(false)
     })
   })
 

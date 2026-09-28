@@ -168,6 +168,7 @@
       <!-- clientId es computed: se pasa una sola vez a ambos managers -->
       <ClientPropertiesManager :client-id="clientId" />
       <ClientPriceListManager :client-id="clientId" />
+      <ClientSubUsersManager :client-id="clientId" />
 
       <!-- Client Orders — usa DataTable igual que OrdersList -->
       <DataTable
@@ -202,6 +203,7 @@ import AppButton from '../../ui/AppButton.vue'
 import ProfileField from '../../ui/ProfileField.vue'
 import ClientPropertiesManager from '../shared/ClientPropertiesManager.vue'
 import ClientPriceListManager from '../shared/ClientPriceListManager.vue'
+import ClientSubUsersManager from '../shared/ClientSubUsersManager.vue'
 import { useUiStore } from '../../../stores/ui.js'
 import { formatApiErrorMessage } from '../../../utils/errors'
 

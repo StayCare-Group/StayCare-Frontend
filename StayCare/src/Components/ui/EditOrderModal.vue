@@ -205,8 +205,10 @@ async function submitEdit() {
     error.value = t('orderDetail.cannotEditInvoicedOrder')
     return
   }
-  if (!isEditableStatus(props.order.status)) {
-    error.value = t('orderDetail.cannotEditReceivedOrder')
+  if (!isEditableStatus(props.order.status, props.isAdminOrStaff)) {
+    error.value = props.isAdminOrStaff
+      ? t('orderDetail.cannotEditReceivedOrder')
+      : t('orderDetail.cannotEditOnceReceivedClient')
     return
   }
 

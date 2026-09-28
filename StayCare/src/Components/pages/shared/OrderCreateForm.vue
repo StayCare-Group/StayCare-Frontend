@@ -201,11 +201,14 @@ onMounted(async () => {
       }))
     } else {
       const meData = await fetchMe().catch(() => null)
-      const userId = meData?.user?.id ?? meData?.user?._id ?? authStore.user?.id ?? ''
-      form.clientId = userId
-      if (userId) {
-        const props = await getPropertiesByUserId(userId).catch(() => [])
+      const clientId = authStore.user?.parentClientId || meData?.user?.parent_client_id || (meData?.user?.id ?? meData?.user?._id ?? authStore.user?.id ?? '')
+      form.clientId = clientId
+      if (clientId) {
+        const props = await getPropertiesByUserId(clientId).catch(() => [])
         properties.value = props ?? []
+        if (properties.value.length === 1) {
+          form.propertyId = properties.value[0].id ?? properties.value[0]._id
+        }
       }
     }
   } catch {
@@ -262,7 +265,7 @@ const errorMessage = ref('')
 
 function parseTimeWindow(tw) {
   const [start, end] = tw.split(' - ')
-  const date = form.pickupDate || today
+  const date = form.pickupDate || todayStr.value
   return {
     start_time: new Date(`${date}T${start}:00`).toISOString(),
     end_time: new Date(`${date}T${end}:00`).toISOString(),
@@ -271,7 +274,7 @@ function parseTimeWindow(tw) {
 
 function resolveClientId() {
   if (isAdmin.value) return form.clientId
-  return form.clientId || authStore.user?.clientId || authStore.user?.client?._id || authStore.user?.id
+  return authStore.user?.parentClientId || authStore.user?.clientId || authStore.user?.client?._id || authStore.user?.id || form.clientId
 }
 
 async function submitOrder() {

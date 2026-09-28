@@ -35,6 +35,9 @@ vi.mock('@/stores/auth.js', () => ({
   useAuthStore: () => ({
     user: { id: 'u1', name: 'Test User', role: mockIsAdmin ? 'admin' : 'client' },
     isAdmin: mockIsAdmin,
+    isAdminOrStaff: mockIsAdmin,
+    isClient: !mockIsAdmin,
+    hasPermission: () => true,
   }),
 }))
 

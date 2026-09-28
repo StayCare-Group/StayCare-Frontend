@@ -43,10 +43,19 @@ export function isCancelableStatus(status?: string): boolean {
   return norm === 'pending' || norm === 'assigned'
 }
 
-export function isEditableStatus(status?: string): boolean {
+export function isPreReceiveStatus(status?: string): boolean {
+  const norm = normalizeStatus(status)
+  return norm === 'pending' || norm === 'assigned' || norm === 'rescheduled' || norm === 'transit'
+}
+
+export function isEditableStatus(status?: string, isAdminOrStaff: boolean = true): boolean {
   const norm = normalizeStatus(status)
   if (!norm) return false
-  return !NON_EDITABLE_STATUSES.has(norm)
+  if (NON_EDITABLE_STATUSES.has(norm)) return false
+  if (!isAdminOrStaff) {
+    return isPreReceiveStatus(norm)
+  }
+  return true
 }
 
 export function isPickupAssignableStatus(status: string): boolean {

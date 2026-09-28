@@ -6,8 +6,9 @@ export function isClientProfileCompleteForOrder(meData, clientProfileOverride) {
   const user = meData?.user ?? meData ?? {}
   const profile = clientProfileOverride ?? meData?.client_profile ?? {}
 
+  const hasPhone = hasText(user.phone) || Boolean(user.parentClientId || user.parent_client_id)
   return (
-    hasText(user.phone) &&
+    hasPhone &&
     hasText(profile.contact_person) &&
     hasText(profile.billing_address)
   )

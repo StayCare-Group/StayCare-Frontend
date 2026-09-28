@@ -20,9 +20,9 @@
         </svg>
         {{ generatingPdf ? $t('orderPdf.generating') : $t('orderPdf.download') }}
       </AppButton>
-      <!-- Edit order (admin / staff only) -->
+      <!-- Edit order (admin / staff or with orders:update permission) -->
       <AppButton
-        v-if="order && isAdminOrStaff"
+        v-if="order && canEdit"
         variant="secondary"
         size="sm"
         :disabled="!canEditOrder"
@@ -34,9 +34,9 @@
         </svg>
         {{ $t('admin.editOrder') }}
       </AppButton>
-      <!-- Cancel order (admin only) -->
+      <!-- Cancel order (admin or with orders:delete permission) -->
       <AppButton
-        v-if="order && isAdmin && isCancelableStatus(order.status)"
+        v-if="order && canCancel && isCancelableStatus(order.status)"
         variant="danger"
         size="sm"
         @click="showCancelModal = true"
@@ -48,11 +48,11 @@
       </AppButton>
     </TitleHeader>
 
-    <p v-if="order && isAdminOrStaff && order.isInvoiced" class="text-xs text-amber-600">
+    <p v-if="order && canEdit && order.isInvoiced" class="text-xs text-amber-600">
       {{ $t('orderDetail.cannotEditInvoicedOrder') }}
     </p>
-    <p v-else-if="order && isAdminOrStaff && !isEditableStatus(order.status)" class="text-xs text-amber-600">
-      {{ $t('orderDetail.cannotEditReceivedOrder') }}
+    <p v-else-if="order && canEdit && !canEditOrder" class="text-xs text-amber-600">
+      {{ cannotEditTooltip }}
     </p>
 
     <div v-if="order" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -187,16 +187,22 @@ const showEditModal = ref(false)
 
 const isAdmin = computed(() => authStore.isAdmin)
 const isAdminOrStaff = computed(() => authStore.isInternal)
+const canCancel = computed(() => authStore.hasPermission('orders:delete'))
+const canEdit = computed(() => authStore.hasPermission('orders:update'))
 
 const canEditOrder = computed(() => {
   if (!order.value) return false
   if (order.value.isInvoiced) return false
-  return isEditableStatus(order.value.status)
+  return isEditableStatus(order.value.status, isAdminOrStaff.value)
 })
 
 const cannotEditTooltip = computed(() => {
   if (order.value?.isInvoiced) return t('orderDetail.cannotEditInvoicedOrder')
-  if (!isEditableStatus(order.value?.status)) return t('orderDetail.cannotEditReceivedOrder')
+  if (!isEditableStatus(order.value?.status, isAdminOrStaff.value)) {
+    return isAdminOrStaff.value
+      ? t('orderDetail.cannotEditReceivedOrder')
+      : t('orderDetail.cannotEditOnceReceivedClient')
+  }
   return ''
 })
 
