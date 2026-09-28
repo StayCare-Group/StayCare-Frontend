@@ -93,29 +93,31 @@ import LoadingPanel from '../ui/LoadingPanel.vue'
 import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import { useNavStore } from '../../stores/nav.js'
-import { fetchAllOrders } from '../../api/orders'
+import { fetchOrders } from '../../api/orders'
 import { mapOrderForList } from '@/utils/orderMappers'
 import { fetchDashboardStats } from '../../api/reports'
+import { getCurrentWeekBounds } from '@/utils/date'
 
 const { t } = useI18n()
 const navStore = useNavStore()
 
-const orders = ref([])
+const weeklyOrders = ref([])
+const recentOrders = ref([])
 const dashboardStats = ref(null)
 const loading = ref(true)
 
 async function loadDashboardData() {
   try {
     loading.value = true
-    const now = new Date()
-    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1)
-    const fromStr = twoMonthsAgo.toISOString()
+    const { fromStr, toStr } = getCurrentWeekBounds()
 
-    const [ordersData, statsData] = await Promise.all([
-      fetchAllOrders({ from: fromStr, limit: '200' }).catch(() => []),
+    const [weeklyOrdersData, recentOrdersData, statsData] = await Promise.all([
+      fetchOrders({ from: fromStr, to: toStr, limit: '200' }).catch(() => []),
+      fetchOrders({ limit: '6' }).catch(() => []),
       fetchDashboardStats().catch(() => null),
     ])
-    orders.value = (ordersData ?? []).map(mapOrderForList)
+    weeklyOrders.value = (weeklyOrdersData ?? []).map(mapOrderForList)
+    recentOrders.value = (recentOrdersData ?? []).map(mapOrderForList)
     dashboardStats.value = statsData
   } catch {
     /* stays empty */
@@ -157,18 +159,9 @@ const adminChartData = computed(() => {
   const dayMap = {}
   for (const k of dayKeys) dayMap[k] = 0
 
-  // Calculate current week bounds (Mon–Sun)
-  const now = new Date()
-  const day = now.getDay() // 0=Sun
-  const diffToMon = day === 0 ? -6 : 1 - day
-  const monday = new Date(now)
-  monday.setHours(0, 0, 0, 0)
-  monday.setDate(now.getDate() + diffToMon)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  sunday.setHours(23, 59, 59, 999)
+  const { monday, sunday } = getCurrentWeekBounds()
 
-  for (const o of orders.value) {
+  for (const o of weeklyOrders.value) {
     const dateStr = o.createdAt
     if (dateStr) {
       const parts = dateStr.split('-').map(Number)
@@ -191,7 +184,7 @@ const adminChartData = computed(() => {
 const maxVal = computed(() => Math.max(...adminChartData.value.values, 1))
 
 const adminActivity = computed(() => {
-  return orders.value.slice(0, 6).map((o, i) => {
+  return recentOrders.value.slice(0, 6).map((o, i) => {
     const statusAction = {
       pending: t('admin.newOrderPlaced'),
       delivered: t('admin.orderCompleted'),

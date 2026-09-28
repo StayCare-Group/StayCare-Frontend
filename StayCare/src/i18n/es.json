@@ -338,6 +338,7 @@
     "exportExcelAll": "Descargar Excel",
     "exportSelectRequired": "Selecciona al menos una orden para descargar.",
     "exportCsv": "Descargar CSV",
+    "exportCsvCount": "Descargar CSV ({count})",
     "exportError": "No se pudo exportar las facturas. Por favor inténtalo de nuevo."
   },
   "excel": {
@@ -385,10 +386,8 @@
     "machineWash": "Máquina de Lavado",
     "machineDry": "Máquina de Secado",
     "machineIroning": "Máquina / Estación de Plancha",
-    "exportFormatDetailed": "Detallado (una hoja por orden)",
-    "exportFormatFlat": "Resumen (una fila por orden + prendas)",
-    "exportGenerating": "Generando archivo Excel...",
-    "exportLimitError": "Demasiadas órdenes ({count}). Aplica un filtro más específico (máx. 200 órdenes)."
+    "exportGenerating": "Generando archivo...",
+    "exportError": "No se pudo exportar las órdenes. Por favor inténtalo de nuevo."
   },
   "invoiceDetail": {
     "paymentMethod": "Método de Pago",

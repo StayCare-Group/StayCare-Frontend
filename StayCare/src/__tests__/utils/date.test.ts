@@ -5,6 +5,7 @@ import {
   isPastDate,
   getDefaultDateRange,
   getFutureDateString,
+  getCurrentWeekBounds,
 } from '@/utils/date'
 
 describe('date utils', () => {
@@ -100,6 +101,76 @@ describe('date utils', () => {
       const base = new Date(2026, 0, 1) // Jan 1, 2026
       const future = getFutureDateString(15, base)
       expect(future).toBe('2026-01-16')
+    })
+  })
+
+  describe('getCurrentWeekBounds', () => {
+    it('calculates Monday to Sunday correctly for a date in the middle of a month', () => {
+      const wednesday = new Date(2026, 6, 15, 14, 0, 0) // Wednesday, July 15, 2026
+      const { monday, sunday } = getCurrentWeekBounds(wednesday)
+
+      expect(monday.getFullYear()).toBe(2026)
+      expect(monday.getMonth()).toBe(6) // July
+      expect(monday.getDate()).toBe(13) // Monday July 13
+      expect(monday.getHours()).toBe(0)
+      expect(monday.getMinutes()).toBe(0)
+
+      expect(sunday.getFullYear()).toBe(2026)
+      expect(sunday.getMonth()).toBe(6) // July
+      expect(sunday.getDate()).toBe(19) // Sunday July 19
+      expect(sunday.getHours()).toBe(23)
+      expect(sunday.getMinutes()).toBe(59)
+    })
+
+    it('correctly handles month rollover when Monday is in the previous month', () => {
+      const wednesday = new Date(2026, 8, 2, 10, 0, 0) // Wednesday, Sep 2, 2026
+      const { monday, sunday } = getCurrentWeekBounds(wednesday)
+
+      expect(monday.getFullYear()).toBe(2026)
+      expect(monday.getMonth()).toBe(7) // August (previous month)
+      expect(monday.getDate()).toBe(31) // Monday Aug 31
+
+      expect(sunday.getFullYear()).toBe(2026)
+      expect(sunday.getMonth()).toBe(8) // September
+      expect(sunday.getDate()).toBe(6) // Sunday Sep 6
+    })
+
+    it('correctly handles month rollover when Sunday is in the next month', () => {
+      const tuesday = new Date(2026, 2, 31, 10, 0, 0) // Tuesday, March 31, 2026
+      const { monday, sunday } = getCurrentWeekBounds(tuesday)
+
+      expect(monday.getFullYear()).toBe(2026)
+      expect(monday.getMonth()).toBe(2) // March
+      expect(monday.getDate()).toBe(30) // Monday Mar 30
+
+      expect(sunday.getFullYear()).toBe(2026)
+      expect(sunday.getMonth()).toBe(3) // April (next month)
+      expect(sunday.getDate()).toBe(5) // Sunday Apr 5
+    })
+
+    it('correctly handles year rollover (e.g. New Year week)', () => {
+      const thursday = new Date(2026, 0, 1, 15, 0, 0) // Thursday, Jan 1, 2026
+      const { monday, sunday } = getCurrentWeekBounds(thursday)
+
+      expect(monday.getFullYear()).toBe(2025) // Previous year
+      expect(monday.getMonth()).toBe(11) // December
+      expect(monday.getDate()).toBe(29) // Monday Dec 29, 2025
+
+      expect(sunday.getFullYear()).toBe(2026) // New year
+      expect(sunday.getMonth()).toBe(0) // January
+      expect(sunday.getDate()).toBe(4) // Sunday Jan 4, 2026
+    })
+
+    it('handles when reference date is Monday or Sunday', () => {
+      const mondayInput = new Date(2026, 7, 31, 12, 0, 0) // Monday Aug 31, 2026
+      const boundsMon = getCurrentWeekBounds(mondayInput)
+      expect(boundsMon.monday.getDate()).toBe(31)
+      expect(boundsMon.sunday.getDate()).toBe(6)
+
+      const sundayInput = new Date(2026, 8, 6, 22, 0, 0) // Sunday Sep 6, 2026
+      const boundsSun = getCurrentWeekBounds(sundayInput)
+      expect(boundsSun.monday.getDate()).toBe(31)
+      expect(boundsSun.sunday.getDate()).toBe(6)
     })
   })
 })

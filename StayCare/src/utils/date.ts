@@ -60,3 +60,28 @@ export function getFutureDateString(days: number = 30, fromDate: Date = new Date
   return normalizeDateString(target)
 }
 
+/**
+ * Returns the bounds of the current week (Monday 00:00:00.000 to Sunday 23:59:59.999)
+ * based on a reference date, correctly handling month and year rollovers.
+ */
+export function getCurrentWeekBounds(refDate: Date = new Date()): {
+  monday: Date
+  sunday: Date
+  fromStr: string
+  toStr: string
+} {
+  const now = new Date(refDate)
+  const day = now.getDay() // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const diffToMon = day === 0 ? -6 : 1 - day
+
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon, 0, 0, 0, 0)
+  const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6, 23, 59, 59, 999)
+
+  return {
+    monday,
+    sunday,
+    fromStr: monday.toISOString(),
+    toStr: sunday.toISOString(),
+  }
+}
+

@@ -338,6 +338,7 @@
     "exportExcelAll": "Download Excel",
     "exportSelectRequired": "Select at least one order to download.",
     "exportCsv": "Download CSV",
+    "exportCsvCount": "Download CSV ({count})",
     "exportError": "Failed to export invoices. Please try again."
   },
   "excel": {
@@ -385,10 +386,8 @@
     "machineWash": "Washing Machine",
     "machineDry": "Drying Machine",
     "machineIroning": "Ironing Machine / Station",
-    "exportFormatDetailed": "Detailed (one sheet per order)",
-    "exportFormatFlat": "Summary (one row per order + items)",
-    "exportGenerating": "Generating Excel file...",
-    "exportLimitError": "Too many orders ({count}). Apply a narrower filter (max 200 orders)."
+    "exportGenerating": "Generating file...",
+    "exportError": "Failed to export orders. Please try again."
   },
   "invoiceDetail": {
     "paymentMethod": "Payment Method",
