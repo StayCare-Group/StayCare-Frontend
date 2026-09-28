@@ -170,20 +170,30 @@
       <ClientPriceListManager :client-id="clientId" />
       <ClientSubUsersManager :client-id="clientId" />
 
-      <!-- Client Orders — usa DataTable igual que OrdersList -->
-      <DataTable
-        :title="$t('clientDetail.ordersCount', { count: clientOrders.length })"
-        :headers="orderHeaders"
-        :items="clientOrders"
-        :empty-text="$t('clientDetail.noOrders')"
-        row-key="_id"
-        clickable
-        min-width="600px"
-        @row-click="o => navStore.goToDetail('order-detail', o._id)"
-      >
-        <template #cell-status="{ value }"><StatusBadge :status="value" /></template>
-        <template #cell-total="{ value }">&euro;{{ (value ?? 0).toFixed(2) }}</template>
-      </DataTable>
+      <!-- Client Orders — usa DataTable igual que OrdersList con paginación de servidor -->
+      <div class="space-y-3">
+        <DataTable
+          :title="$t('clientDetail.ordersCount', { count: ordersTotal })"
+          :headers="orderHeaders"
+          :items="clientOrders"
+          :empty-text="$t('clientDetail.noOrders')"
+          row-key="_id"
+          clickable
+          min-width="600px"
+          @row-click="o => navStore.goToDetail('order-detail', o._id)"
+        >
+          <template #cell-status="{ value }"><StatusBadge :status="value" /></template>
+          <template #cell-total="{ value }">&euro;{{ (value ?? 0).toFixed(2) }}</template>
+        </DataTable>
+
+        <AppPagination
+          :current-page="ordersPage"
+          :total-pages="ordersTotalPages"
+          :total-items="ordersTotal"
+          :disabled="ordersLoading"
+          @page-change="loadClientOrders"
+        />
+      </div>
     </template>
   </div>
 </template>
@@ -193,12 +203,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useNavStore } from '../../../stores/nav.js'
 import { fetchUserById, updateUserById } from '../../../api/users'
-import { fetchAllOrders } from '../../../api/orders'
+import { fetchOrders } from '../../../api/orders'
 import { mapOrderForList } from '@/utils/orderMappers'
 import TitleHeader from '../../ui/TitleHeader.vue'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import DataTable from '../../ui/DataTable.vue'
+import AppPagination from '../../ui/AppPagination.vue'
 import AppButton from '../../ui/AppButton.vue'
 import ProfileField from '../../ui/ProfileField.vue'
 import ClientPropertiesManager from '../shared/ClientPropertiesManager.vue'
@@ -213,6 +224,11 @@ const ui = useUiStore()
 
 const client = ref(null)
 const clientOrders = ref([])
+const ordersPage = ref(1)
+const ordersLimit = ref(10)
+const ordersTotal = ref(0)
+const ordersTotalPages = ref(1)
+const ordersLoading = ref(false)
 const loading = ref(true)
 const isEditing = ref(false)
 const saving = ref(false)
@@ -351,6 +367,32 @@ function normalizeClientDetailResponse(payload) {
   }
 }
 
+async function loadClientOrders(page = 1) {
+  const id = clientId.value || navStore.selectedId
+  if (!id) return
+  ordersLoading.value = true
+  ordersPage.value = page
+  try {
+    const res = await fetchOrders({
+      client_id: id,
+      page: String(page),
+      limit: String(ordersLimit.value),
+    })
+    const rawOrders = Array.isArray(res) ? res : []
+    const pagination = res?._pagination ?? {}
+    clientOrders.value = rawOrders.map(mapOrderForList)
+    ordersTotal.value = Number(pagination.total ?? pagination.count ?? clientOrders.value.length)
+    ordersTotalPages.value = Number(
+      pagination.pages ?? pagination.totalPages ?? Math.max(1, Math.ceil(ordersTotal.value / ordersLimit.value))
+    )
+  } catch (err) {
+    clientOrders.value = []
+    ui.showError(formatApiErrorMessage(err, t('admin.errorFetchOrders'), t))
+  } finally {
+    ordersLoading.value = false
+  }
+}
+
 async function loadClientData() {
   loading.value = true
   try {
@@ -360,14 +402,10 @@ async function loadClientData() {
       return
     }
 
-    const [clientData, ordersData] = await Promise.all([
-      fetchUserById(id),
-      fetchAllOrders({ client_id: id }).catch(() => []),
-    ])
-
+    const clientData = await fetchUserById(id)
     client.value = normalizeClientDetailResponse(clientData)
     fillEditForm()
-    clientOrders.value = (ordersData ?? []).map(mapOrderForList)
+    await loadClientOrders(1)
   } catch (err) {
     client.value = null
     ui.showError(formatApiErrorMessage(err, t('clientDetail.loadFailed'), t))
