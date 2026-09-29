@@ -615,8 +615,25 @@
     "allStopsCompletedHint": "Has finalizado todas las entregas y recogidas de esta ruta.",
     "showCompleted": "Mostrar completadas ({count})",
     "hideCompleted": "Ocultar completadas",
-    "pendingStopsCount": "{count} pendientes"
+    "pendingStopsCount": "{count} pendientes",
+    "selectMode": "Seleccionar",
+    "exitSelectMode": "Cancelar selección",
+    "selectedCount": "{count} seleccionadas",
+    "bulkPickupTitle": "Confirmar recogida ({count} órdenes)",
+    "bulkDeliveryTitle": "Confirmar entrega ({count} órdenes)",
+    "bulkConfirm": "Confirmar todas",
+    "bulkConfirming": "Confirmando...",
+    "bulkSuccessAll": "Todas las órdenes confirmadas correctamente.",
+    "bulkSuccessPartial": "{succeeded} confirmadas, {failed} no se pudieron procesar.",
+    "bulkErrorAll": "No se pudo confirmar ninguna orden. Revisa los errores e inténtalo de nuevo.",
+    "bulkNoSameType": "Selecciona órdenes del mismo tipo (todas recogidas o todas entregas).",
+    "bulkSelectHint": "Selecciona órdenes del mismo tipo para confirmarlas juntas.",
+    "orderSummary": "Resumen de la orden",
+    "bagsForOrder": "Bolsas de esta orden",
+    "packagesForOrder": "Paquetes de esta orden",
+    "sharedNotes": "Notas compartidas (todas las órdenes)"
   },
+
   "facility": {
     "processingBoard": "Tablero de procesamiento",
     "machineStatus": "Estado de máquinas",

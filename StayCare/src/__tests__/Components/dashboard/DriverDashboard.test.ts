@@ -41,6 +41,7 @@ vi.mock('@/stores/auth.js', () => ({
 vi.mock('@/Components/pages/driver/RouteView.vue', () => ({ default: { template: '<div data-testid="route-view" />' } }))
 vi.mock('@/Components/pages/driver/PickupConfirm.vue', () => ({ default: { template: '<div data-testid="pickup-confirm" />' } }))
 vi.mock('@/Components/pages/driver/DeliveryConfirm.vue', () => ({ default: { template: '<div data-testid="delivery-confirm" />' } }))
+vi.mock('@/Components/pages/driver/BulkConfirm.vue', () => ({ default: { template: '<div data-testid="bulk-confirm" />' } }))
 vi.mock('@/Components/pages/driver/DriverHistory.vue', () => ({ default: { template: '<div data-testid="driver-history" />' } }))
 vi.mock('@/Components/pages/shared/Settings.vue', () => ({ default: { template: '<div data-testid="settings" />' } }))
 vi.mock('@/Components/pages/shared/ProfileAccount.vue', () => ({ default: { template: '<div data-testid="profile-account" />' } }))

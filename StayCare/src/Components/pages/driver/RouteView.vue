@@ -29,6 +29,15 @@
                 :style="{ width: progress + '%' }"
               ></div>
             </div>
+            <!-- Select-mode toggle -->
+            <AppButton
+              v-if="displayedStops.length > 1"
+              size="sm"
+              :variant="selectMode ? 'danger' : 'secondary'"
+              @click="toggleSelectMode"
+            >
+              {{ selectMode ? $t('driver.exitSelectMode') : $t('driver.selectMode') }}
+            </AppButton>
           </div>
         </div>
 
@@ -79,13 +88,32 @@
           <div
             v-for="stop in displayedStops"
             :key="stop.viewKey"
-            class="bg-white rounded-xl shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow border border-gray-100"
-            :class="{ 'opacity-60': stop.status === 'Completed' }"
+            class="bg-white rounded-xl shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow border"
+            :class="[
+              stop.status === 'Completed' ? 'opacity-60 border-gray-100' : '',
+              selectMode && isStopSelectable(stop) && selectedStopIds.some(sid => String(sid) === String(stop._id ?? stop.id))
+                ? 'border-brand-400 ring-2 ring-brand-200'
+                : 'border-gray-100',
+            ]"
+            @click="selectMode && isStopSelectable(stop) ? toggleStopSelection(stop) : null"
           >
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div class="flex items-start gap-3">
-                <!-- Stop number -->
+                <!-- Checkbox (select mode) or stop number -->
                 <div
+                  v-if="selectMode && isStopSelectable(stop)"
+                  class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 cursor-pointer"
+                  :class="selectedStopIds.some(sid => String(sid) === String(stop._id ?? stop.id))
+                    ? 'bg-brand-700 text-white'
+                    : 'bg-gray-100 text-gray-400 border-2 border-gray-300'"
+                >
+                  <svg v-if="selectedStopIds.some(sid => String(sid) === String(stop._id ?? stop.id))" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+                <!-- Normal stop index -->
+                <div
+                  v-else
                   class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                   :class="stop.status === 'Completed' ? 'bg-green-100 text-green-700' : stop.status === 'In Transit' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'"
                 >
@@ -109,11 +137,12 @@
                 </div>
               </div>
 
-              <div class="flex gap-2 sm:flex-col sm:items-end">
+              <!-- Action buttons (only shown outside select mode) -->
+              <div v-if="!selectMode" class="flex gap-2 sm:flex-col sm:items-end">
                 <AppButton
                   v-if="canConfirmPickup(stop.type, stop.originalStatus)"
                   size="sm"
-                  @click="navStore.goToDetail('pickup-confirm', stop._id ?? stop.id, stop.routeId)"
+                  @click.stop="navStore.goToDetail('pickup-confirm', stop._id ?? stop.id, stop.routeId)"
                 >
                   {{ $t('driver.confirmPickup') }}
                 </AppButton>
@@ -121,7 +150,7 @@
                   v-if="canConfirmDelivery(stop.type, stop.status)"
                   size="sm"
                   variant="secondary"
-                  @click="navStore.goToDetail('delivery-confirm', stop._id ?? stop.id, stop.routeId)"
+                  @click.stop="navStore.goToDetail('delivery-confirm', stop._id ?? stop.id, stop.routeId)"
                 >
                   {{ $t('driver.confirmDelivery') }}
                 </AppButton>
@@ -138,6 +167,25 @@
             </div>
           </div>
         </div>
+
+        <!-- Bulk action bar -->
+        <Transition name="bulk-bar">
+          <div
+            v-if="selectMode && selectedStopIds.length > 0"
+            class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-gray-900 text-white rounded-2xl shadow-xl px-5 py-3"
+          >
+            <span class="text-sm font-medium">
+              {{ $t('driver.selectedCount', { count: selectedStopIds.length }) }}
+            </span>
+            <AppButton
+              id="bulk-confirm-action-btn"
+              size="sm"
+              @click="goBulkConfirm"
+            >
+              {{ bulkActionLabel }}
+            </AppButton>
+          </div>
+        </Transition>
       </template>
     </template>
   </div>
@@ -149,14 +197,18 @@ import StatusBadge from '../../ui/StatusBadge.vue'
 import MiniMap from '../../ui/MiniMap.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
+import { useUiStore } from '../../../stores/ui.js'
+import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import { fetchRoutesByDriver, mapRouteForDriver } from '../../../api/routes'
 import { canConfirmPickup, canConfirmDelivery } from '../../../utils/orderFlow'
 import { normalizeDateString, getTodayDateString } from '../../../utils/date'
 
+const { t } = useI18n()
 const navStore = useNavStore()
 const authStore = useAuthStore()
+const ui = useUiStore()
 
 function createEmptyRouteState() {
   return {
@@ -262,5 +314,85 @@ const progress = computed(() =>
     ? Math.round((driverRoute.value.completedStops / driverRoute.value.totalStops) * 100)
     : 0
 )
+
+// ── Bulk selection ────────────────────────────────────────────────────────────
+
+const selectMode = ref(false)
+/** IDs currently checked by the driver */
+const selectedStopIds = ref([])
+
+function toggleSelectMode() {
+  selectMode.value = !selectMode.value
+  selectedStopIds.value = []
+}
+
+/**
+ * A stop is selectable if it is pending action (pickup or delivery)
+ * and its type matches the already-selected type (or nothing is selected yet).
+ */
+function isStopSelectable(stop) {
+  const canPickup = canConfirmPickup(stop.type, stop.originalStatus)
+  const canDeliver = canConfirmDelivery(stop.type, stop.status)
+  if (!canPickup && !canDeliver) return false
+
+  const stopType = canPickup ? 'pickup' : 'delivery'
+
+  // If nothing selected yet, any actionable stop is valid
+  if (selectedStopIds.value.length === 0) return true
+
+  // Otherwise, only allow the same type as the first selection
+  return stopType === inferSelectedType.value
+}
+
+/** Infers the type based on the already-selected stops */
+const inferSelectedType = computed(() => {
+  if (selectedStopIds.value.length === 0) return null
+  const firstId = String(selectedStopIds.value[0])
+  const firstStop = driverRoute.value.stops.find((s) => String(s._id ?? s.id) === firstId)
+  if (!firstStop) return null
+  return canConfirmPickup(firstStop.type, firstStop.originalStatus) ? 'pickup' : 'delivery'
+})
+
+function toggleStopSelection(stop) {
+  const id = stop._id ?? stop.id
+  const idx = selectedStopIds.value.findIndex((sid) => String(sid) === String(id))
+  if (idx === -1) {
+    selectedStopIds.value = [...selectedStopIds.value, id]
+  } else {
+    selectedStopIds.value = selectedStopIds.value.filter((sid) => String(sid) !== String(id))
+  }
+}
+
+const bulkActionLabel = computed(() => {
+  const type = inferSelectedType.value
+  const count = selectedStopIds.value.length
+  if (type === 'pickup') return t('driver.bulkPickupTitle', { count })
+  if (type === 'delivery') return t('driver.bulkDeliveryTitle', { count })
+  return ''
+})
+
+function goBulkConfirm() {
+  const type = inferSelectedType.value
+  if (!type) {
+    ui.showError(t('driver.bulkNoSameType'))
+    return
+  }
+  const selectedStops = driverRoute.value.stops.filter((s) =>
+    selectedStopIds.value.some((sid) => String(sid) === String(s._id ?? s.id))
+  )
+  const firstRouteId = selectedStops[0]?.routeId ?? null
+  navStore.goToBulkConfirm(type, selectedStops, firstRouteId)
+}
 </script>
 
+<style scoped>
+.bulk-bar-enter-active,
+.bulk-bar-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.bulk-bar-enter-from,
+.bulk-bar-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 1rem);
+}
+</style>

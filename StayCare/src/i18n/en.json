@@ -615,8 +615,25 @@
     "allStopsCompletedHint": "You have completed all pickups and deliveries for this route.",
     "showCompleted": "Show completed ({count})",
     "hideCompleted": "Hide completed",
-    "pendingStopsCount": "{count} pending"
+    "pendingStopsCount": "{count} pending",
+    "selectMode": "Select",
+    "exitSelectMode": "Cancel selection",
+    "selectedCount": "{count} selected",
+    "bulkPickupTitle": "Confirm Pickup ({count} orders)",
+    "bulkDeliveryTitle": "Confirm Delivery ({count} orders)",
+    "bulkConfirm": "Confirm all",
+    "bulkConfirming": "Confirming...",
+    "bulkSuccessAll": "All orders confirmed successfully.",
+    "bulkSuccessPartial": "{succeeded} confirmed, {failed} could not be processed.",
+    "bulkErrorAll": "None of the orders could be confirmed. Check the errors and try again.",
+    "bulkNoSameType": "Select orders of the same type (all pickups or all deliveries).",
+    "bulkSelectHint": "Select orders of the same type to confirm them together.",
+    "orderSummary": "Order summary",
+    "bagsForOrder": "Bags for this order",
+    "packagesForOrder": "Packages for this order",
+    "sharedNotes": "Shared notes (all orders)"
   },
+
   "facility": {
     "processingBoard": "Processing Board",
     "machineStatus": "Machine Status",

@@ -4,6 +4,7 @@
     <RouteView v-if="navStore.currentPage === 'route'" />
     <PickupConfirm v-else-if="navStore.currentPage === 'pickup-confirm'" />
     <DeliveryConfirm v-else-if="navStore.currentPage === 'delivery-confirm'" />
+    <BulkConfirm v-else-if="navStore.currentPage === 'bulk-pickup-confirm' || navStore.currentPage === 'bulk-delivery-confirm'" />
     <DriverHistory v-else-if="navStore.currentPage === 'history'" />
     <Settings v-else-if="navStore.currentPage === 'settings'" />
     <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
@@ -109,6 +110,7 @@ import StatusBadge from '../ui/StatusBadge.vue'
 import RouteView from '../pages/driver/RouteView.vue'
 import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
+import BulkConfirm from '../pages/driver/BulkConfirm.vue'
 import DriverHistory from '../pages/driver/DriverHistory.vue'
 import Settings from '../pages/shared/Settings.vue'
 import ProfileAccount from '../pages/shared/ProfileAccount.vue'

@@ -122,6 +122,34 @@ export async function confirmDelivery(id: string, payload: any) {
   })
 }
 
+/**
+ * Confirms pickup or delivery for multiple orders in a single request.
+ *
+ * @param action   - 'pickup' or 'delivery'
+ * @param orders   - Array of per-order data: id + optional individual fields
+ * @param shared   - Fields shared across all orders (received_by, special_notes, photos)
+ *
+ * Returns { succeeded: order[], failed: { orderId, error }[] }
+ */
+export async function bulkConfirmDriverAction(
+  action: 'pickup' | 'delivery',
+  orders: { id: string; actual_bags?: number; packages_delivered?: number; special_notes?: string }[],
+  shared?: { received_by?: string; special_notes?: string; photos?: { url: string }[] }
+) {
+  return apiFetch('/api/orders/bulk/deliver', {
+    method: 'PATCH',
+    body: JSON.stringify({
+      action,
+      orders,
+      received_by: shared?.received_by,
+      special_notes: shared?.special_notes,
+      photos: shared?.photos,
+    }),
+  })
+}
+
+
+
 export async function reassignOrder(
   orderId: string,
   driverId: string,
