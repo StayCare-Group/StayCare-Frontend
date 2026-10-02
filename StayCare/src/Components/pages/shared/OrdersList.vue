@@ -9,7 +9,7 @@
           v-if="isAdminOrStaff"
           variant="secondary"
           size="sm"
-          :disabled="exportLoading"
+          :disabled="exportLoading || exportStainedLoading"
           @click="exportToCsv"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -17,6 +17,20 @@
           </svg>
           <span v-if="exportLoading">{{ $t('excel.exportGenerating') }}</span>
           <span v-else>{{ selectedOrderIds.length ? $t('invoices.exportCsvCount', { count: selectedOrderIds.length }) : $t('invoices.exportCsv') }}</span>
+        </AppButton>
+        <!-- Stained Items Export button -->
+        <AppButton
+          v-if="isAdminOrStaff"
+          variant="secondary"
+          size="sm"
+          :disabled="exportLoading || exportStainedLoading"
+          @click="exportStainedToCsv"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"/>
+          </svg>
+          <span v-if="exportStainedLoading">{{ $t('excel.exportGenerating') }}</span>
+          <span v-else>{{ selectedOrderIds.length ? $t('invoices.exportStainedCount', { count: selectedOrderIds.length }) : $t('invoices.exportStained') }}</span>
         </AppButton>
         <AppButton
           v-if="!isClient || auth.hasPermission('orders:create')"
@@ -148,7 +162,7 @@ import OrderNotesBadge from '../../ui/OrderNotesBadge.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
-import { fetchAllOrders, downloadOrdersFlatCsv } from '../../../api/orders'
+import { fetchAllOrders, downloadOrdersFlatCsv, downloadOrdersStainedCsv } from '../../../api/orders'
 import { mapOrderForList } from '@/utils/orderMappers'
 import { isClientProfileCompleteForOrder } from '../../../utils/orderEligibility'
 import { isCancelableStatus } from '../../../utils/orderFlow'
@@ -172,6 +186,7 @@ const canCancel = computed(() => auth.hasPermission('orders:delete'))
 const orders = ref([])
 const loading = ref(true)
 const exportLoading = ref(false)
+const exportStainedLoading = ref(false)
 const canCreateOrder = ref(false)
 const selectedClientId = ref('')
 const selectedOrderIds = ref([])
@@ -265,6 +280,27 @@ async function exportToCsv() {
     uiStore.showError(formatApiErrorMessage(err, t('excel.exportError'), t))
   } finally {
     exportLoading.value = false
+  }
+}
+
+async function exportStainedToCsv() {
+  if (!selectedOrderIds.value.length) {
+    uiStore.showError(t('invoices.exportSelectRequired'))
+    return
+  }
+
+  const selectedSet   = new Set(selectedOrderIds.value)
+  const itemsToExport = filteredOrders.value.filter(o => selectedSet.has(o._id))
+
+  if (!itemsToExport.length) return
+
+  exportStainedLoading.value = true
+  try {
+    await downloadOrdersStainedCsv(itemsToExport.map(o => o._id))
+  } catch (err) {
+    uiStore.showError(formatApiErrorMessage(err, t('excel.exportError'), t))
+  } finally {
+    exportStainedLoading.value = false
   }
 }
 

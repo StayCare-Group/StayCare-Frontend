@@ -345,6 +345,8 @@
     "exportSelectRequired": "Select at least one order to download.",
     "exportCsv": "Download CSV",
     "exportCsvCount": "Download CSV ({count})",
+    "exportStained": "Download Stained",
+    "exportStainedCount": "Download Stained ({count})",
     "exportError": "Failed to export invoices. Please try again."
   },
   "excel": {

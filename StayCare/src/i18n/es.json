@@ -345,6 +345,8 @@
     "exportSelectRequired": "Selecciona al menos una orden para descargar.",
     "exportCsv": "Descargar CSV",
     "exportCsvCount": "Descargar CSV ({count})",
+    "exportStained": "Descargar Manchados",
+    "exportStainedCount": "Descargar Manchados ({count})",
     "exportError": "No se pudo exportar las facturas. Por favor inténtalo de nuevo."
   },
   "excel": {

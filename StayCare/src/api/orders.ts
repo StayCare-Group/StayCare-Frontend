@@ -214,3 +214,40 @@ export async function downloadOrdersFlatCsv(ids: string[]): Promise<void> {
   document.body.removeChild(anchor)
   URL.revokeObjectURL(objectUrl)
 }
+
+/**
+ * Downloads a CSV file with one row per order and one dynamic column per
+ * unique item name showing stained items quantity (qty_stained).
+ *
+ * Hits POST /api/orders/export/stained
+ *
+ * @param ids - Internal order IDs (_id) of the orders to export
+ * @throws Error if the server returns a non-OK response
+ */
+export async function downloadOrdersStainedCsv(ids: string[]): Promise<void> {
+  const API_BASE_URL = (import.meta as any).env?.VITE_BACKEND_URL ?? ''
+
+  const res = await fetch(`${API_BASE_URL}/api/orders/export/stained`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}))
+    throw new Error(json?.message ?? `Export failed (${res.status})`)
+  }
+
+  const blob      = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const anchor    = document.createElement('a')
+  const dateStr   = new Date().toISOString().slice(0, 10)
+  anchor.href     = objectUrl
+  anchor.download = `Ordenes-Manchados-StayCare-${dateStr}.csv`
+  document.body.appendChild(anchor)
+  anchor.click()
+  document.body.removeChild(anchor)
+  URL.revokeObjectURL(objectUrl)
+}
+
