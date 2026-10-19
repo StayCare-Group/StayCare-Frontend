@@ -127,7 +127,7 @@ describe('InvoicesList.vue', () => {
       const { fetchInvoices } = await mountInvoicesList()
       expect(fetchInvoices).toHaveBeenCalledOnce()
       const params = fetchInvoices.mock.calls[0][0]
-      expect(params).toMatchObject({ limit: '200' })
+      expect(params).toMatchObject({ page: '1', limit: '150' })
       expect(params.from).toBeDefined()
       expect(params.to).toBeDefined()
     })
@@ -301,6 +301,42 @@ describe('InvoicesList.vue', () => {
       await flushPromises()
 
       expect(mockShowError).toHaveBeenCalledWith('Network export error')
+    })
+  })
+
+  // ─── 6. Paginación ─────────────────────────────────────────────────────────
+
+  describe('Paginación', () => {
+    it('muestra el componente AppPagination cuando hay más de una página', async () => {
+      const fakeInvoices: any = [
+        makeRawInvoice('INV-001', { total: 100 }),
+      ]
+      fakeInvoices._pagination = { total: 300, page: 1, limit: 150, pages: 2 }
+
+      const { wrapper } = await mountInvoicesList({ invoicesData: fakeInvoices })
+      const paginationComp = wrapper.findComponent({ name: 'AppPagination' })
+      expect(paginationComp.exists()).toBe(true)
+      expect(paginationComp.props('totalPages')).toBe(2)
+      expect(paginationComp.props('currentPage')).toBe(1)
+    })
+
+    it('solicita la página correspondiente al emitir page-change', async () => {
+      const { fetchInvoices } = await import('@/api/invoices')
+      const fakeInvoices: any = [
+        makeRawInvoice('INV-001', { total: 100 }),
+      ]
+      fakeInvoices._pagination = { total: 300, page: 1, limit: 150, pages: 2 }
+
+      const { wrapper } = await mountInvoicesList({ invoicesData: fakeInvoices })
+      const paginationComp = wrapper.findComponent({ name: 'AppPagination' })
+      expect(paginationComp.exists()).toBe(true)
+
+      paginationComp.vm.$emit('page-change', 2)
+      await flushPromises()
+
+      expect(vi.mocked(fetchInvoices)).toHaveBeenCalledTimes(2)
+      const secondCallParams = vi.mocked(fetchInvoices).mock.calls[1][0]
+      expect(secondCallParams).toMatchObject({ page: '2', limit: '150' })
     })
   })
 })

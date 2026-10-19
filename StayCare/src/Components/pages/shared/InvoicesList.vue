@@ -52,38 +52,49 @@
 
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
 
-    <!-- Invoices table -->
-    <DataTable v-else :headers="invoiceHeaders" :items="invoices" min-width="650px">
-      <template #cell-id="{ value }">
-        <span class="font-medium text-gray-800">{{ value }}</span>
-      </template>
-      <template #cell-orderId="{ value }">
-        <span class="text-gray-500 text-xs break-words leading-relaxed inline-block">{{ value }}</span>
-      </template>
-      <template #cell-client="{ value }">
-        <span class="text-gray-700">{{ value }}</span>
-      </template>
-      <template #cell-issueDate="{ value }">
-        <span class="text-gray-500">{{ value }}</span>
-      </template>
-      <template #cell-dueDate="{ value }">
-        <span class="text-gray-500">{{ value }}</span>
-      </template>
-      <template #cell-status="{ value }">
-        <StatusBadge :status="value" type="invoice" />
-      </template>
-      <template #cell-grandTotal="{ value }">
-        <span class="font-semibold text-gray-800">{{ formatCurrency(value) }}</span>
-      </template>
-      <template #cell-actions="{ item }">
-        <div class="flex items-center justify-center whitespace-nowrap">
-          <button
-            @click.stop="navStore.goToDetail('invoice-detail', item._id)"
-            class="text-brand-700 hover:underline text-xs font-medium"
-          >{{ $t('common.viewDetails') }}</button>
-        </div>
-      </template>
-    </DataTable>
+    <template v-else>
+      <!-- Invoices table -->
+      <DataTable :headers="invoiceHeaders" :items="invoices" min-width="650px">
+        <template #cell-id="{ value }">
+          <span class="font-medium text-gray-800">{{ value }}</span>
+        </template>
+        <template #cell-orderId="{ value }">
+          <span class="text-gray-500 text-xs break-words leading-relaxed inline-block">{{ value }}</span>
+        </template>
+        <template #cell-client="{ value }">
+          <span class="text-gray-700">{{ value }}</span>
+        </template>
+        <template #cell-issueDate="{ value }">
+          <span class="text-gray-500">{{ value }}</span>
+        </template>
+        <template #cell-dueDate="{ value }">
+          <span class="text-gray-500">{{ value }}</span>
+        </template>
+        <template #cell-status="{ value }">
+          <StatusBadge :status="value" type="invoice" />
+        </template>
+        <template #cell-grandTotal="{ value }">
+          <span class="font-semibold text-gray-800">{{ formatCurrency(value) }}</span>
+        </template>
+        <template #cell-actions="{ item }">
+          <div class="flex items-center justify-center whitespace-nowrap">
+            <button
+              @click.stop="navStore.goToDetail('invoice-detail', item._id)"
+              class="text-brand-700 hover:underline text-xs font-medium"
+            >{{ $t('common.viewDetails') }}</button>
+          </div>
+        </template>
+      </DataTable>
+
+      <!-- Pagination -->
+      <AppPagination
+        v-if="totalPages > 1"
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        :total-items="totalItems"
+        @page-change="onPageChange"
+      />
+    </template>
   </div>
 </template>
 
@@ -93,6 +104,7 @@ import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
+import AppPagination from '../../ui/AppPagination.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import ClientFilterSelect from '../../ui/ClientFilterSelect.vue'
 import DateRangeFilter from '../../ui/DateRangeFilter.vue'
@@ -112,7 +124,12 @@ const uiStore = useUiStore()
 const isAdmin = computed(() => authStore.isAdmin)
 const canExport = computed(() => authStore.isAdminOrStaff || (typeof authStore.hasPermission === 'function' ? authStore.hasPermission('invoices:export') : true))
 
-const LOAD_LIMIT = '200'
+const PAGE_SIZE = '150'
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalItems = ref(null)
+let latestRequestId = 0
+
 const exportLoading = ref(false)
 
 const defaultRange = getDefaultDateRange()
@@ -155,10 +172,15 @@ const filters = computed(() => [
   { key: 'paid',    label: t('invoices.filterPaid') },
 ])
 
-async function loadInvoices() {
+async function loadInvoices(page = 1) {
+  currentPage.value = page
+  const thisRequestId = ++latestRequestId
   loading.value = true
   try {
-    const params = { limit: LOAD_LIMIT }
+    const params = {
+      page: String(page),
+      limit: PAGE_SIZE,
+    }
     if (activeFilter.value && activeFilter.value !== 'all') {
       params.status = activeFilter.value
     }
@@ -173,44 +195,64 @@ async function loadInvoices() {
     }
 
     const data = await fetchInvoices(params)
+    if (thisRequestId !== latestRequestId) return
+
     const rawItems = Array.isArray(data) ? data : []
     invoices.value = rawItems.map(mapInvoiceForList)
+
+    const pagination = data?._pagination
+    if (pagination) {
+      totalPages.value = pagination.pages ?? 1
+      totalItems.value = pagination.total ?? rawItems.length
+    } else {
+      totalPages.value = 1
+      totalItems.value = rawItems.length
+    }
   } catch {
+    if (thisRequestId !== latestRequestId) return
     invoices.value = []
+    totalPages.value = 1
+    totalItems.value = 0
   } finally {
-    loading.value = false
+    if (thisRequestId === latestRequestId) {
+      loading.value = false
+    }
   }
+}
+
+function onPageChange(page) {
+  loadInvoices(page)
 }
 
 function onFilterChange(filterKey) {
   if (activeFilter.value === filterKey) return
   activeFilter.value = filterKey
-  loadInvoices()
+  loadInvoices(1)
 }
 
 function onClientFilterChange() {
-  loadInvoices()
+  loadInvoices(1)
 }
 
 function onDateFromChange(val) {
   dateFrom.value = val
-  loadInvoices()
+  loadInvoices(1)
 }
 
 function onDateToChange(val) {
   dateTo.value = val
-  loadInvoices()
+  loadInvoices(1)
 }
 
 function clearDateFilter() {
   const range = getDefaultDateRange()
   dateFrom.value = range.from
   dateTo.value = range.to
-  loadInvoices()
+  loadInvoices(1)
 }
 
 onMounted(() => {
-  loadInvoices()
+  loadInvoices(1)
 })
 
 const invoiceHeaders = computed(() => [
