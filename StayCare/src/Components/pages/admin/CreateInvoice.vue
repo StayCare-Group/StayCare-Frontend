@@ -144,6 +144,7 @@ import { getClientDisplayName } from '../../../utils/client'
 import { getTodayDateString, getFutureDateString } from '../../../utils/date'
 import { DEFAULT_VAT_RATE, DEFAULT_VAT_PERCENTAGE, calculateVatBreakdown, formatCurrency } from '../../../utils/pricing'
 import { formatApiErrorMessage } from '../../../utils/errors'
+import { INVOICEABLE_STATUSES } from '../../../utils/orderFlow'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -204,7 +205,7 @@ async function loadOrdersForClient(clientId) {
   try {
     const orders = await fetchOrders({
       client_id: clientId,
-      status: 'delivered,collected,ready_to_delivery',
+      status: INVOICEABLE_STATUSES.join(','),      
       is_invoiced: 'false',
     }).catch(() => [])
     clientOrders.value = orders ?? []

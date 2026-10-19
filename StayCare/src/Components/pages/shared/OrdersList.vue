@@ -55,7 +55,7 @@
       <div class="flex flex-wrap gap-2">
         <button
           v-for="f in filters" :key="f.key"
-          @click="activeFilter = f.key"
+          @click="onStatusFilterChange(f.key)"
           class="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
           :class="activeFilter === f.key ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
         >{{ f.label }}</button>
@@ -83,7 +83,7 @@
     <LoadingPanel v-if="loading" :label="$t('common.loading')" />
 
     <!-- Orders table -->
-    <DataTable v-else :headers="orderHeaders" :items="filteredOrders" min-width="850px">
+    <DataTable v-else :headers="orderHeaders" :items="orders" min-width="850px">
       <template #header-select>
         <input
           type="checkbox"
@@ -138,12 +138,20 @@
       </template>
     </DataTable>
 
+    <AppPagination
+      v-if="!loading"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      :total-items="totalItems"
+      @page-change="onPageChange"
+    />
+
     <!-- Cancellation Confirmation Modal -->
     <CancelOrderModal
       :show="Boolean(orderToCancel)"
       :order="orderToCancel"
       @close="orderToCancel = null"
-      @success="loadOrders"
+      @success="loadOrders()"
     />
   </div>
 </template>
@@ -154,6 +162,7 @@ import { useI18n } from 'vue-i18n'
 import StatusBadge from '../../ui/StatusBadge.vue'
 import DataTable from '../../ui/DataTable.vue'
 import AppButton from '../../ui/AppButton.vue'
+import AppPagination from '../../ui/AppPagination.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import CancelOrderModal from '../../ui/CancelOrderModal.vue'
 import ClientFilterSelect from '../../ui/ClientFilterSelect.vue'
@@ -162,10 +171,11 @@ import OrderNotesBadge from '../../ui/OrderNotesBadge.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
-import { fetchAllOrders, downloadOrdersFlatCsv, downloadOrdersStainedCsv } from '../../../api/orders'
+import { fetchOrders } from '../../../api/orders'
+import { useOrdersExport } from '../../../composables/useOrdersExport.js'
 import { mapOrderForList } from '@/utils/orderMappers'
 import { isClientProfileCompleteForOrder } from '../../../utils/orderEligibility'
-import { isCancelableStatus } from '../../../utils/orderFlow'
+import { isCancelableStatus, getStatusesForListFilter } from '../../../utils/orderFlow'
 import { formatApiErrorMessage } from '@/utils/errors'
 import { getDefaultDateRange } from '@/utils/date'
 
@@ -185,73 +195,123 @@ const canCancel = computed(() => auth.hasPermission('orders:delete'))
 
 const orders = ref([])
 const loading = ref(true)
-const exportLoading = ref(false)
-const exportStainedLoading = ref(false)
 const canCreateOrder = ref(false)
 const selectedClientId = ref('')
 const selectedOrderIds = ref([])
+const activeFilter = ref('all')
+
+const PAGE_SIZE = '150'
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalItems = ref(null)
+let latestRequestId = 0
 
 const orderToCancel = ref(null)
 
 const isAllSelected = computed(() => {
-  if (!filteredOrders.value.length) return false
-  return filteredOrders.value.every(o => selectedOrderIds.value.includes(o._id))
+  if (!orders.value.length) return false
+  return orders.value.every(o => selectedOrderIds.value.includes(o._id))
 })
 
 function toggleSelectAll(e) {
   if (e.target.checked) {
-    const visibleIds = filteredOrders.value.map(o => o._id)
+    const visibleIds = orders.value.map(o => o._id)
     const set = new Set([...selectedOrderIds.value, ...visibleIds])
     selectedOrderIds.value = Array.from(set)
   } else {
-    const visibleSet = new Set(filteredOrders.value.map(o => o._id))
+    const visibleSet = new Set(orders.value.map(o => o._id))
     selectedOrderIds.value = selectedOrderIds.value.filter(id => !visibleSet.has(id))
   }
 }
 
-const loadOrders = async () => {
+/** Filters shared by the list request and the "export without selection" request. */
+function buildFilterParams() {
+  const params = {}
+  if (auth.user?.role === 'client' && auth.user?.id) {
+    params.client_id = String(auth.user.id)
+  } else if (selectedClientId.value) {
+    params.client_id = selectedClientId.value
+  }
+  if (dateFrom.value) {
+    params.from = dateFrom.value
+  }
+  if (dateTo.value) {
+    params.to = `${dateTo.value} 23:59:59`
+  }
+  const statuses = getStatusesForListFilter(activeFilter.value)
+  if (statuses) {
+    params.status = statuses.join(',')
+  }
+  return params
+}
+
+function getExportFilters() {
+  const { client_id, from, to, status } = buildFilterParams()
+  return { client_id, from, to, status: status ? status.split(',') : undefined }
+}
+
+const { exportLoading, exportStainedLoading, exportToCsv, exportStainedToCsv } =
+  useOrdersExport(selectedOrderIds, getExportFilters)
+
+const loadOrders = async (page = currentPage.value) => {
+  const requestId = ++latestRequestId
   try {
     loading.value = true
-    const params = {}
-    if (auth.user?.role === 'client' && auth.user?.id) {
-      params.client_id = String(auth.user.id)
-    } else if (selectedClientId.value) {
-      params.client_id = selectedClientId.value
+    const params = {
+      ...buildFilterParams(),
+      page: String(page),
+      limit: PAGE_SIZE,
     }
-    if (dateFrom.value) {
-      params.from = dateFrom.value
-    }
-    if (dateTo.value) {
-      params.to = `${dateTo.value} 23:59:59`
-    }
-    const data = await fetchAllOrders(params)
-    orders.value = (data ?? []).map(mapOrderForList)
+    const data = await fetchOrders(params)
+    if (requestId !== latestRequestId) return
+    const items = Array.isArray(data) ? data : []
+    orders.value = items.map(mapOrderForList)
+    currentPage.value = page
+    const pagination = data?._pagination
+    totalPages.value = Number(pagination?.pages ?? 1) || 1
+    totalItems.value = Number(pagination?.total ?? items.length)
     if (isClient.value) {
       canCreateOrder.value = isClientProfileCompleteForOrder(auth.user, auth.clientProfile)
     } else {
       canCreateOrder.value = true
     }
   } catch (err) {
-    uiStore.showError(err?.message || t('admin.errorFetchOrders'))
+    if (requestId !== latestRequestId) return
+    uiStore.showError(formatApiErrorMessage(err, t('admin.errorFetchOrders'), t))
   } finally {
-    loading.value = false
+    if (requestId === latestRequestId) loading.value = false
   }
 }
 
+/** Any filter change restarts from the first page. */
+function reloadFromFirstPage() {
+  return loadOrders(1)
+}
+
+function onPageChange(page) {
+  loadOrders(page)
+}
+
+function onStatusFilterChange(key) {
+  if (activeFilter.value === key) return
+  activeFilter.value = key
+  reloadFromFirstPage()
+}
+
 function onClientFilterChange() {
-  loadOrders()
+  reloadFromFirstPage()
 }
 
 function onDateFromChange(val) {
   dateFrom.value = val
   selectedOrderIds.value = []
-  loadOrders()
+  reloadFromFirstPage()
 }
 
 function onDateToChange(val) {
   dateTo.value = val
   selectedOrderIds.value = []
-  loadOrders()
+  reloadFromFirstPage()
 }
 
 function clearDateFilter() {
@@ -259,53 +319,11 @@ function clearDateFilter() {
   dateFrom.value = defaultRange.from
   dateTo.value = defaultRange.to
   selectedOrderIds.value = []
-  loadOrders()
-}
-
-async function exportToCsv() {
-  if (!selectedOrderIds.value.length) {
-    uiStore.showError(t('invoices.exportSelectRequired'))
-    return
-  }
-
-  const selectedSet   = new Set(selectedOrderIds.value)
-  const itemsToExport = filteredOrders.value.filter(o => selectedSet.has(o._id))
-
-  if (!itemsToExport.length) return
-
-  exportLoading.value = true
-  try {
-    await downloadOrdersFlatCsv(itemsToExport.map(o => o._id))
-  } catch (err) {
-    uiStore.showError(formatApiErrorMessage(err, t('excel.exportError'), t))
-  } finally {
-    exportLoading.value = false
-  }
-}
-
-async function exportStainedToCsv() {
-  if (!selectedOrderIds.value.length) {
-    uiStore.showError(t('invoices.exportSelectRequired'))
-    return
-  }
-
-  const selectedSet   = new Set(selectedOrderIds.value)
-  const itemsToExport = filteredOrders.value.filter(o => selectedSet.has(o._id))
-
-  if (!itemsToExport.length) return
-
-  exportStainedLoading.value = true
-  try {
-    await downloadOrdersStainedCsv(itemsToExport.map(o => o._id))
-  } catch (err) {
-    uiStore.showError(formatApiErrorMessage(err, t('excel.exportError'), t))
-  } finally {
-    exportStainedLoading.value = false
-  }
+  reloadFromFirstPage()
 }
 
 onMounted(() => {
-  loadOrders()
+  loadOrders(1)
 })
 
 const promptCancelOrder = (item) => {
@@ -320,17 +338,6 @@ const filters = computed(() => [
   { key: 'delivered', label: t('orderStatuses.delivered') },
   { key: 'cancelled', label: t('orderStatuses.cancelled') },
 ])
-const activeFilter = ref('all')
-
-const filteredOrders = computed(() => {
-  if (activeFilter.value === 'all') return orders.value
-  if (activeFilter.value === 'in_progress') {
-    return orders.value.filter(o =>
-      !['pending', 'ready_to_delivery', 'collected', 'delivered', 'completed', 'invoiced', 'cancelled'].includes(o.status)
-    )
-  }
-  return orders.value.filter(o => o.status === activeFilter.value)
-})
 
 const orderHeaders = computed(() => [
   { key: 'select', label: '', thClass: 'w-10 text-center', tdClass: 'text-center' },

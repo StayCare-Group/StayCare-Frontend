@@ -7,10 +7,10 @@ import en from '@/i18n/en.json'
 
 // ─── Mocks de servicios y composables ────────────────────────────────────────
 
-const { mockDownloadOrdersFlatCsv, mockDownloadOrdersStainedCsv, mockFetchAllOrders } = vi.hoisted(() => ({
+const { mockDownloadOrdersFlatCsv, mockDownloadOrdersStainedCsv, mockFetchOrders } = vi.hoisted(() => ({
   mockDownloadOrdersFlatCsv: vi.fn().mockResolvedValue(undefined),
   mockDownloadOrdersStainedCsv: vi.fn().mockResolvedValue(undefined),
-  mockFetchAllOrders: vi.fn(),
+  mockFetchOrders: vi.fn(),
 }))
 
 vi.mock('@/router', () => ({
@@ -28,7 +28,7 @@ vi.mock('@/api/clients', () => ({
 }))
 
 vi.mock('@/api/orders', () => ({
-  fetchAllOrders: mockFetchAllOrders,
+  fetchOrders: mockFetchOrders,
   downloadOrdersFlatCsv: mockDownloadOrdersFlatCsv,
   downloadOrdersStainedCsv: mockDownloadOrdersStainedCsv,
 }))
@@ -84,10 +84,12 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
     vi.clearAllMocks()
     mockIsAdminOrStaff = true
     mockIsClient = false
-    mockFetchAllOrders.mockResolvedValue([
+    const mockOrders = [
       makeRawOrder('ord-1', { order_number: 'ORD-001' }),
       makeRawOrder('ord-2', { order_number: 'ORD-002' }),
-    ])
+    ]
+    ;(mockOrders as any)._pagination = { total: 2, pages: 1 }
+    mockFetchOrders.mockResolvedValue(mockOrders)
   })
 
   it('renders both Download CSV and Download Stained buttons for admin/staff', async () => {
@@ -147,7 +149,7 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
     expect(stainedBtn).toBeUndefined()
   })
 
-  it('shows validation error when clicking Download Stained without selected orders', async () => {
+  it('exports by active filters (not only the visible page) when nothing is selected', async () => {
     const wrapper = mount(OrdersList, {
       global: {
         plugins: [createTestI18n()],
@@ -170,9 +172,42 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
     expect(stainedBtn).toBeDefined()
 
     await stainedBtn!.trigger('click')
+    await flushPromises()
 
-    expect(mockShowError).toHaveBeenCalledWith(en.invoices.exportSelectRequired)
-    expect(mockDownloadOrdersStainedCsv).not.toHaveBeenCalled()
+    expect(mockShowError).not.toHaveBeenCalled()
+    expect(mockDownloadOrdersStainedCsv).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ from: expect.any(String), to: expect.stringContaining('23:59:59') })
+    )
+  })
+
+  it('requests a single page of 150 and sends status filters to the backend', async () => {
+    const wrapper = mount(OrdersList, {
+      global: {
+        plugins: [createTestI18n()],
+        stubs: {
+          DataTable: false,
+          AppButton: false,
+          LoadingPanel: false,
+          StatusBadge: true,
+          ClientFilterSelect: true,
+          DateRangeFilter: true,
+          OrderNotesBadge: true,
+          CancelOrderModal: true,
+        },
+      },
+    })
+
+    await flushPromises()
+    expect(mockFetchOrders).toHaveBeenCalledTimes(1)
+    expect(mockFetchOrders.mock.calls[0][0]).toMatchObject({ page: '1', limit: '150' })
+
+    const pendingChip = wrapper.findAll('button').find(b => b.text() === en.orderStatuses.pending)
+    await pendingChip!.trigger('click')
+    await flushPromises()
+
+    expect(mockFetchOrders).toHaveBeenCalledTimes(2)
+    expect(mockFetchOrders.mock.calls[1][0]).toMatchObject({ status: 'pending', page: '1', limit: '150' })
   })
 
   it('calls downloadOrdersStainedCsv with selected order IDs when orders are checked', async () => {
@@ -206,7 +241,7 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
     await stainedBtn!.trigger('click')
     await flushPromises()
 
-    expect(mockDownloadOrdersStainedCsv).toHaveBeenCalledWith(['ord-1'])
+    expect(mockDownloadOrdersStainedCsv).toHaveBeenCalledWith(['ord-1'], expect.any(Object))
   })
 
   it('calls downloadOrdersFlatCsv with selected order IDs when flat CSV button is clicked', async () => {
@@ -238,7 +273,7 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
     await flatCsvBtn!.trigger('click')
     await flushPromises()
 
-    expect(mockDownloadOrdersFlatCsv).toHaveBeenCalledWith(['ord-2'])
+    expect(mockDownloadOrdersFlatCsv).toHaveBeenCalledWith(['ord-2'], expect.any(Object))
   })
 
   it('displays error toast if downloadOrdersStainedCsv fails', async () => {

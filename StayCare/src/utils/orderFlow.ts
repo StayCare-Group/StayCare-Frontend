@@ -26,6 +26,47 @@ export const NON_EDITABLE_STATUSES = new Set<string>([
 ])
 
 /**
+ * Statuses in which an order can be invoiced (after being received in plant).
+ * Must stay aligned with backend INVOICEABLE_ORDER_STATUSES.
+ */
+export const INVOICEABLE_STATUSES: readonly OrderStatus[] = [
+  'arrived',
+  'washing',
+  'drying',
+  'ironing',
+  'quality_check',
+  'ready_to_delivery',
+  'collected',
+  'delivered',
+  'completed',
+]
+
+/**
+ * Statuses grouped under the "In progress" chip of the orders list
+ * (everything that is neither pending, ready/collected/delivered/completed nor cancelled).
+ */
+export const IN_PROGRESS_STATUSES: readonly OrderStatus[] = [
+  'assigned',
+  'rescheduled',
+  'transit',
+  'arrived',
+  'washing',
+  'drying',
+  'ironing',
+  'quality_check',
+]
+
+/**
+ * Maps an orders-list filter chip key to the statuses sent to the backend.
+ * Returns undefined for 'all' (no status restriction).
+ */
+export function getStatusesForListFilter(filterKey: string): string[] | undefined {
+  if (!filterKey || filterKey === 'all') return undefined
+  if (filterKey === 'in_progress') return [...IN_PROGRESS_STATUSES]
+  return [filterKey]
+}
+
+/**
  * Normalizes any status string to canonical snake_case.
  * Handles casing (e.g. MySQL PascalCase "QualityCheck", "ReadyToDeliver") and spaces/hyphens.
  */
