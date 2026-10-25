@@ -188,6 +188,12 @@ function getOrderSubtotal(order) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+function getOrderVatAmount(order) {
+  const value = order?.vat_amount ?? order?.pricing_snapshot?.vat_amount ?? 0
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 onMounted(async () => {
   try {
     clients.value = await fetchClients().catch(() => [])
@@ -233,6 +239,12 @@ const selectedOrdersSubtotal = computed(() => {
   return selected.reduce((sum, o) => sum + getOrderSubtotal(o), 0)
 })
 
+const selectedOrdersVat = computed(() => {
+  const selectedIds = new Set((form.orderIds ?? []).map(id => String(id)))
+  const selected = clientOrders.value.filter(o => selectedIds.has(getOrderId(o)))
+  return selected.reduce((sum, o) => sum + getOrderVatAmount(o), 0)
+})
+
 const extraItemsSubtotal = computed(() =>
   form.lineItems.reduce((sum, li) => {
     if (!li.description || !li.description.trim()) return sum
@@ -241,8 +253,8 @@ const extraItemsSubtotal = computed(() =>
 )
 
 const subtotal = computed(() => selectedOrdersSubtotal.value + extraItemsSubtotal.value)
-const vatAmount = computed(() => calculateVatBreakdown(subtotal.value).vatAmount)
-const grandTotal = computed(() => calculateVatBreakdown(subtotal.value).total)
+const vatAmount = computed(() => selectedOrdersVat.value)
+const grandTotal = computed(() => subtotal.value + vatAmount.value)
 
 async function submitInvoice() {
   if (submitting.value) return
@@ -278,7 +290,7 @@ async function submitInvoice() {
       due_date: new Date(form.dueDate).toISOString(),
       line_items: validLineItems,
       subtotal: subtotal.value,
-      vat_percentage: DEFAULT_VAT_PERCENTAGE,
+      vat_percentage: vatAmount.value > 0 ? DEFAULT_VAT_PERCENTAGE : 0,
       vat_amount: vatAmount.value,
       total: grandTotal.value,
     }

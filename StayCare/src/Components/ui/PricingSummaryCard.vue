@@ -15,8 +15,10 @@
       </div>
 
       <div class="flex justify-between">
-        <span class="text-gray-500">{{ vatLabel || $t('admin.vatPercent') }}</span>
-        <span class="font-medium text-gray-800">{{ formatCurrency(vatAmount) }}</span>
+        <span class="text-gray-500">{{ vatAmount > 0 ? (vatLabel || $t('admin.vatPercent')) : (vatLabel || $t('admin.vat')) }}</span>
+        <span :class="vatAmount > 0 ? 'font-medium text-gray-800' : 'font-medium text-gray-500'">
+          {{ vatAmount > 0 ? formatCurrency(vatAmount) : $t('common.vatIncluded') }}
+        </span>
       </div>
 
       <div class="flex justify-between border-t border-gray-200 pt-2 mt-2 text-base">

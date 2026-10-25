@@ -135,8 +135,9 @@ import TitleHeader from '../../ui/TitleHeader.vue'
 import { useNavStore } from '../../../stores/nav.js'
 import { useAuthStore } from '../../../stores/auth.js'
 import { createOrder } from '../../../api/orders'
-import { getUsers, fetchMe } from '../../../api/users'
+import { getUsers, fetchMe, fetchUserById } from '../../../api/users'
 import { getPropertiesByUserId } from '../../../api/properties'
+import { getClientPriceList } from '../../../api/priceList'
 
 import PickupWindowFields from '../../forms/PickupWindowFields.vue'
 import OrderItemsPicker from '../../forms/OrderItemsPicker.vue'
@@ -178,6 +179,8 @@ const clients = ref([])
 const properties = ref([])
 const itemQtys = ref({})
 const itemCatalogByCode = ref({})
+const clientCustomPrices = ref({})
+const clientApplyVatToCustom = ref(false)
 const loading = ref(true)
 const loadingClient = ref(false)
 
@@ -188,6 +191,35 @@ function onCatalogLoaded(catalog) {
 const noClientsAvailable = computed(() =>
   isAdmin.value && !loading.value && clients.value.length === 0
 )
+
+async function loadClientPricingConfig(clientId) {
+  if (!clientId) {
+    clientCustomPrices.value = {}
+    clientApplyVatToCustom.value = false
+    return
+  }
+  try {
+    const [priceListResp, userResp] = await Promise.all([
+      getClientPriceList(clientId).catch(() => null),
+      fetchUserById(clientId).catch(() => null),
+    ])
+
+    const customMap = {}
+    if (priceListResp?.items && Array.isArray(priceListResp.items)) {
+      for (const it of priceListResp.items) {
+        customMap[it.item_id] = Number(it.price)
+      }
+    }
+    clientCustomPrices.value = customMap
+
+    if (userResp?.client_profile) {
+      clientApplyVatToCustom.value = Boolean(userResp.client_profile.apply_vat_to_custom_prices)
+    }
+  } catch {
+    clientCustomPrices.value = {}
+    clientApplyVatToCustom.value = false
+  }
+}
 
 onMounted(async () => {
   try {
@@ -203,7 +235,11 @@ onMounted(async () => {
       const meData = await fetchMe().catch(() => null)
       const clientId = authStore.user?.parentClientId || meData?.user?.parent_client_id || (meData?.user?.id ?? meData?.user?._id ?? authStore.user?.id ?? '')
       form.clientId = clientId
+      if (meData?.client_profile) {
+        clientApplyVatToCustom.value = Boolean(meData.client_profile.apply_vat_to_custom_prices)
+      }
       if (clientId) {
+        loadClientPricingConfig(clientId)
         const props = await getPropertiesByUserId(clientId).catch(() => [])
         properties.value = props ?? []
         if (properties.value.length === 1) {
@@ -222,10 +258,15 @@ watch(() => form.clientId, async (newId) => {
   if (!isAdmin.value) return
   form.propertyId = ''
   properties.value = []
-  if (!newId) return
+  if (!newId) {
+    clientCustomPrices.value = {}
+    clientApplyVatToCustom.value = false
+    return
+  }
 
   loadingClient.value = true
   try {
+    loadClientPricingConfig(newId)
     const props = await getPropertiesByUserId(newId)
     properties.value = props ?? []
     if (properties.value.length === 1) {
@@ -242,20 +283,40 @@ const selectedProperty = computed(() =>
   properties.value.find(p => (p.id ?? p._id) === form.propertyId) ?? null
 )
 
-const subtotal = computed(() =>
-  Object.keys(itemQtys.value).reduce((sum, code) => {
+const itemsBreakdown = computed(() => {
+  return Object.keys(itemQtys.value).map((code) => {
     const qty = Number(itemQtys.value[code] || 0)
-    if (qty <= 0) return sum
-    const unitPrice = Number(itemCatalogByCode.value[code]?.unitPrice ?? 0)
-    return sum + qty * unitPrice
-  }, 0)
+    if (qty <= 0) return null
+    const catItem = itemCatalogByCode.value[code]
+    if (!catItem) return null
+    const itemId = String(catItem._id ?? catItem.id)
+    const hasCustom = clientCustomPrices.value[itemId] !== undefined
+    const unitPrice = hasCustom ? clientCustomPrices.value[itemId] : Number(catItem.unitPrice ?? 0)
+    const lineTotal = qty * unitPrice
+    const isVatSubject = hasCustom && clientApplyVatToCustom.value
+    return {
+      qty,
+      unitPrice,
+      lineTotal,
+      isVatSubject,
+    }
+  }).filter(Boolean)
+})
+
+const subtotal = computed(() =>
+  itemsBreakdown.value.reduce((sum, item) => sum + item.lineTotal, 0)
 )
 
 const expressCharge = computed(() =>
   form.serviceType === 'Express (24h)' ? 25 : 0
 )
 
-const vat = computed(() => (subtotal.value + expressCharge.value) * DEFAULT_VAT_RATE)
+const vat = computed(() => {
+  const customTaxableTotal = itemsBreakdown.value
+    .filter(item => item.isVatSubject)
+    .reduce((sum, item) => sum + item.lineTotal, 0)
+  return customTaxableTotal * DEFAULT_VAT_RATE
+})
 
 const estimatedTotal = computed(() => subtotal.value + expressCharge.value + vat.value)
 

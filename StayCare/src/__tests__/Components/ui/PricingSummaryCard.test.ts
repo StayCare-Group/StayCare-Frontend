@@ -10,6 +10,8 @@ describe('PricingSummaryCard.vue', () => {
           'admin.subtotal': 'Subtotal',
           'admin.expressSurcharge': 'Express Surcharge',
           'admin.vatPercent': 'VAT (18%)',
+          'admin.vat': 'VAT',
+          'common.vatIncluded': 'VAT included in price',
           'admin.grandTotal': 'Grand Total',
         }
         return translations[key] || key
@@ -34,6 +36,24 @@ describe('PricingSummaryCard.vue', () => {
     expect(wrapper.text()).toContain('Grand Total')
     expect(wrapper.text()).toContain('€118.00')
     expect(wrapper.text()).not.toContain('Express Surcharge')
+  })
+
+  it('renders VAT included in price when vatAmount is 0', () => {
+    const wrapper = mount(PricingSummaryCard, {
+      props: {
+        subtotal: 100,
+        vatAmount: 0,
+        total: 100,
+      },
+      global: globalOptions,
+    })
+
+    expect(wrapper.text()).toContain('Subtotal')
+    expect(wrapper.text()).toContain('€100.00')
+    expect(wrapper.text()).toContain('VAT')
+    expect(wrapper.text()).toContain('VAT included in price')
+    expect(wrapper.text()).toContain('Grand Total')
+    expect(wrapper.text()).toContain('€100.00')
   })
 
   it('renders title and surcharge when provided', () => {

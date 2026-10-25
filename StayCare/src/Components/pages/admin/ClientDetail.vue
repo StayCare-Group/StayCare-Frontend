@@ -121,6 +121,27 @@
               </select>
             </template>
           </ProfileField>
+
+          <!-- Apply VAT to custom prices -->
+          <ProfileField
+            :label="$t('clientDetail.applyVatToCustomPrices')"
+            :display-value="client.apply_vat_to_custom_prices ? $t('common.yes') : $t('common.no')"
+            :is-editing="isEditing"
+          >
+            <template #input>
+              <div class="mt-2 flex items-center gap-2">
+                <input
+                  id="apply-vat-checkbox"
+                  type="checkbox"
+                  v-model="editForm.apply_vat_to_custom_prices"
+                  class="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
+                />
+                <label for="apply-vat-checkbox" class="text-sm text-gray-700 cursor-pointer">
+                  {{ $t('clientDetail.applyVatToCustomPricesLabel') }}
+                </label>
+              </div>
+            </template>
+          </ProfileField>
         </div>
       </div>
 
@@ -241,6 +262,7 @@ const editForm = ref({
   vat_number: '',
   credits_terms_days: 30,
   pricing_tier: 'standard',
+  apply_vat_to_custom_prices: false,
 })
 
 const passwordForm = ref({
@@ -276,6 +298,7 @@ function fillEditForm() {
     vat_number: client.value.vat_number ?? '',
     credits_terms_days: Number(client.value.credits_terms_days ?? 30),
     pricing_tier: client.value.pricing_tier ?? 'standard',
+    apply_vat_to_custom_prices: Boolean(client.value.apply_vat_to_custom_prices),
   }
 }
 
@@ -303,6 +326,7 @@ async function saveClientProfile() {
         vat_number: editForm.value.vat_number,
         credits_terms_days: Number(editForm.value.credits_terms_days),
         pricing_tier: editForm.value.pricing_tier,
+        apply_vat_to_custom_prices: Boolean(editForm.value.apply_vat_to_custom_prices),
       },
     }
     const response = await updateUserById(clientId.value, payload)
@@ -364,6 +388,7 @@ function normalizeClientDetailResponse(payload) {
     vat_number: profile.vat_number ?? '',
     credits_terms_days: profile.credits_terms_days ?? 30,
     pricing_tier: profile.pricing_tier ?? 'standard',
+    apply_vat_to_custom_prices: Boolean(profile.apply_vat_to_custom_prices),
   }
 }
 
