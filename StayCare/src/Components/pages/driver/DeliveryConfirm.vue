@@ -154,14 +154,14 @@
               type="submit"
               size="lg"
               :loading="submitting"
-              :disabled="submitting"
+              :disabled="submitting || isSuccess"
             >
               {{ $t('driver.confirmDelivery') }}
             </AppButton>
 
             <button
               type="button"
-              :disabled="submitting"
+              :disabled="submitting || isSuccess"
               class="bg-gray-100 text-gray-600 font-medium py-2.5 px-6 rounded-lg hover:bg-gray-200 transition text-sm disabled:opacity-50"
               @click="goBack"
             >
@@ -218,6 +218,7 @@ import {
   fetchOrderById,
   confirmDelivery as apiConfirmDelivery,
 } from '../../../api/orders'
+import { formatApiErrorMessage } from '@/utils/errors'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -227,6 +228,7 @@ const ui = useUiStore()
 const stop = ref(null)
 const loading = ref(true)
 const submitting = ref(false)
+const isSuccess = ref(false)
 const loadError = ref('')
 
 const stopInfoItems = computed(() => {
@@ -637,7 +639,7 @@ onMounted(async () => {
 })
 
 async function confirmDelivery() {
-  if (!stop.value || submitting.value) {
+  if (!stop.value || submitting.value || isSuccess.value) {
     return
   }
 
@@ -689,6 +691,7 @@ async function confirmDelivery() {
       payload
     )
 
+    isSuccess.value = true
     ui.showSuccess(`${t('driver.confirmDelivery')} ✓`)
 
     window.setTimeout(() => {
@@ -701,9 +704,7 @@ async function confirmDelivery() {
     )
 
     ui.showError(
-      error?.message ??
-      error?.error ??
-      t('driver.errorConfirmDelivery')
+      formatApiErrorMessage(error, t('driver.errorConfirmDelivery'), t)
     )
   } finally {
     submitting.value = false

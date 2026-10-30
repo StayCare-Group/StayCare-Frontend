@@ -87,7 +87,7 @@
           type="button"
           size="lg"
           :loading="submitting"
-          :disabled="submitting"
+          :disabled="submitting || isSuccess"
           @click="submit"
         >
           {{ submitting ? $t('driver.bulkConfirming') : $t('driver.bulkConfirm') }}
@@ -97,7 +97,7 @@
           type="button"
           variant="secondary"
           size="lg"
-          :disabled="submitting"
+          :disabled="submitting || isSuccess"
           @click="goBack"
         >
           {{ $t('common.cancel') }}
@@ -220,11 +220,12 @@ onMounted(loadAll)
 
 // ── Submit ─────────────────────────────────────────────────────────────────
 const submitting     = ref(false)
+const isSuccess      = ref(false)
 const failedOrders   = ref([])
 const succeededCount = ref(0)
 
 async function submit() {
-  if (submitting.value) return
+  if (submitting.value || isSuccess.value) return
 
   // Validate per-order quantities
   for (let i = 0; i < orders.value.length; i++) {
@@ -264,6 +265,7 @@ async function submit() {
     failedOrders.value   = data?.failed ?? []
 
     if (failedOrders.value.length === 0) {
+      isSuccess.value = true
       ui.showSuccess(t('driver.bulkSuccessAll'))
       window.setTimeout(() => goBack(), 1500)
     } else if (succeededCount.value > 0) {

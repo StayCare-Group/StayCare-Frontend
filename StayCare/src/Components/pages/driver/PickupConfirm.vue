@@ -122,14 +122,14 @@
               type="submit"
               size="lg"
               :loading="submitting"
-              :disabled="submitting"
+              :disabled="submitting || isSuccess"
             >
               {{ $t('driver.confirmPickup') }}
             </AppButton>
 
             <button
               type="button"
-              :disabled="submitting"
+              :disabled="submitting || isSuccess"
               class="bg-gray-100 text-gray-600 font-medium py-2.5 px-6 rounded-lg hover:bg-gray-200 transition text-sm disabled:opacity-50"
               @click="goBack"
             >
@@ -181,6 +181,7 @@ import {
   fetchOrderById,
   confirmPickup as apiConfirmPickup,
 } from '../../../api/orders'
+import { formatApiErrorMessage } from '@/utils/errors'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -190,6 +191,7 @@ const loadError = ref('')
 const stop = ref(null)
 const loading = ref(true)
 const submitting = ref(false)
+const isSuccess = ref(false)
 const photoPreview = ref(null)
 
 const stopInfoItems = computed(() => {
@@ -662,7 +664,7 @@ function isPendingStatus(status) {
 }
 
 async function confirmPickup() {
-  if (!stop.value || submitting.value) {
+  if (!stop.value || submitting.value || isSuccess.value) {
     return
   }
 
@@ -702,6 +704,7 @@ async function confirmPickup() {
       payload
     )
 
+    isSuccess.value = true
     ui.showSuccess(`${t('driver.confirmPickup')} ✓`)
 
     window.setTimeout(() => {
@@ -714,9 +717,7 @@ async function confirmPickup() {
     )
 
     ui.showError(
-      error?.message ??
-      error?.error ??
-      t('driver.errorConfirmPickup')
+      formatApiErrorMessage(error, t('driver.errorConfirmPickup'), t)
     )
   } finally {
     submitting.value = false

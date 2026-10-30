@@ -115,6 +115,7 @@ import { fetchInvoices, downloadInvoicesCsv } from '../../../api/invoices'
 import { mapInvoiceForList } from '@/utils/invoiceMappers'
 import { formatCurrency } from '@/utils/pricing'
 import { getDefaultDateRange } from '@/utils/date'
+import { formatApiErrorMessage } from '@/utils/errors'
 
 const { t } = useI18n()
 const navStore = useNavStore()
@@ -124,7 +125,7 @@ const uiStore = useUiStore()
 const isAdmin = computed(() => authStore.isAdmin)
 const canExport = computed(() => authStore.isAdminOrStaff || (typeof authStore.hasPermission === 'function' ? authStore.hasPermission('invoices:export') : true))
 
-const PAGE_SIZE = '150'
+const PAGE_SIZE = '100'
 const currentPage = ref(1)
 const totalPages = ref(1)
 const totalItems = ref(null)
@@ -159,7 +160,7 @@ async function exportToCsv() {
     }
     await downloadInvoicesCsv(params)
   } catch (err) {
-    uiStore.showError(err?.message ?? t('invoices.exportError'))
+    uiStore.showError(formatApiErrorMessage(err, t('invoices.exportError'), t))
   } finally {
     exportLoading.value = false
   }

@@ -117,9 +117,11 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
 
     expect(flatCsvBtn).toBeDefined()
     expect(stainedBtn).toBeDefined()
+    expect(flatCsvBtn!.text()).toContain('(2)')
+    expect(stainedBtn!.text()).toContain('(2)')
   })
 
-  it('hides export buttons when user is a client', async () => {
+  it('shows only the normal export button (not stained) when user is a client', async () => {
     mockIsAdminOrStaff = false
     mockIsClient = true
 
@@ -145,7 +147,7 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
     const flatCsvBtn = buttons.find(b => b.text().includes(en.invoices.exportCsv))
     const stainedBtn = buttons.find(b => b.text().includes(en.invoices.exportStained))
 
-    expect(flatCsvBtn).toBeUndefined()
+    expect(flatCsvBtn).toBeDefined()
     expect(stainedBtn).toBeUndefined()
   })
 
@@ -181,7 +183,7 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
     )
   })
 
-  it('requests a single page of 150 and sends status filters to the backend', async () => {
+  it('requests a single page of 100 and sends status filters to the backend', async () => {
     const wrapper = mount(OrdersList, {
       global: {
         plugins: [createTestI18n()],
@@ -200,14 +202,14 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
 
     await flushPromises()
     expect(mockFetchOrders).toHaveBeenCalledTimes(1)
-    expect(mockFetchOrders.mock.calls[0][0]).toMatchObject({ page: '1', limit: '150' })
+    expect(mockFetchOrders.mock.calls[0][0]).toMatchObject({ page: '1', limit: '100' })
 
     const pendingChip = wrapper.findAll('button').find(b => b.text() === en.orderStatuses.pending)
     await pendingChip!.trigger('click')
     await flushPromises()
 
     expect(mockFetchOrders).toHaveBeenCalledTimes(2)
-    expect(mockFetchOrders.mock.calls[1][0]).toMatchObject({ status: 'pending', page: '1', limit: '150' })
+    expect(mockFetchOrders.mock.calls[1][0]).toMatchObject({ status: 'pending', page: '1', limit: '100' })
   })
 
   it('calls downloadOrdersStainedCsv with selected order IDs when orders are checked', async () => {
@@ -229,12 +231,17 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
 
     await flushPromises()
 
+    // Initially shows total filtered orders count (2)
+    let stainedBtn = wrapper.findAll('button').find(b => b.text().includes('Download Stained'))
+    expect(stainedBtn).toBeDefined()
+    expect(stainedBtn!.text()).toContain('(2)')
+
     // Select the first order via its checkbox
     const checkboxes = wrapper.findAll('tbody input[type="checkbox"]')
     expect(checkboxes.length).toBeGreaterThanOrEqual(1)
     await checkboxes[0].setValue(true)
 
-    const stainedBtn = wrapper.findAll('button').find(b => b.text().includes('Download Stained'))
+    stainedBtn = wrapper.findAll('button').find(b => b.text().includes('Download Stained'))
     expect(stainedBtn).toBeDefined()
     expect(stainedBtn!.text()).toContain('(1)')
 

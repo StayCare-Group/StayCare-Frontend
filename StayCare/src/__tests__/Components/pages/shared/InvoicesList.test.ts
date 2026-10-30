@@ -127,7 +127,7 @@ describe('InvoicesList.vue', () => {
       const { fetchInvoices } = await mountInvoicesList()
       expect(fetchInvoices).toHaveBeenCalledOnce()
       const params = fetchInvoices.mock.calls[0][0]
-      expect(params).toMatchObject({ page: '1', limit: '150' })
+      expect(params).toMatchObject({ page: '1', limit: '100' })
       expect(params.from).toBeDefined()
       expect(params.to).toBeDefined()
     })
@@ -311,12 +311,12 @@ describe('InvoicesList.vue', () => {
       const fakeInvoices: any = [
         makeRawInvoice('INV-001', { total: 100 }),
       ]
-      fakeInvoices._pagination = { total: 300, page: 1, limit: 150, pages: 2 }
+      fakeInvoices._pagination = { total: 300, page: 1, limit: 100, pages: 3 }
 
       const { wrapper } = await mountInvoicesList({ invoicesData: fakeInvoices })
       const paginationComp = wrapper.findComponent({ name: 'AppPagination' })
       expect(paginationComp.exists()).toBe(true)
-      expect(paginationComp.props('totalPages')).toBe(2)
+      expect(paginationComp.props('totalPages')).toBe(3)
       expect(paginationComp.props('currentPage')).toBe(1)
     })
 
@@ -325,7 +325,7 @@ describe('InvoicesList.vue', () => {
       const fakeInvoices: any = [
         makeRawInvoice('INV-001', { total: 100 }),
       ]
-      fakeInvoices._pagination = { total: 300, page: 1, limit: 150, pages: 2 }
+      fakeInvoices._pagination = { total: 300, page: 1, limit: 100, pages: 3 }
 
       const { wrapper } = await mountInvoicesList({ invoicesData: fakeInvoices })
       const paginationComp = wrapper.findComponent({ name: 'AppPagination' })
@@ -336,7 +336,7 @@ describe('InvoicesList.vue', () => {
 
       expect(vi.mocked(fetchInvoices)).toHaveBeenCalledTimes(2)
       const secondCallParams = vi.mocked(fetchInvoices).mock.calls[1][0]
-      expect(secondCallParams).toMatchObject({ page: '2', limit: '150' })
+      expect(secondCallParams).toMatchObject({ page: '2', limit: '100' })
     })
   })
 })

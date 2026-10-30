@@ -6,7 +6,6 @@
       <div class="flex items-center gap-2">
         <!-- CSV Export button -->
         <AppButton
-          v-if="isAdminOrStaff"
           variant="secondary"
           size="sm"
           :disabled="exportLoading || exportStainedLoading"
@@ -16,7 +15,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"/>
           </svg>
           <span v-if="exportLoading">{{ $t('excel.exportGenerating') }}</span>
-          <span v-else>{{ selectedOrderIds.length ? $t('invoices.exportCsvCount', { count: selectedOrderIds.length }) : $t('invoices.exportCsv') }}</span>
+          <span v-else-if="exportCount !== null">{{ $t('invoices.exportCsvCount', { count: exportCount }) }}</span>
+          <span v-else>{{ $t('invoices.exportCsv') }}</span>
         </AppButton>
         <!-- Stained Items Export button -->
         <AppButton
@@ -30,7 +30,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"/>
           </svg>
           <span v-if="exportStainedLoading">{{ $t('excel.exportGenerating') }}</span>
-          <span v-else>{{ selectedOrderIds.length ? $t('invoices.exportStainedCount', { count: selectedOrderIds.length }) : $t('invoices.exportStained') }}</span>
+          <span v-else-if="exportCount !== null">{{ $t('invoices.exportStainedCount', { count: exportCount }) }}</span>
+          <span v-else>{{ $t('invoices.exportStained') }}</span>
         </AppButton>
         <AppButton
           v-if="!isClient || auth.hasPermission('orders:create')"
@@ -200,11 +201,18 @@ const selectedClientId = ref('')
 const selectedOrderIds = ref([])
 const activeFilter = ref('all')
 
-const PAGE_SIZE = '150'
+const PAGE_SIZE = '100'
 const currentPage = ref(1)
 const totalPages = ref(1)
 const totalItems = ref(null)
 let latestRequestId = 0
+
+const exportCount = computed(() => {
+  if (selectedOrderIds.value.length > 0) {
+    return selectedOrderIds.value.length
+  }
+  return totalItems.value
+})
 
 const orderToCancel = ref(null)
 
@@ -295,10 +303,12 @@ function onPageChange(page) {
 function onStatusFilterChange(key) {
   if (activeFilter.value === key) return
   activeFilter.value = key
+  selectedOrderIds.value = []
   reloadFromFirstPage()
 }
 
 function onClientFilterChange() {
+  selectedOrderIds.value = []
   reloadFromFirstPage()
 }
 
