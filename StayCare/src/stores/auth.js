@@ -71,7 +71,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   function hasPermission(perm) {
     if (!user.value) return false
-    if (isAdmin.value || isStaff.value) return true
+    if (isAdmin.value) return true
+    if (isStaff.value) {
+      return perm === 'orders:read' || perm === 'orders:create'
+    }
     if (isClient.value && !user.value.parentClientId) return true
     return Array.isArray(user.value.permissions) && user.value.permissions.includes(perm)
   }

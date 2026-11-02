@@ -6,6 +6,7 @@
       <div class="flex items-center gap-2">
         <!-- CSV Export button -->
         <AppButton
+          v-if="!auth.isStaff"
           variant="secondary"
           size="sm"
           :disabled="exportLoading || exportStainedLoading"
@@ -20,7 +21,7 @@
         </AppButton>
         <!-- Stained Items Export button -->
         <AppButton
-          v-if="isAdminOrStaff"
+          v-if="isAdmin"
           variant="secondary"
           size="sm"
           :disabled="exportLoading || exportStainedLoading"

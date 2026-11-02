@@ -32,6 +32,8 @@ Full business context: `docs/PROJECT_CONTEXT.md`. UI standards:
   (`isAdmin`, `isStaff`, `isDriver`, `isClient`, `isOperator`,
   `isAdminOrStaff`, `isInternal`, `hasPermission(perm)`).
 - Client sub-users carry `permissions` (`orders:create|read|update|delete`).
+- `staff` sees `dashboard`, `orders`, `reception`, `processing`, and `settings` (no `routes` or `users`). In `hasPermission`, `staff` only has `orders:read` and `orders:create` (cannot edit, reschedule, cancel, or export orders to CSV), while retaining full access in `Reception` and `Processing`.
+- `operator` only sees `processing` and `settings` in the sidebar, and on the processing board can only assign/release `iron` machines in `ironing` and advance `ironing → quality_check` (via `canAdvanceProcessingStage` and `canManageStageMachine` in `orderFlow.ts`).
 - Frontend checks only hide/show UI; **the backend is the authority**.
 
 ## Order statuses (source of truth in the frontend: `src/utils/orderFlow.ts`)

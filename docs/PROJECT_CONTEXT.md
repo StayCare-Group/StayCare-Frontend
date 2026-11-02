@@ -49,6 +49,20 @@ The application has the following roles:
 
 Each role has different permissions, screens and allowed actions.
 
+### Staff Role (`staff`)
+
+- **Sidebar & Navigation**: Has access to **Dashboard** (`dashboard`), **Orders** (`orders`), **Reception** (`reception`), **Processing** (`processing`) and **Settings** (`settings`). Does not have access to **Routes** (`routes`) or **Users** (`users`).
+- **Orders**: Can view all orders and their detail (`orders:read`, PDF download) and create orders (`orders:create`). Cannot edit orders (`EditOrderModal`), reschedule pickups (`reschedule`), cancel orders (`orders:delete`) or export CSVs (`exportOrdersFlat`, `exportOrdersStained`).
+- **Reception & Processing**: Full access in **Reception** (`receiveAtFacility` / `receiveInPlant`) and **Processing** (all processing stage transitions, rollbacks, `QualityCheckModal` item condition updates during `quality_check`, and all machine management/assignments).
+- **Routes & Driver Actions**: Cannot view or manage routes (`/api/routes`), reassign orders (`reassignOrder`), or confirm driver pickups/collections/deliveries (`confirmPickup`, `confirmCollection`, `confirmDelivery`).
+
+### Operator Role (`operator`)
+
+- **Sidebar & Navigation**: Has access only to **Processing** (`processing`, default screen) and **Settings** (`settings`), plus **Profile** (`profile`) from the top header.
+- **Orders (`orders:read`)**: Can list and view orders on the processing board (`GET /api/orders`, `GET /api/orders/:id`). Cannot create, edit, reschedule, cancel or export orders.
+- **Stage Transitions**: Can only advance orders from `ironing` to `quality_check` (`PATCH /api/orders/:id/status`). All other stage transitions, facility reception (`arrived`), quality-check completion (`quality_check → ready_to_delivery`) and rollbacks are restricted to `admin` and `staff`.
+- **Machines**: Can view all plant machines (`GET /api/machines`), and can only assign or release **iron** machines (`type === 'iron'`) for orders currently in the `ironing` stage (`POST /api/machines/:id/assign`, `POST /api/machines/:id/release`). Cannot create, edit or delete machines.
+
 ### Client Sub-Users and Custom Roles
 
 Clients can create custom roles (e.g. "Order Manager") with granular permissions

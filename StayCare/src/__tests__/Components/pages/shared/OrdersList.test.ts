@@ -34,14 +34,20 @@ vi.mock('@/api/orders', () => ({
 }))
 
 let mockIsAdminOrStaff = true
+let mockIsAdmin = true
+let mockIsStaff = false
 let mockIsClient = false
 vi.mock('@/stores/auth.js', () => ({
   useAuthStore: () => ({
-    user: { id: 'u1', name: 'Test User', role: mockIsAdminOrStaff ? 'admin' : 'client' },
-    isAdmin: mockIsAdminOrStaff,
+    user: { id: 'u1', name: 'Test User', role: mockIsAdmin ? 'admin' : mockIsStaff ? 'staff' : 'client' },
+    isAdmin: mockIsAdmin,
+    isStaff: mockIsStaff,
     isAdminOrStaff: mockIsAdminOrStaff,
     isClient: mockIsClient,
-    hasPermission: () => true,
+    hasPermission: (perm: string) => {
+      if (mockIsStaff) return perm === 'orders:read' || perm === 'orders:create'
+      return true
+    },
     clientProfile: { is_complete: true },
   }),
 }))
@@ -83,6 +89,8 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     mockIsAdminOrStaff = true
+    mockIsAdmin = true
+    mockIsStaff = false
     mockIsClient = false
     const mockOrders = [
       makeRawOrder('ord-1', { order_number: 'ORD-001' }),
@@ -123,6 +131,8 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
 
   it('shows only the normal export button (not stained) when user is a client', async () => {
     mockIsAdminOrStaff = false
+    mockIsAdmin = false
+    mockIsStaff = false
     mockIsClient = true
 
     const wrapper = mount(OrdersList, {
@@ -149,6 +159,42 @@ describe('OrdersList.vue — Stained Items and Flat CSV Exports', () => {
 
     expect(flatCsvBtn).toBeDefined()
     expect(stainedBtn).toBeUndefined()
+  })
+
+  it('hides CSV export buttons and Cancel Order button for staff while keeping New Order button visible', async () => {
+    mockIsAdminOrStaff = true
+    mockIsAdmin = false
+    mockIsStaff = true
+    mockIsClient = false
+
+    const wrapper = mount(OrdersList, {
+      global: {
+        plugins: [createTestI18n()],
+        stubs: {
+          DataTable: false,
+          AppButton: false,
+          LoadingPanel: false,
+          StatusBadge: true,
+          ClientFilterSelect: true,
+          DateRangeFilter: true,
+          OrderNotesBadge: true,
+          CancelOrderModal: true,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    const buttons = wrapper.findAll('button')
+    const flatCsvBtn = buttons.find(b => b.text().includes(en.invoices.exportCsv))
+    const stainedBtn = buttons.find(b => b.text().includes(en.invoices.exportStained))
+    const newOrderBtn = buttons.find(b => b.text().includes(en.client.newOrder))
+    const cancelBtn = buttons.find(b => b.text().includes(en.admin.cancelOrder))
+
+    expect(flatCsvBtn).toBeUndefined()
+    expect(stainedBtn).toBeUndefined()
+    expect(cancelBtn).toBeUndefined()
+    expect(newOrderBtn).toBeDefined()
   })
 
   it('exports by active filters (not only the visible page) when nothing is selected', async () => {
