@@ -1,3 +1,5 @@
+import { isAdminOrStaffRole, isOperatorRole } from '../constants/roles'
+
 export type RouteType = 'Pickup' | 'Delivery'
 export type RouteStopStatus = 'Pending' | 'In Transit' | 'Completed'
 
@@ -131,6 +133,38 @@ export function getRouteStopProgressStatus(status: string): RouteStopStatus {
 
 export function canConfirmPickup(stopType: string, originalStatus: string): boolean {
   return stopType === 'Pickup' && normalizeStatus(originalStatus) === 'assigned'
+}
+
+/**
+ * Determines whether the given role can advance an order out of `currentStatus`
+ * on the facility processing board.
+ * - Admin / Staff: can advance from any processing stage that has a nextStatus.
+ * - Operator: can only advance an order from 'ironing' (to 'quality_check').
+ */
+export function canAdvanceProcessingStage(currentStatus?: string, role?: unknown): boolean {
+  const norm = normalizeStatus(currentStatus)
+  if (!norm || norm === 'ready_to_delivery') return false
+  if (isAdminOrStaffRole(role)) return true
+  if (isOperatorRole(role)) return norm === 'ironing'
+  return false
+}
+
+/**
+ * Determines whether the given role can assign or release a machine in `stageStatus`
+ * on the facility processing board.
+ * - Admin / Staff: can assign/release machines in any assignable stage (washing, drying, ironing).
+ * - Operator: can only assign/release iron machines in the 'ironing' stage.
+ */
+export function canManageStageMachine(
+  stageStatus?: string,
+  machineType?: string | null,
+  role?: unknown
+): boolean {
+  const norm = normalizeStatus(stageStatus)
+  if (!norm || !machineType) return false
+  if (isAdminOrStaffRole(role)) return true
+  if (isOperatorRole(role)) return norm === 'ironing' && machineType === 'iron'
+  return false
 }
 
 export function canConfirmDelivery(stopType: string, stopStatus: RouteStopStatus): boolean {

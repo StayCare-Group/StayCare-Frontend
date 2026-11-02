@@ -153,6 +153,7 @@
     "roleClient": "Client",
     "roleDriver": "Driver",
     "roleFacility": "Facility Staff",
+    "roleOperator": "Operator",
     "noClientLinked": "Your account is not yet linked to a client profile. Please contact your administrator to set up your properties."
   },
   "properties": {

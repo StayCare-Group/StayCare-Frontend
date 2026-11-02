@@ -181,6 +181,7 @@ const roleLabel = computed(() => {
   if (role === 'admin') return t('profile.roleAdmin')
   if (role === 'driver') return t('profile.roleDriver')
   if (role === 'staff') return t('profile.roleFacility')
+  if (role === 'operator') return t('profile.roleOperator')
   return t('profile.roleClient')
 })
 

@@ -153,6 +153,7 @@
     "roleClient": "Cliente",
     "roleDriver": "Conductor",
     "roleFacility": "Personal de Planta",
+    "roleOperator": "Operador",
     "noClientLinked": "Tu cuenta aún no está vinculada a un perfil de cliente. Contacta a tu administrador para configurar tus propiedades."
   },
   "properties": {

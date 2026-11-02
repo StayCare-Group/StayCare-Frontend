@@ -46,12 +46,15 @@ vi.mock('@/api/facility', () => ({
 
 vi.mock('@/api/client', () => ({ apiFetch: vi.fn() }))
 
+const mockUseAuthStore = vi.fn(() => ({
+  user: { role: 'staff' },
+  userRole: 'staff',
+  isAdmin: false,
+  isAdminOrStaff: true,
+}))
+
 vi.mock('@/stores/auth.js', () => ({
-  useAuthStore: vi.fn(() => ({
-    user: { role: 'staff' },
-    isAdmin: false,
-    isAdminOrStaff: true,
-  })),
+  useAuthStore: () => mockUseAuthStore(),
 }))
 
 vi.mock('@/stores/ui.js', () => ({
@@ -472,6 +475,62 @@ describe('Processing — asignación y liberación manual en la tarjeta', () => 
     await flushPromises()
 
     expect(mockReleaseMachine).toHaveBeenCalledWith('mach-w1', 'ord-wash-1')
+  })
+})
+
+// ─── 10. Rol Operator — permisos acotados a Ironing ─────────────────────────
+
+describe('Processing — restricciones del rol operator', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUseAuthStore.mockReturnValue({
+      user: { role: 'operator' },
+      userRole: 'operator',
+      isAdmin: false,
+      isAdminOrStaff: false,
+    })
+  })
+
+  it('muestra únicamente el botón Move to Quality Check en la columna Ironing y oculta botones de avance en las demás columnas', async () => {
+    const orders = [
+      makeOrder('arrived', 'ord-arr'),
+      makeOrder('washing', 'ord-wash'),
+      makeOrder('drying', 'ord-dry'),
+      makeOrder('ironing', 'ord-iron'),
+      makeOrder('quality_check', 'ord-qc'),
+    ]
+    const wrapper = await mountProcessing({ orders, machines: [] })
+
+    const moveButtons = wrapper.findAll('button').filter(b =>
+      b.text().toLowerCase().includes('move to')
+    )
+    expect(moveButtons).toHaveLength(1)
+    expect(moveButtons[0].text().toLowerCase()).toContain('quality check')
+  })
+
+  it('permite al operator asignar y liberar planchas en Ironing, pero oculta el selector de máquinas en Washing y Drying', async () => {
+    const orders = [
+      makeOrder('washing', 'ord-wash'),
+      makeOrder('drying', 'ord-dry'),
+      makeOrder('ironing', 'ord-iron'),
+    ]
+    const machines = [
+      makeMachine('washer', 'mach-w1'),
+      makeMachine('dryer', 'mach-d1'),
+      makeMachine('iron', 'mach-i1'),
+    ]
+    const wrapper = await mountProcessing({ orders, machines })
+
+    // Solo debe existir 1 <select> en todo el tablero (el de la columna Ironing)
+    const selects = wrapper.findAll('select')
+    expect(selects).toHaveLength(1)
+
+    await selects[0].setValue('mach-i1')
+    const goBtn = wrapper.findAll('button').find(b => b.text() === en.facilityProcessing.go)
+    await goBtn?.trigger('click')
+    await flushPromises()
+
+    expect(mockAssignMachine).toHaveBeenCalledWith('mach-i1', 'ord-iron')
   })
 })
 

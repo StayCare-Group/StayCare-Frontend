@@ -5,6 +5,8 @@ import {
   isEditableStatus,
   isPickupAssignableStatus,
   isDeliveryAssignableStatus,
+  canAdvanceProcessingStage,
+  canManageStageMachine,
 } from '@/utils/orderFlow'
 
 describe('orderFlow utils', () => {
@@ -81,6 +83,37 @@ describe('orderFlow utils', () => {
       expect(isDeliveryAssignableStatus('ready_to_delivery')).toBe(true)
       expect(isDeliveryAssignableStatus('collected')).toBe(true)
       expect(isDeliveryAssignableStatus('arrived')).toBe(false)
+    })
+  })
+
+  describe('canAdvanceProcessingStage & canManageStageMachine', () => {
+    it('permite a admin y staff avanzar todas las etapas de procesamiento y gestionar todas las maquinas', () => {
+      for (const role of ['admin', 'staff']) {
+        expect(canAdvanceProcessingStage('arrived', role)).toBe(true)
+        expect(canAdvanceProcessingStage('washing', role)).toBe(true)
+        expect(canAdvanceProcessingStage('drying', role)).toBe(true)
+        expect(canAdvanceProcessingStage('ironing', role)).toBe(true)
+        expect(canAdvanceProcessingStage('quality_check', role)).toBe(true)
+        expect(canAdvanceProcessingStage('ready_to_delivery', role)).toBe(false)
+
+        expect(canManageStageMachine('washing', 'washer', role)).toBe(true)
+        expect(canManageStageMachine('drying', 'dryer', role)).toBe(true)
+        expect(canManageStageMachine('ironing', 'iron', role)).toBe(true)
+      }
+    })
+
+    it('restringe a operator para que solo pueda avanzar en ironing (hacia quality_check) y solo gestionar planchas en ironing', () => {
+      expect(canAdvanceProcessingStage('arrived', 'operator')).toBe(false)
+      expect(canAdvanceProcessingStage('washing', 'operator')).toBe(false)
+      expect(canAdvanceProcessingStage('drying', 'operator')).toBe(false)
+      expect(canAdvanceProcessingStage('ironing', 'operator')).toBe(true)
+      expect(canAdvanceProcessingStage('quality_check', 'operator')).toBe(false)
+      expect(canAdvanceProcessingStage('ready_to_delivery', 'operator')).toBe(false)
+
+      expect(canManageStageMachine('washing', 'washer', 'operator')).toBe(false)
+      expect(canManageStageMachine('drying', 'dryer', 'operator')).toBe(false)
+      expect(canManageStageMachine('ironing', 'iron', 'operator')).toBe(true)
+      expect(canManageStageMachine('ironing', 'washer', 'operator')).toBe(false)
     })
   })
 })

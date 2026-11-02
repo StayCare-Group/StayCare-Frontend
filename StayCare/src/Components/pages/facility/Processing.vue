@@ -25,6 +25,8 @@
             :is-advancing="advancing === getOrderId(order)"
             :is-rolling-back="rollingBack === getOrderId(order)"
             :is-admin-or-staff="isAdminOrStaff"
+            :can-advance="col.canAdvance"
+            :can-manage-machine="col.canManageMachine"
             :has-rollback-options="getRollbackOptions(col.status).length > 0"
             :next-status-label="col.nextStatus ? nextLabel(col.nextStatus) : ''"
             @assign="machineId => handleAssign(machineId, getOrderId(order))"
@@ -133,12 +135,18 @@ import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
 import { fetchAllOrders, updateOrderStatus } from '../../../api/orders'
 import { fetchMachineStatus, assignMachine, releaseMachine } from '../../../api/facility'
-import { normalizeStatus } from '../../../utils/orderFlow'
+import {
+  normalizeStatus,
+  canAdvanceProcessingStage,
+  canManageStageMachine,
+} from '../../../utils/orderFlow'
+import { formatApiErrorMessage } from '../../../utils/errors'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
 const ui = useUiStore()
 const isAdminOrStaff = computed(() => authStore.isAdminOrStaff)
+const currentRole = computed(() => authStore.userRole ?? authStore.user?.role ?? null)
 
 const allOrders = ref([])
 const machines = ref([])
@@ -212,7 +220,7 @@ async function doRollback() {
     closeRollbackModal()
     await loadData()
   } catch (err) {
-    const msg = err?.message ?? t('facilityProcessing.unknownError')
+    const msg = formatApiErrorMessage(err, t('facilityProcessing.unknownError'), t)
     ui.showError(`${t('facilityProcessing.rollbackFailed')}: ${msg}`)
   } finally {
     rollingBack.value = null
@@ -243,14 +251,23 @@ function getMachineId(machine) {
   return machine?._id ?? machine?.id ?? ''
 }
 
-
 async function loadData() {
   try {
     const processingStatuses = PIPELINE.value.map(p => p.status).join(',')
-    const [ordersData, machinesData] = await Promise.all([
-      fetchAllOrders({ status: processingStatuses }).catch(() => []),
-      fetchMachineStatus().catch(() => []),
+    const [ordersResult, machinesResult] = await Promise.allSettled([
+      fetchAllOrders({ status: processingStatuses }),
+      fetchMachineStatus(),
     ])
+
+    if (ordersResult.status === 'rejected') {
+      ui.showError(formatApiErrorMessage(ordersResult.reason, t('facilityProcessing.unknownError'), t))
+    }
+    if (machinesResult.status === 'rejected') {
+      ui.showError(formatApiErrorMessage(machinesResult.reason, t('facilityProcessing.unknownError'), t))
+    }
+
+    const ordersData = ordersResult.status === 'fulfilled' ? ordersResult.value : []
+    const machinesData = machinesResult.status === 'fulfilled' ? machinesResult.value : []
 
     allOrders.value = (ordersData ?? []).map(raw => ({
       id: raw.order_number ?? raw._id ?? raw.id,
@@ -284,7 +301,8 @@ async function loadData() {
             }
           : null),
     }))
-  } catch {
+  } catch (err) {
+    ui.showError(formatApiErrorMessage(err, t('facilityProcessing.unknownError'), t))
     allOrders.value = []
     machines.value = []
   } finally {
@@ -297,6 +315,8 @@ onMounted(loadData)
 const columns = computed(() =>
   PIPELINE.value.map(col => ({
     ...col,
+    canAdvance: canAdvanceProcessingStage(col.status, currentRole.value),
+    canManageMachine: canManageStageMachine(col.status, col.machineType, currentRole.value),
     orders: allOrders.value.filter(o => o.status === col.status),
   }))
 )
@@ -320,31 +340,48 @@ function availableMachines(machineType) {
   return machines.value.filter(m => m.type === machineType && m.status !== 'maintenance')
 }
 
-
-
 async function handleAssign(machineId, orderId) {
   if (!machineId || !orderId) {
     ui.showError(t('facilityProcessing.assignFailed') + ': Missing machine or order id')
     return
   }
+  const order = allOrders.value.find(o => getOrderId(o) === orderId)
+  const machine = machines.value.find(m => getMachineId(m) === machineId)
+  if (order && machine && !canManageStageMachine(order.status, machine.type, currentRole.value)) {
+    ui.showError(t('common.accessDenied'))
+    return
+  }
+
   assigning.value = orderId
   try {
     await assignMachine(machineId, orderId)
     machineSelections[orderId] = ''
     await loadData()
   } catch (err) {
-    ui.showError(t('facilityProcessing.assignFailed') + ': ' + (err?.message ?? t('facilityProcessing.unknownError')))
+    ui.showError(
+      t('facilityProcessing.assignFailed') + ': ' + formatApiErrorMessage(err, t('facilityProcessing.unknownError'), t)
+    )
   } finally {
     assigning.value = null
   }
 }
 
 async function handleRelease(machineId, orderId = null) {
+  const machine = machines.value.find(m => getMachineId(m) === machineId)
+  const order = orderId ? allOrders.value.find(o => getOrderId(o) === orderId) : null
+  const stageStatus = order?.status ?? (machine?.type === 'iron' ? 'ironing' : machine?.type === 'dryer' ? 'drying' : 'washing')
+  if (machine && !canManageStageMachine(stageStatus, machine.type, currentRole.value)) {
+    ui.showError(t('common.accessDenied'))
+    return
+  }
+
   try {
     await releaseMachine(machineId, orderId)
     await loadData()
   } catch (err) {
-    ui.showError(t('facilityProcessing.releaseFailed') + ': ' + (err?.message ?? t('facilityProcessing.unknownError')))
+    ui.showError(
+      t('facilityProcessing.releaseFailed') + ': ' + formatApiErrorMessage(err, t('facilityProcessing.unknownError'), t)
+    )
   }
 }
 
@@ -354,11 +391,16 @@ async function advanceOrder(orderId, nextStatus) {
     return
   }
 
+  const order = allOrders.value.find(o => getOrderId(o) === orderId)
+  if (order && !canAdvanceProcessingStage(order.status, currentRole.value)) {
+    ui.showError(t('common.accessDenied'))
+    return
+  }
+
   const normalizedNext = normalizeStatus(nextStatus)
 
   // When advancing from quality_check to ready_to_delivery, open the
   if (normalizedNext === 'ready_to_delivery') {
-    const order = allOrders.value.find(o => getOrderId(o) === orderId)
     if (order) {
       qualityCheckOrder.value = order
       showQualityCheckModal.value = true
@@ -413,7 +455,9 @@ async function doAdvanceOrder(orderId, normalizedNextStatus, machineIdToAssign =
     // Refresh orders and machines once at the end of the transition
     await loadData()
   } catch (err) {
-    ui.showError(t('facilityProcessing.updateStatusFailed') + ': ' + (err?.message ?? t('facilityProcessing.unknownError')))
+    ui.showError(
+      t('facilityProcessing.updateStatusFailed') + ': ' + formatApiErrorMessage(err, t('facilityProcessing.unknownError'), t)
+    )
   } finally {
     advancing.value = null
   }

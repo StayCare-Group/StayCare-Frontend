@@ -18,17 +18,18 @@
     </div>
 
     <!-- Machine assignment (for Washing, Drying, Ironing columns) -->
-    <div v-if="col.assignable" class="mt-2 min-w-0">
+    <div v-if="col.assignable && (assignedMachine || canManageMachine)" class="mt-2 min-w-0">
       <div v-if="assignedMachine" class="flex items-center justify-between bg-green-50 rounded px-2 py-1 min-w-0">
         <span class="text-xs text-green-700 font-medium truncate mr-1">{{ assignedMachine.name }}</span>
         <button
+          v-if="canManageMachine"
           @click="onRelease"
           class="text-xs text-red-500 hover:text-red-700 shrink-0 font-medium"
         >
           {{ $t('facilityProcessing.release') }}
         </button>
       </div>
-      <div v-else class="flex items-center gap-1.5 min-w-0 w-full">
+      <div v-else-if="canManageMachine" class="flex items-center gap-1.5 min-w-0 w-full">
         <select
           :value="machineSelection"
           @change="$emit('update:machineSelection', $event.target.value)"
@@ -56,10 +57,10 @@
     </div>
 
     <!-- Actions (Advance + Rollback) -->
-    <div v-if="col.nextStatus || (isAdminOrStaff && hasRollbackOptions)" class="mt-2 flex items-stretch gap-1.5">
+    <div v-if="(canAdvance && col.nextStatus) || (isAdminOrStaff && hasRollbackOptions)" class="mt-2 flex items-stretch gap-1.5">
       <!-- Advance button -->
       <AppButton
-        v-if="col.nextStatus"
+        v-if="canAdvance && col.nextStatus"
         size="sm"
         :disabled="isAdvancing"
         class="flex-1 min-w-0"
@@ -76,7 +77,7 @@
         :disabled="isRollingBack"
         :loading="isRollingBack"
         :title="$t('facilityProcessing.rollbackTitle')"
-        :class="col.nextStatus ? 'shrink-0 px-2.5' : 'w-full'"
+        :class="canAdvance && col.nextStatus ? 'shrink-0 px-2.5' : 'w-full'"
         @click="$emit('rollback')"
       >
         <span class="text-sm font-bold leading-none">↩</span>
@@ -128,6 +129,14 @@ const props = defineProps({
   isAdminOrStaff: {
     type: Boolean,
     default: false,
+  },
+  canAdvance: {
+    type: Boolean,
+    default: true,
+  },
+  canManageMachine: {
+    type: Boolean,
+    default: true,
   },
   hasRollbackOptions: {
     type: Boolean,
