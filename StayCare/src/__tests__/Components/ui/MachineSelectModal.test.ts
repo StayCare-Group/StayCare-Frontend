@@ -240,3 +240,38 @@ describe('MachineSelectModal — reset al reabrir', () => {
     expect(confirmBtn()?.element.hasAttribute('disabled')).toBe(true)
   })
 })
+
+// ─── 5. Selección de operarios en etapa Ironing ──────────────────────────────
+
+describe('MachineSelectModal — selección de operarios (Ironing)', () => {
+  const OPERATORS = [
+    { id: 'op-1', name: 'Ana Gómez' },
+    { id: 'op-2', name: 'Luis Pérez' },
+  ]
+
+  it('muestra checkboxes para operarios cuando showOperators es true y emite confirm con máquina y operarios', async () => {
+    const wrapper = mountModal({
+      stageLabel: 'Ironing',
+      operators: OPERATORS,
+      showOperators: true,
+    })
+
+    const checkboxes = wrapper.findAll('input[type="checkbox"]')
+    expect(checkboxes).toHaveLength(2)
+
+    await wrapper.findAll('input[type="radio"]')[0].setValue(MACHINES[0].id)
+    await checkboxes[0].setValue(true)
+    await checkboxes[1].setValue(true)
+
+    const confirmBtn = wrapper.findAll('button').find(b =>
+      b.text().includes(en.machineSelectModal.confirm)
+    )
+    await confirmBtn?.trigger('click')
+
+    expect(wrapper.emitted('confirm')).toBeTruthy()
+    expect(wrapper.emitted('confirm')![0]).toEqual([
+      MACHINES[0].id,
+      ['Ana Gómez', 'Luis Pérez'],
+    ])
+  })
+})

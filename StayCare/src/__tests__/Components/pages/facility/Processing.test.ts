@@ -29,6 +29,7 @@ const mockUpdateOrderStatus = vi.fn()
 const mockFetchMachineStatus = vi.fn()
 const mockAssignMachine    = vi.fn()
 const mockReleaseMachine   = vi.fn()
+const mockGetUsers         = vi.fn()
 const mockShowError        = vi.fn()
 const mockShowSuccess      = vi.fn()
 
@@ -42,6 +43,10 @@ vi.mock('@/api/facility', () => ({
   fetchMachineStatus: (...args: any[]) => mockFetchMachineStatus(...args),
   assignMachine:      (...args: any[]) => mockAssignMachine(...args),
   releaseMachine:     (...args: any[]) => mockReleaseMachine(...args),
+}))
+
+vi.mock('@/api/users', () => ({
+  getUsers: (...args: any[]) => mockGetUsers(...args),
 }))
 
 vi.mock('@/api/client', () => ({ apiFetch: vi.fn() }))
@@ -143,12 +148,15 @@ function createTestI18n() {
 async function mountProcessing(options: {
   orders?: any[]
   machines?: any[]
+  operators?: any[]
 } = {}) {
-  const orders   = options.orders   ?? []
-  const machines = options.machines ?? []
+  const orders    = options.orders    ?? []
+  const machines  = options.machines  ?? []
+  const operators = options.operators ?? []
 
   mockFetchAllOrders.mockResolvedValue(orders)
   mockFetchMachineStatus.mockResolvedValue(machines)
+  mockGetUsers.mockResolvedValue(operators)
   mockUpdateOrderStatus.mockResolvedValue({})
   mockAssignMachine.mockResolvedValue({})
   mockReleaseMachine.mockResolvedValue({})
@@ -531,6 +539,35 @@ describe('Processing — restricciones del rol operator', () => {
     await flushPromises()
 
     expect(mockAssignMachine).toHaveBeenCalledWith('mach-i1', 'ord-iron')
+  })
+
+  it('permite seleccionar uno o más operarios en la columna Ironing y los registra en el historial', async () => {
+    const orders = [makeOrder('ironing', 'ord-iron')]
+    const operators = [
+      { id: 'op-1', name: 'Ana Gómez' },
+      { id: 'op-2', name: 'Luis Pérez' },
+    ]
+    const wrapper = await mountProcessing({ orders, machines: [], operators })
+
+    const assignOpBtn = wrapper.findAll('button').find(b =>
+      b.text().includes(en.facilityProcessing.assignOperators)
+    )
+    expect(assignOpBtn).toBeTruthy()
+    await assignOpBtn?.trigger('click')
+    await flushPromises()
+
+    const checkboxes = wrapper.findAll('input[type="checkbox"]')
+    expect(checkboxes).toHaveLength(2)
+    await checkboxes[0].setValue(true)
+    await checkboxes[1].setValue(true)
+
+    const goBtn = wrapper.findAll('button').find(b => b.text() === en.facilityProcessing.go)
+    await goBtn?.trigger('click')
+    await flushPromises()
+
+    expect(mockUpdateOrderStatus).toHaveBeenCalledWith('ord-iron', 'ironing', {
+      note: 'Operators: Ana Gómez, Luis Pérez',
+    })
   })
 })
 

@@ -516,12 +516,18 @@
     "rollbackRollingBack": "Rolling back...",
     "rollbackSuccess": "Order has been rolled back to the previous stage.",
     "rollbackFailed": "Failed to roll back the order.",
-    "rollbackInvoicedBlocked": "Cannot roll back an invoiced order."
+    "rollbackInvoicedBlocked": "Cannot roll back an invoiced order.",
+    "assignOperators": "Assign operators...",
+    "operatorsCount": "{count} operator(s) selected",
+    "editOperators": "Edit",
+    "noOperatorsAvailable": "No operators available"
   },
   "machineSelectModal": {
     "title": "Assign Machine",
     "description": "Select the machine to use for the {stage} stage. You can skip and assign it later from the board.",
     "noMachines": "No machines available for this stage. You can still advance the order and assign one later.",
+    "operatorsTitle": "Assign Ironing Operators (optional)",
+    "noOperators": "No operators available.",
     "skipHint": "Skipping assignment is allowed — the order will appear on the board without a machine.",
     "skipAssign": "Skip & Advance",
     "confirm": "Assign & Advance"

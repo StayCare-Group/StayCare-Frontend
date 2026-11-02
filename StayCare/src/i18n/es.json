@@ -516,12 +516,18 @@
     "rollbackRollingBack": "Devolviendo...",
     "rollbackSuccess": "La orden fue devuelta a la etapa anterior.",
     "rollbackFailed": "No se pudo devolver la orden.",
-    "rollbackInvoicedBlocked": "No se puede devolver una orden ya facturada."
+    "rollbackInvoicedBlocked": "No se puede devolver una orden ya facturada.",
+    "assignOperators": "Asignar operarios...",
+    "operatorsCount": "{count} operario(s) seleccionado(s)",
+    "editOperators": "Editar",
+    "noOperatorsAvailable": "Sin operarios disponibles"
   },
   "machineSelectModal": {
     "title": "Asignar Máquina",
     "description": "Selecciona la máquina para la etapa de {stage}. Puedes omitirlo y asignarla más tarde desde el tablero.",
     "noMachines": "No hay máquinas disponibles para esta etapa. Puedes avanzar la orden y asignarla después.",
+    "operatorsTitle": "Asignar Operarios de Planchado (opcional)",
+    "noOperators": "No hay operarios disponibles.",
     "skipHint": "Omitir la asignación está permitido — la orden aparecerá en el tablero sin máquina.",
     "skipAssign": "Omitir y Avanzar",
     "confirm": "Asignar y Avanzar"

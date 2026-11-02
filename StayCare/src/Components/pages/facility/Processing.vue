@@ -20,8 +20,11 @@
             :col="col"
             :assigned-machine="getAssignedMachine(getOrderId(order))"
             :available-machines="availableMachines(col.machineType)"
+            :assigned-operators="order.ironOperators || []"
+            :available-operators="operators"
             v-model:machine-selection="machineSelections[getOrderId(order)]"
             :is-assigning="assigning === getOrderId(order)"
+            :is-assigning-operators="assigningOperators === getOrderId(order)"
             :is-advancing="advancing === getOrderId(order)"
             :is-rolling-back="rollingBack === getOrderId(order)"
             :is-admin-or-staff="isAdminOrStaff"
@@ -30,6 +33,7 @@
             :has-rollback-options="getRollbackOptions(col.status).length > 0"
             :next-status-label="col.nextStatus ? nextLabel(col.nextStatus) : ''"
             @assign="machineId => handleAssign(machineId, getOrderId(order))"
+            @assign-operators="selectedOps => handleAssignOperators(getOrderId(order), selectedOps)"
             @release="machineId => handleRelease(machineId, getOrderId(order))"
             @advance="advanceOrder(getOrderId(order), col.nextStatus)"
             @rollback="openRollback(getOrderId(order), col.status)"
@@ -56,6 +60,8 @@
     :show="showMachineSelectModal"
     :machines="machineSelectStage ? availableMachines(machineSelectStage.machineType) : []"
     :stage-label="machineSelectStage?.stageLabel ?? ''"
+    :operators="machineSelectStage?.machineType === 'iron' ? operators : []"
+    :show-operators="machineSelectStage?.machineType === 'iron'"
     @close="onMachineSelectClose"
     @confirm="onMachineSelectConfirm"
     @skip="onMachineSelectSkip"
@@ -135,6 +141,7 @@ import { useAuthStore } from '../../../stores/auth.js'
 import { useUiStore } from '../../../stores/ui.js'
 import { fetchAllOrders, updateOrderStatus } from '../../../api/orders'
 import { fetchMachineStatus, assignMachine, releaseMachine } from '../../../api/facility'
+import { getUsers } from '../../../api/users'
 import {
   normalizeStatus,
   canAdvanceProcessingStage,
@@ -150,9 +157,11 @@ const currentRole = computed(() => authStore.userRole ?? authStore.user?.role ??
 
 const allOrders = ref([])
 const machines = ref([])
+const operators = ref([])
 const loading = ref(true)
 const advancing = ref(null)
 const assigning = ref(null)
+const assigningOperators = ref(null)
 const machineSelections = reactive({})
 
 // Quality-check modal state
@@ -254,9 +263,10 @@ function getMachineId(machine) {
 async function loadData() {
   try {
     const processingStatuses = PIPELINE.value.map(p => p.status).join(',')
-    const [ordersResult, machinesResult] = await Promise.allSettled([
-      fetchAllOrders({ status: processingStatuses }),
+    const [ordersResult, machinesResult, operatorsResult] = await Promise.allSettled([
+      fetchAllOrders({ status: processingStatuses, include_iron_operators: 'true' }),
       fetchMachineStatus(),
+      getUsers({ role: 'operator', is_active: 'true', limit: '100' }),
     ])
 
     if (ordersResult.status === 'rejected') {
@@ -268,6 +278,7 @@ async function loadData() {
 
     const ordersData = ordersResult.status === 'fulfilled' ? ordersResult.value : []
     const machinesData = machinesResult.status === 'fulfilled' ? machinesResult.value : []
+    const operatorsData = operatorsResult.status === 'fulfilled' ? operatorsResult.value : []
 
     allOrders.value = (ordersData ?? []).map(raw => ({
       id: raw.order_number ?? raw._id ?? raw.id,
@@ -276,6 +287,7 @@ async function loadData() {
       status: normalizeStatus(raw.status),
       serviceType: raw.service_type === 'express' ? 'Express' : 'Standard',
       specialNotes: raw.specialNotes ?? raw.special_notes ?? '',
+      ironOperators: Array.isArray(raw.iron_operators) ? raw.iron_operators : [],
       items: (raw.items ?? []).map(i => ({
         itemId:     i.item_id ?? null,
         code:       i.item_code ?? i.item_code_snapshot ?? '',
@@ -286,6 +298,11 @@ async function loadData() {
         qtyStained: i.qty_stained ?? null,
       })),
     }))
+
+    operators.value = (Array.isArray(operatorsData) ? operatorsData : []).map(u => ({
+      id: u.id ?? u._id ?? u.name,
+      name: u.name ?? '',
+    })).filter(u => Boolean(u.name))
 
     machines.value = (machinesData ?? []).map(raw => ({
       ...raw,
@@ -366,6 +383,28 @@ async function handleAssign(machineId, orderId) {
   }
 }
 
+async function handleAssignOperators(orderId, selectedOperators) {
+  if (!orderId) return
+  const order = allOrders.value.find(o => getOrderId(o) === orderId)
+  if (order && !canManageStageMachine(order.status, 'iron', currentRole.value)) {
+    ui.showError(t('common.accessDenied'))
+    return
+  }
+
+  assigningOperators.value = orderId
+  try {
+    const names = Array.isArray(selectedOperators) ? selectedOperators.filter(Boolean).join(', ') : ''
+    await updateOrderStatus(orderId, 'ironing', { note: `Operators: ${names}` })
+    await loadData()
+  } catch (err) {
+    ui.showError(
+      t('facilityProcessing.assignFailed') + ': ' + formatApiErrorMessage(err, t('facilityProcessing.unknownError'), t)
+    )
+  } finally {
+    assigningOperators.value = null
+  }
+}
+
 async function handleRelease(machineId, orderId = null) {
   const machine = machines.value.find(m => getMachineId(m) === machineId)
   const order = orderId ? allOrders.value.find(o => getOrderId(o) === orderId) : null
@@ -433,7 +472,7 @@ async function advanceOrder(orderId, nextStatus) {
  * @param {string}      normalizedNextStatus
  * @param {string|null} [machineIdToAssign] - machine chosen by the user (null = skip assignment)
  */
-async function doAdvanceOrder(orderId, normalizedNextStatus, machineIdToAssign = null) {
+async function doAdvanceOrder(orderId, normalizedNextStatus, machineIdToAssign = null, operatorsToAssign = null) {
   advancing.value = orderId
   try {
     // Release existing machine for THIS order only.
@@ -445,7 +484,15 @@ async function doAdvanceOrder(orderId, normalizedNextStatus, machineIdToAssign =
       }
     }
 
-    await updateOrderStatus(orderId, normalizedNextStatus)
+    const operatorNames = Array.isArray(operatorsToAssign)
+      ? operatorsToAssign.filter(Boolean).join(', ')
+      : ''
+
+    if (operatorNames) {
+      await updateOrderStatus(orderId, normalizedNextStatus, { note: `Operators: ${operatorNames}` })
+    } else {
+      await updateOrderStatus(orderId, normalizedNextStatus)
+    }
 
     // Assign the machine the staff explicitly chose (if any).
     if (machineIdToAssign) {
@@ -476,13 +523,13 @@ function onMachineSelectClose() {
   machineSelectStage.value = null
 }
 
-async function onMachineSelectConfirm(machineId) {
+async function onMachineSelectConfirm(machineId, selectedOperators = null) {
   const stage = machineSelectStage.value
   if (!stage) return
   machineSelectAdvancing.value = true
   showMachineSelectModal.value = false
   try {
-    await doAdvanceOrder(stage.orderId, stage.nextStatus, machineId)
+    await doAdvanceOrder(stage.orderId, stage.nextStatus, machineId, selectedOperators)
   } finally {
     machineSelectAdvancing.value = false
     machineSelectStage.value = null

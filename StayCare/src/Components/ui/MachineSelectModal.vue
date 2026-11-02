@@ -51,6 +51,31 @@
       {{ $t('machineSelectModal.noMachines') }}
     </p>
 
+    <!-- Ironing operators selection (only shown for ironing stage) -->
+    <div v-if="showOperators || operators.length > 0" class="mt-3 pt-3 border-t border-gray-100">
+      <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+        {{ $t('machineSelectModal.operatorsTitle') }}
+      </p>
+      <div v-if="operators.length > 0" class="divide-y divide-gray-50 max-h-40 overflow-y-auto">
+        <label
+          v-for="op in operators"
+          :key="op.id || op.name"
+          class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 rounded-lg px-2 transition-colors"
+        >
+          <input
+            type="checkbox"
+            :value="op.name"
+            v-model="selectedOperators"
+            class="accent-brand-600 w-4 h-4 rounded shrink-0"
+          />
+          <span class="text-sm font-medium text-gray-800 truncate">{{ op.name }}</span>
+        </label>
+      </div>
+      <p v-else class="text-xs text-gray-400">
+        {{ $t('machineSelectModal.noOperators') }}
+      </p>
+    </div>
+
     <!-- Skip hint -->
     <p class="text-xs text-gray-400">
       {{ $t('machineSelectModal.skipHint') }}
@@ -78,11 +103,11 @@
         {{ $t('machineSelectModal.skipAssign') }}
       </AppButton>
 
-      <!-- Advance with machine -->
+      <!-- Advance with machine and/or operators -->
       <AppButton
         size="sm"
         :loading="submitting"
-        :disabled="!selectedMachineId || submitting"
+        :disabled="(!selectedMachineId && selectedOperators.length === 0) || submitting"
         @click="handleConfirm"
       >
         {{ $t('machineSelectModal.confirm') }}
@@ -97,16 +122,21 @@ import AppModal from './AppModal.vue'
 import AppButton from './AppButton.vue'
 
 const props = defineProps({
-  show:       { type: Boolean, default: false },
+  show:          { type: Boolean, default: false },
   /** Máquinas disponibles del tipo correcto, pre-filtradas por el padre */
-  machines:   { type: Array, default: () => [] },
+  machines:      { type: Array, default: () => [] },
   /** Etiqueta legible del estado destino, p. ej. "Washing" */
-  stageLabel: { type: String, default: '' },
+  stageLabel:    { type: String, default: '' },
+  /** Operarios disponibles para asignar en la etapa de planchado */
+  operators:     { type: Array, default: () => [] },
+  /** Mostrar la sección de operarios (activo para la etapa ironing) */
+  showOperators: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['close', 'confirm', 'skip'])
 
 const selectedMachineId = ref('')
+const selectedOperators = ref([])
 const submitting        = ref(false)
 const error             = ref('')
 
@@ -114,6 +144,7 @@ const error             = ref('')
 watch(() => props.show, (visible) => {
   if (!visible) return
   selectedMachineId.value = ''
+  selectedOperators.value = []
   submitting.value        = false
   error.value             = ''
 })
@@ -135,11 +166,15 @@ function handleSkip() {
 }
 
 async function handleConfirm() {
-  if (!selectedMachineId.value || submitting.value) return
+  if ((!selectedMachineId.value && selectedOperators.value.length === 0) || submitting.value) return
   submitting.value = true
   error.value = ''
   try {
-    emit('confirm', selectedMachineId.value)
+    if (selectedOperators.value.length > 0) {
+      emit('confirm', selectedMachineId.value, [...selectedOperators.value])
+    } else {
+      emit('confirm', selectedMachineId.value)
+    }
   } finally {
     // The parent controls closing the modal after its own async work finishes.
     // We reset submitting here as a safety net in case the parent doesn't close.
