@@ -53,19 +53,26 @@
 
     <!-- Ironing operators selection (only shown for ironing stage) -->
     <div v-if="showOperators || operators.length > 0" class="mt-3 pt-3 border-t border-gray-100">
-      <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-        {{ $t('machineSelectModal.operatorsTitle') }}
-      </p>
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+          {{ $t('machineSelectModal.operatorsTitle') }}
+        </p>
+        <span class="text-[11px] text-gray-400">
+          {{ $t('machineSelectModal.operatorsLimitHint') }}
+        </span>
+      </div>
       <div v-if="operators.length > 0" class="divide-y divide-gray-50 max-h-40 overflow-y-auto">
         <label
           v-for="op in operators"
           :key="op.id || op.name"
           class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 rounded-lg px-2 transition-colors"
+          :class="{ 'opacity-50 cursor-not-allowed': selectedOperators.length >= 2 && !selectedOperators.includes(op.name) }"
         >
           <input
             type="checkbox"
             :value="op.name"
             v-model="selectedOperators"
+            :disabled="selectedOperators.length >= 2 && !selectedOperators.includes(op.name)"
             class="accent-brand-600 w-4 h-4 rounded shrink-0"
           />
           <span class="text-sm font-medium text-gray-800 truncate">{{ op.name }}</span>

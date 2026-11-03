@@ -96,7 +96,7 @@ const MachineSelectModalStub = {
 }
 
 const COMPONENT_STUBS = {
-  AppButton:          { template: '<button><slot /></button>', props: ['disabled', 'loading'] },
+  AppButton:          { template: '<button :disabled="disabled"><slot /></button>', props: ['disabled', 'loading'] },
   AppTooltip:         { template: '<div><slot /></div>' },
   OrderNotesBadge:    { template: '<div data-testid="order-notes-badge"><slot /></div>', props: ['notes', 'title', 'label', 'fallback'] },
   QualityCheckModal:  { template: '<div />', props: ['show', 'order'], emits: ['close', 'success'] },
@@ -394,20 +394,35 @@ describe('Processing — Close en MachineSelectModal', () => {
 describe('Processing — etapas sin máquina (ironing → quality_check)', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('NO abre el MachineSelectModal al avanzar de ironing a quality_check', async () => {
-    const order   = makeOrder('ironing', 'ord-iron-1')
-    const wrapper = await mountProcessing({ orders: [order], machines: [] })
+  it('deshabilita el botón de avanzar en ironing si falta máquina o falta operario', async () => {
+    const orderWithoutOps = makeOrder('ironing', 'ord-iron-1')
+    const iron = makeMachine('iron', 'mach-iron-1', 'running', 'ord-iron-1')
+    const wrapper = await mountProcessing({ orders: [orderWithoutOps], machines: [iron] })
 
     const advanceBtn = wrapper.findAll('button').find(b =>
       b.text().toLowerCase().includes('quality')
     )
+    expect(advanceBtn?.attributes('disabled')).toBeDefined()
+  })
+
+  it('NO abre el MachineSelectModal al avanzar de ironing a quality_check cuando tiene máquina y operarios', async () => {
+    const order   = { ...makeOrder('ironing', 'ord-iron-1'), iron_operators: ['Ana Gómez'] }
+    const iron    = makeMachine('iron', 'mach-iron-1', 'running', 'ord-iron-1')
+    const wrapper = await mountProcessing({ orders: [order], machines: [iron] })
+
+    const advanceBtn = wrapper.findAll('button').find(b =>
+      b.text().toLowerCase().includes('quality')
+    )
+    expect(advanceBtn?.attributes('disabled')).toBeUndefined()
     await advanceBtn?.trigger('click')
     await flushPromises()
 
     // El modal de selección de máquina no debe aparecer
     expect(wrapper.find('[data-testid="machine-select-modal"]').exists()).toBe(false)
-    // Pero sí debe llamar directamente a updateOrderStatus
-    expect(mockUpdateOrderStatus).toHaveBeenCalledWith('ord-iron-1', 'quality_check')
+    // Pero sí debe llamar directamente a updateOrderStatus con los operarios
+    expect(mockUpdateOrderStatus).toHaveBeenCalledWith('ord-iron-1', 'quality_check', {
+      iron_operators: ['Ana Gómez'],
+    })
   })
 })
 
@@ -417,8 +432,8 @@ describe('Processing — liberar máquina anterior al avanzar', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('llama a releaseMachine antes de actualizar el estado si la orden tenía máquina asignada', async () => {
-    // Orden en ironing con máquina asignada
-    const order   = makeOrder('ironing', 'ord-iron-1')
+    // Orden en ironing con máquina asignada y operario asignado
+    const order   = { ...makeOrder('ironing', 'ord-iron-1'), iron_operators: ['Ana Gómez'] }
     // La máquina referencia la orden
     const iron    = makeMachine('iron', 'mach-iron-1', 'running', 'ord-iron-1')
     const wrapper = await mountProcessing({ orders: [order], machines: [iron] })
@@ -430,7 +445,9 @@ describe('Processing — liberar máquina anterior al avanzar', () => {
     await flushPromises()
 
     expect(mockReleaseMachine).toHaveBeenCalledWith('mach-iron-1', 'ord-iron-1')
-    expect(mockUpdateOrderStatus).toHaveBeenCalledWith('ord-iron-1', 'quality_check')
+    expect(mockUpdateOrderStatus).toHaveBeenCalledWith('ord-iron-1', 'quality_check', {
+      iron_operators: ['Ana Gómez'],
+    })
   })
 })
 
@@ -516,7 +533,7 @@ describe('Processing — restricciones del rol operator', () => {
     expect(moveButtons[0].text().toLowerCase()).toContain('quality check')
   })
 
-  it('permite al operator asignar y liberar planchas en Ironing, pero oculta el selector de máquinas en Washing y Drying', async () => {
+  it('permite al operator seleccionar plancha en Ironing sin botón Go adicional, y oculta selectores en Washing y Drying', async () => {
     const orders = [
       makeOrder('washing', 'ord-wash'),
       makeOrder('drying', 'ord-dry'),
@@ -533,22 +550,35 @@ describe('Processing — restricciones del rol operator', () => {
     const selects = wrapper.findAll('select')
     expect(selects).toHaveLength(1)
 
-    await selects[0].setValue('mach-i1')
-    const goBtn = wrapper.findAll('button').find(b => b.text() === en.facilityProcessing.go)
-    await goBtn?.trigger('click')
-    await flushPromises()
-
-    expect(mockAssignMachine).toHaveBeenCalledWith('mach-i1', 'ord-iron')
+    // En Ironing no hay botón Go para la máquina: se guarda al mover a Quality Check
+    const goBtns = wrapper.findAll('button').filter(b => b.text() === en.facilityProcessing.go)
+    expect(goBtns).toHaveLength(0)
   })
 
-  it('permite seleccionar uno o más operarios en la columna Ironing y los registra en el historial', async () => {
+  it('consolida la asignación de máquina y operarios en el botón único Move to Quality Check', async () => {
     const orders = [makeOrder('ironing', 'ord-iron')]
+    const machines = [makeMachine('iron', 'mach-i1')]
     const operators = [
       { id: 'op-1', name: 'Ana Gómez' },
       { id: 'op-2', name: 'Luis Pérez' },
     ]
-    const wrapper = await mountProcessing({ orders, machines: [], operators })
+    const wrapper = await mountProcessing({ orders, machines, operators })
 
+    // El botón Move to Quality Check debe estar inicialmente deshabilitado (falta máquina y operarios)
+    const advanceBtn = wrapper.findAll('button').find(b =>
+      b.text().toLowerCase().includes('quality')
+    )
+    expect(advanceBtn?.attributes('disabled')).toBeDefined()
+
+    // 1. Seleccionar máquina en el select
+    const select = wrapper.find('select')
+    await select.setValue('mach-i1')
+    await flushPromises()
+
+    // Aún está deshabilitado porque faltan operarios
+    expect(advanceBtn?.attributes('disabled')).toBeDefined()
+
+    // 2. Seleccionar operarios
     const assignOpBtn = wrapper.findAll('button').find(b =>
       b.text().includes(en.facilityProcessing.assignOperators)
     )
@@ -560,13 +590,19 @@ describe('Processing — restricciones del rol operator', () => {
     expect(checkboxes).toHaveLength(2)
     await checkboxes[0].setValue(true)
     await checkboxes[1].setValue(true)
-
-    const goBtn = wrapper.findAll('button').find(b => b.text() === en.facilityProcessing.go)
-    await goBtn?.trigger('click')
     await flushPromises()
 
-    expect(mockUpdateOrderStatus).toHaveBeenCalledWith('ord-iron', 'ironing', {
-      note: 'Operators: Ana Gómez, Luis Pérez',
+    // Ahora ambos requisitos están cubiertos -> botón habilitado
+    expect(advanceBtn?.attributes('disabled')).toBeUndefined()
+
+    // 3. Click en el botón único Move to Quality Check: asigna máquina, operarios y avanza
+    await advanceBtn?.trigger('click')
+    await flushPromises()
+
+    expect(mockAssignMachine).toHaveBeenCalledWith('mach-i1', 'ord-iron')
+    expect(mockReleaseMachine).toHaveBeenCalledWith('mach-i1', 'ord-iron')
+    expect(mockUpdateOrderStatus).toHaveBeenCalledWith('ord-iron', 'quality_check', {
+      iron_operators: ['Ana Gómez', 'Luis Pérez'],
     })
   })
 })

@@ -274,4 +274,23 @@ describe('MachineSelectModal — selección de operarios (Ironing)', () => {
       ['Ana Gómez', 'Luis Pérez'],
     ])
   })
+
+  it('deshabilita las demás casillas cuando ya se seleccionaron 2 operarios', async () => {
+    const wrapper = mountModal({
+      stageLabel: 'Ironing',
+      operators: [
+        ...OPERATORS,
+        { id: 'op-3', name: 'Carlos Ruíz' },
+      ],
+      showOperators: true,
+    })
+
+    const checkboxes = wrapper.findAll('input[type="checkbox"]')
+    expect(checkboxes).toHaveLength(3)
+
+    await checkboxes[0].setValue(true)
+    await checkboxes[1].setValue(true)
+
+    expect(checkboxes[2].attributes('disabled')).toBeDefined()
+  })
 })

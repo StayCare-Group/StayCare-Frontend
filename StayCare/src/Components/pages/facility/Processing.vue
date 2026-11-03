@@ -35,7 +35,7 @@
             @assign="machineId => handleAssign(machineId, getOrderId(order))"
             @assign-operators="selectedOps => handleAssignOperators(getOrderId(order), selectedOps)"
             @release="machineId => handleRelease(machineId, getOrderId(order))"
-            @advance="advanceOrder(getOrderId(order), col.nextStatus)"
+            @advance="payload => advanceOrder(getOrderId(order), col.nextStatus, payload)"
             @rollback="openRollback(getOrderId(order), col.status)"
           />
           <div v-if="col.orders.length === 0" class="text-xs text-gray-300 text-center py-4">{{ $t('facilityProcessing.noOrders') }}</div>
@@ -264,7 +264,7 @@ async function loadData() {
   try {
     const processingStatuses = PIPELINE.value.map(p => p.status).join(',')
     const [ordersResult, machinesResult, operatorsResult] = await Promise.allSettled([
-      fetchAllOrders({ status: processingStatuses, include_iron_operators: 'true' }),
+      fetchAllOrders({ status: processingStatuses }),
       fetchMachineStatus(),
       getUsers({ role: 'operator', is_active: 'true', limit: '100' }),
     ])
@@ -393,8 +393,8 @@ async function handleAssignOperators(orderId, selectedOperators) {
 
   assigningOperators.value = orderId
   try {
-    const names = Array.isArray(selectedOperators) ? selectedOperators.filter(Boolean).join(', ') : ''
-    await updateOrderStatus(orderId, 'ironing', { note: `Operators: ${names}` })
+    const names = Array.isArray(selectedOperators) ? selectedOperators.filter(Boolean) : []
+    await updateOrderStatus(orderId, 'ironing', { iron_operators: names })
     await loadData()
   } catch (err) {
     ui.showError(
@@ -424,7 +424,7 @@ async function handleRelease(machineId, orderId = null) {
   }
 }
 
-async function advanceOrder(orderId, nextStatus) {
+async function advanceOrder(orderId, nextStatus, payload = null) {
   if (!orderId) {
     ui.showError(t('facilityProcessing.updateStatusFailed') + ': Missing order id')
     return
@@ -437,6 +437,37 @@ async function advanceOrder(orderId, nextStatus) {
   }
 
   const normalizedNext = normalizeStatus(nextStatus)
+
+  // Ironing to Quality Check: mandatory machine and 1-2 operators assignment
+  if (order?.status === 'ironing' && normalizedNext === 'quality_check') {
+    const machineId = payload?.machineId
+    const operators = Array.isArray(payload?.operators) ? payload.operators.filter(Boolean) : []
+    const assignedMachine = getAssignedMachine(orderId)
+    const effectiveMachineId = assignedMachine ? getMachineId(assignedMachine) : machineId
+
+    if (!effectiveMachineId || operators.length < 1 || operators.length > 2) {
+      ui.showError(t('facilityProcessing.ironingRequirementsHint'))
+      return
+    }
+
+    advancing.value = orderId
+    try {
+      // If machine was selected on the card and not yet assigned in backend, assign it now
+      if (!assignedMachine && machineId) {
+        await assignMachine(machineId, orderId)
+      }
+      delete machineSelections[orderId]
+      // Release machine on exit from ironing and advance to quality_check with operators
+      await doAdvanceOrder(orderId, normalizedNext, null, operators, effectiveMachineId)
+    } catch (err) {
+      ui.showError(
+        t('facilityProcessing.updateStatusFailed') + ': ' + formatApiErrorMessage(err, t('facilityProcessing.unknownError'), t)
+      )
+    } finally {
+      advancing.value = null
+    }
+    return
+  }
 
   // When advancing from quality_check to ready_to_delivery, open the
   if (normalizedNext === 'ready_to_delivery') {
@@ -471,25 +502,29 @@ async function advanceOrder(orderId, nextStatus) {
  * @param {string}      orderId
  * @param {string}      normalizedNextStatus
  * @param {string|null} [machineIdToAssign] - machine chosen by the user (null = skip assignment)
+ * @param {string[]|null} [operatorsToAssign] - ironing operators to record
+ * @param {string|null} [machineToReleaseId] - machine id to release if newly assigned
  */
-async function doAdvanceOrder(orderId, normalizedNextStatus, machineIdToAssign = null, operatorsToAssign = null) {
+async function doAdvanceOrder(orderId, normalizedNextStatus, machineIdToAssign = null, operatorsToAssign = null, machineToReleaseId = null) {
   advancing.value = orderId
   try {
     // Release existing machine for THIS order only.
     const assignedMachine = getAssignedMachine(orderId)
-    if (assignedMachine) {
-      const assignedMachineId = getMachineId(assignedMachine)
-      if (assignedMachineId) {
-        await releaseMachine(assignedMachineId, orderId)
+    const releaseId = assignedMachine ? getMachineId(assignedMachine) : machineToReleaseId
+    if (releaseId) {
+      try {
+        await releaseMachine(releaseId, orderId)
+      } catch (relErr) {
+        console.warn('Could not release machine', relErr)
       }
     }
 
     const operatorNames = Array.isArray(operatorsToAssign)
-      ? operatorsToAssign.filter(Boolean).join(', ')
-      : ''
+      ? operatorsToAssign.filter(Boolean)
+      : []
 
-    if (operatorNames) {
-      await updateOrderStatus(orderId, normalizedNextStatus, { note: `Operators: ${operatorNames}` })
+    if (operatorNames.length > 0) {
+      await updateOrderStatus(orderId, normalizedNextStatus, { iron_operators: operatorNames })
     } else {
       await updateOrderStatus(orderId, normalizedNextStatus)
     }

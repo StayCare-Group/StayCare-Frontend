@@ -520,17 +520,20 @@
     "assignOperators": "Asignar operarios...",
     "operatorsCount": "{count} operario(s) seleccionado(s)",
     "editOperators": "Editar",
-    "noOperatorsAvailable": "Sin operarios disponibles"
+    "noOperatorsAvailable": "Sin operarios disponibles",
+    "operatorsLimitHint": "Selecciona 1 o 2 operarios",
+    "ironingRequirementsHint": "Debes asignar máquina y de 1 a 2 operarios para mover a Control de Calidad"
   },
   "machineSelectModal": {
     "title": "Asignar Máquina",
     "description": "Selecciona la máquina para la etapa de {stage}. Puedes omitirlo y asignarla más tarde desde el tablero.",
     "noMachines": "No hay máquinas disponibles para esta etapa. Puedes avanzar la orden y asignarla después.",
-    "operatorsTitle": "Asignar Operarios de Planchado (opcional)",
+    "operatorsTitle": "Asignar Operarios de Planchado",
     "noOperators": "No hay operarios disponibles.",
     "skipHint": "Omitir la asignación está permitido — la orden aparecerá en el tablero sin máquina.",
     "skipAssign": "Omitir y Avanzar",
-    "confirm": "Asignar y Avanzar"
+    "confirm": "Asignar y Avanzar",
+    "operatorsLimitHint": "Selecciona 1 o 2 operarios (opcional)"
   },
   "orderDetail": {
     "orderInformation": "Información del Pedido",
@@ -648,7 +651,6 @@
     "packagesForOrder": "Paquetes de esta orden",
     "sharedNotes": "Notas compartidas (todas las órdenes)"
   },
-
   "facility": {
     "processingBoard": "Tablero de procesamiento",
     "machineStatus": "Estado de máquinas",

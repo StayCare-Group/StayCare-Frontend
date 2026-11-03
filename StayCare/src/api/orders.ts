@@ -72,6 +72,7 @@ export async function updateOrderStatus(
   payload?: {
     items?: { item_id: string; qty_good: number; qty_bad: number; qty_stained: number }[];
     note?: string;
+    iron_operators?: string[];
   }
 ) {
   const raw = String(status ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')

@@ -45,7 +45,7 @@
           </option>
         </select>
         <AppButton
-          v-if="machineSelection"
+          v-if="col.status !== 'ironing' && machineSelection"
           size="sm"
           :disabled="isAssigning"
           class="shrink-0 px-2 text-xs"
@@ -57,16 +57,16 @@
     </div>
 
     <!-- Operator assignment (only for Ironing column) -->
-    <div v-if="col.status === 'ironing' && (assignedOperators.length > 0 || canManageMachine)" class="mt-1.5 min-w-0">
+    <div v-if="col.status === 'ironing' && (localOperators.length > 0 || canManageMachine)" class="mt-1.5 min-w-0">
       <div
-        v-if="assignedOperators.length > 0 && !showOperatorPicker"
+        v-if="localOperators.length > 0 && !showOperatorPicker"
         class="flex items-center justify-between bg-indigo-50 rounded px-2 py-1 min-w-0"
       >
         <span
           class="text-xs text-indigo-700 font-medium truncate mr-1"
-          :title="assignedOperators.join(', ')"
+          :title="localOperators.join(', ')"
         >
-          {{ assignedOperators.join(', ') }}
+          {{ localOperators.join(', ') }}
         </span>
         <button
           v-if="canManageMachine"
@@ -93,29 +93,25 @@
             </span>
             <span class="text-gray-400 ml-1 shrink-0">▾</span>
           </button>
-          <AppButton
-            v-if="showOperatorPicker || localOperators.length > 0"
-            size="sm"
-            :disabled="isAssigningOperators"
-            class="shrink-0 px-2 text-xs"
-            @click="onSaveOperators"
-          >
-            {{ isAssigningOperators ? $t('facilityProcessing.assigning') : $t('facilityProcessing.go') }}
-          </AppButton>
         </div>
         <div
           v-if="showOperatorPicker"
           class="mt-1 border border-gray-200 rounded bg-white p-1.5 max-h-32 overflow-y-auto space-y-1 shadow-sm"
         >
+          <p v-if="availableOperators.length > 0" class="text-[10px] text-gray-400 px-1 pb-0.5">
+            {{ $t('facilityProcessing.operatorsLimitHint') }}
+          </p>
           <label
             v-for="op in availableOperators"
             :key="op.id || op.name"
             class="flex items-center gap-2 px-1 py-0.5 text-xs text-gray-700 hover:bg-gray-50 rounded cursor-pointer"
+            :class="{ 'opacity-50 cursor-not-allowed': localOperators.length >= 2 && !localOperators.includes(op.name) }"
           >
             <input
               type="checkbox"
               :value="op.name"
               v-model="localOperators"
+              :disabled="localOperators.length >= 2 && !localOperators.includes(op.name)"
               class="accent-brand-600 w-3.5 h-3.5 rounded shrink-0"
             />
             <span class="truncate">{{ op.name }}</span>
@@ -128,37 +124,45 @@
     </div>
 
     <!-- Actions (Advance + Rollback) -->
-    <div v-if="(canAdvance && col.nextStatus) || (isAdminOrStaff && hasRollbackOptions)" class="mt-2 flex items-stretch gap-1.5">
-      <!-- Advance button -->
-      <AppButton
-        v-if="canAdvance && col.nextStatus"
-        size="sm"
-        :disabled="isAdvancing"
-        class="flex-1 min-w-0"
-        @click="$emit('advance')"
-      >
-        {{ isAdvancing ? $t('facilityProcessing.moving') : $t('facilityProcessing.moveTo', { status: nextStatusLabel }) }}
-      </AppButton>
+    <div v-if="(canAdvance && col.nextStatus) || (isAdminOrStaff && hasRollbackOptions)" class="mt-2 flex flex-col gap-1">
+      <div class="flex items-stretch gap-1.5">
+        <!-- Advance button -->
+        <AppButton
+          v-if="canAdvance && col.nextStatus"
+          size="sm"
+          :disabled="isAdvanceDisabled"
+          class="flex-1 min-w-0"
+          @click="onAdvance"
+        >
+          {{ isAdvancing ? $t('facilityProcessing.moving') : $t('facilityProcessing.moveTo', { status: nextStatusLabel }) }}
+        </AppButton>
 
-      <!-- Rollback button: secondary variant next to advance -->
-      <AppButton
-        v-if="isAdminOrStaff && hasRollbackOptions"
-        variant="secondary"
-        size="sm"
-        :disabled="isRollingBack"
-        :loading="isRollingBack"
-        :title="$t('facilityProcessing.rollbackTitle')"
-        :class="canAdvance && col.nextStatus ? 'shrink-0 px-2.5' : 'w-full'"
-        @click="$emit('rollback')"
+        <!-- Rollback button: secondary variant next to advance -->
+        <AppButton
+          v-if="isAdminOrStaff && hasRollbackOptions"
+          variant="secondary"
+          size="sm"
+          :disabled="isRollingBack"
+          :loading="isRollingBack"
+          :title="$t('facilityProcessing.rollbackTitle')"
+          :class="canAdvance && col.nextStatus ? 'shrink-0 px-2.5' : 'w-full'"
+          @click="$emit('rollback')"
+        >
+          <span class="text-sm font-bold leading-none">↩</span>
+        </AppButton>
+      </div>
+      <p
+        v-if="col.status === 'ironing' && isAdvanceDisabled && !isAdvancing"
+        class="text-[11px] text-amber-600 text-center leading-tight mt-0.5"
       >
-        <span class="text-sm font-bold leading-none">↩</span>
-      </AppButton>
+        {{ $t('facilityProcessing.ironingRequirementsHint') }}
+      </p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppButton from '../../ui/AppButton.vue'
 import OrderNotesBadge from '../../ui/OrderNotesBadge.vue'
@@ -272,5 +276,28 @@ function getMachineId(machine) {
 function onRelease() {
   const machineId = getMachineId(props.assignedMachine)
   emit('release', machineId)
+}
+
+const isAdvanceDisabled = computed(() => {
+  if (props.isAdvancing) return true
+  if (props.col.status === 'ironing') {
+    const hasMachine = Boolean(props.assignedMachine || props.machineSelection)
+    const opsCount = localOperators.value.length
+    const hasValidOps = opsCount >= 1 && opsCount <= 2
+    return !hasMachine || !hasValidOps
+  }
+  return false
+})
+
+function onAdvance() {
+  if (props.col.status === 'ironing') {
+    const effectiveMachineId = props.assignedMachine
+      ? getMachineId(props.assignedMachine)
+      : props.machineSelection
+    const effectiveOperators = [...localOperators.value]
+    emit('advance', { machineId: effectiveMachineId, operators: effectiveOperators })
+    return
+  }
+  emit('advance')
 }
 </script>

@@ -520,13 +520,16 @@
     "assignOperators": "Assign operators...",
     "operatorsCount": "{count} operator(s) selected",
     "editOperators": "Edit",
-    "noOperatorsAvailable": "No operators available"
+    "noOperatorsAvailable": "No operators available",
+    "operatorsLimitHint": "Select 1 or 2 operators",
+    "ironingRequirementsHint": "Assigning a machine and 1 to 2 operators is required to move to Quality Check"
   },
   "machineSelectModal": {
     "title": "Assign Machine",
     "description": "Select the machine to use for the {stage} stage. You can skip and assign it later from the board.",
     "noMachines": "No machines available for this stage. You can still advance the order and assign one later.",
-    "operatorsTitle": "Assign Ironing Operators (optional)",
+    "operatorsTitle": "Assign Ironing Operators",
+    "operatorsLimitHint": "Select 1 or 2 operators (optional)",
     "noOperators": "No operators available.",
     "skipHint": "Skipping assignment is allowed — the order will appear on the board without a machine.",
     "skipAssign": "Skip & Advance",
@@ -648,7 +651,6 @@
     "packagesForOrder": "Packages for this order",
     "sharedNotes": "Shared notes (all orders)"
   },
-
   "facility": {
     "processingBoard": "Processing Board",
     "machineStatus": "Machine Status",
