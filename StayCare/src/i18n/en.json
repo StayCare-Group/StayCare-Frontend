@@ -175,6 +175,17 @@
     "deleteFailed": "Failed to delete property."
   },
   "admin": {
+    "generalSummary": "General Summary",
+    "ordersReceived": "Orders Received",
+    "itemsTotal": "Total Items",
+    "itemsProcessed": "Items Processed",
+    "itemsPending": "Items Pending",
+    "itemsDelivered": "Items Delivered",
+    "filterDateLabel": "Date",
+    "filterByRange": "Range",
+    "filterByMonth": "Month",
+    "filterByYear": "Year",
+    "errorLoadDashboard": "Failed to load dashboard data.",
     "ordersToday": "Orders Today",
     "revenueThisMonth": "Revenue This Month",
     "vatCollected": "VAT Collected",

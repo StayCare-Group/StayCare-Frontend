@@ -190,6 +190,7 @@
           </div>
 
           <ClientFilterSelect
+            :clients="clients"
             v-model="selectedClientId"
             :show-label="false"
           />
@@ -493,6 +494,7 @@ function localDateStr(d = new Date()) {
 
 const drivers = ref([])
 const rawOrders = ref([])
+const clients = ref([])
 const selectedOrderIds = ref([])
 const selectedClientId = ref('')
 const existingRoutes = ref([])
@@ -571,6 +573,7 @@ onMounted(async () => {
       const cid = c._id ?? c.id
       if (cid) map[cid] = c
     }
+    clients.value = clientsData ?? []
     clientMap.value = map
   } catch (err) {
     errorMessage.value =

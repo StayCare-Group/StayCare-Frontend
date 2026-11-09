@@ -9,7 +9,7 @@
       class="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:ring-2 focus:ring-brand-400 focus:border-transparent outline-none cursor-pointer"
     >
       <option value="">{{ defaultOptionText || $t('common.filterAllClients') }}</option>
-      <option v-for="c in clients" :key="getClientUserId(c)" :value="getClientUserId(c)">
+      <option v-for="c in clientList" :key="getClientUserId(c)" :value="getClientUserId(c)">
         {{ getClientDisplayName(c) }}
       </option>
     </select>
@@ -17,11 +17,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { fetchClients } from '../../api/clients'
 import { getClientDisplayName, getClientId } from '../../utils/client'
 
-defineProps({
+const props = defineProps({
   modelValue: {
     type: String,
     default: '',
@@ -38,11 +38,16 @@ defineProps({
     type: String,
     default: '',
   },
+  clients: {
+    type: Array,
+    default: null,
+  },
 })
 
 defineEmits(['update:modelValue', 'change'])
 
-const clients = ref([])
+const internalClients = ref([])
+const clientList = computed(() => (props.clients != null ? props.clients : internalClients.value))
 
 function getClientUserId(client) {
   if (!client || typeof client !== 'object') return ''
@@ -50,11 +55,12 @@ function getClientUserId(client) {
 }
 
 onMounted(async () => {
+  if (props.clients != null) return
   try {
-    const res = await fetchClients({ is_active: 'true', limit: '200' })
-    clients.value = res ?? []
+    const res = await fetchClients()
+    internalClients.value = res ?? []
   } catch {
-    clients.value = []
+    internalClients.value = []
   }
 })
 </script>

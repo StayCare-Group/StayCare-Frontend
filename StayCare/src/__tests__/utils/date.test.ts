@@ -6,6 +6,10 @@ import {
   getDefaultDateRange,
   getFutureDateString,
   getCurrentWeekBounds,
+  getMonthDateRange,
+  getYearDateRange,
+  buildRecentMonthOptions,
+  buildRecentYearOptions,
 } from '@/utils/date'
 
 describe('date utils', () => {
@@ -171,6 +175,66 @@ describe('date utils', () => {
       const boundsSun = getCurrentWeekBounds(sundayInput)
       expect(boundsSun.monday.getDate()).toBe(31)
       expect(boundsSun.sunday.getDate()).toBe(6)
+    })
+  })
+
+  describe('getMonthDateRange', () => {
+    it('returns the first and last calendar days of a 30-day month', () => {
+      expect(getMonthDateRange('2026-11')).toEqual({
+        from: '2026-11-01',
+        to: '2026-11-30',
+      })
+    })
+
+    it('returns 28 days for February in a non-leap year and 29 in a leap year', () => {
+      expect(getMonthDateRange('2026-02')).toEqual({
+        from: '2026-02-01',
+        to: '2026-02-28',
+      })
+      expect(getMonthDateRange('2028-02')).toEqual({
+        from: '2028-02-01',
+        to: '2028-02-29',
+      })
+    })
+
+    it('returns empty strings for invalid month formats', () => {
+      expect(getMonthDateRange('')).toEqual({ from: '', to: '' })
+      expect(getMonthDateRange('2026-13')).toEqual({ from: '', to: '' })
+      expect(getMonthDateRange('2026-00')).toEqual({ from: '', to: '' })
+    })
+  })
+
+  describe('getYearDateRange', () => {
+    it('returns Jan 1 to Dec 31 of the given year', () => {
+      expect(getYearDateRange(2026)).toEqual({
+        from: '2026-01-01',
+        to: '2026-12-31',
+      })
+      expect(getYearDateRange('2025')).toEqual({
+        from: '2025-01-01',
+        to: '2025-12-31',
+      })
+    })
+
+    it('returns empty strings for invalid years', () => {
+      expect(getYearDateRange('invalid')).toEqual({ from: '', to: '' })
+      expect(getYearDateRange(0)).toEqual({ from: '', to: '' })
+    })
+  })
+
+  describe('buildRecentMonthOptions & buildRecentYearOptions', () => {
+    it('builds 12 month options starting from the reference date', () => {
+      const ref = new Date(2026, 10, 7) // Nov 7, 2026
+      const opts = buildRecentMonthOptions(12, ref, 'en')
+      expect(opts).toHaveLength(12)
+      expect(opts[0]?.value).toBe('2026-11')
+      expect(opts[11]?.value).toBe('2025-12')
+    })
+
+    it('builds descending year options starting from the reference date', () => {
+      const ref = new Date(2026, 10, 7)
+      const years = buildRecentYearOptions(5, ref)
+      expect(years).toEqual([2026, 2025, 2024, 2023, 2022])
     })
   })
 })

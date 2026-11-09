@@ -175,6 +175,17 @@
     "deleteFailed": "No se pudo eliminar la propiedad."
   },
   "admin": {
+    "generalSummary": "Resumen general",
+    "ordersReceived": "Órdenes recibidas",
+    "itemsTotal": "Cant. de ítems",
+    "itemsProcessed": "Ítems procesados",
+    "itemsPending": "Ítems pendientes",
+    "itemsDelivered": "Ítems entregados",
+    "filterDateLabel": "Fecha",
+    "filterByRange": "Rango",
+    "filterByMonth": "Mes",
+    "filterByYear": "Año",
+    "errorLoadDashboard": "No se pudieron cargar los datos del panel.",
     "ordersToday": "Pedidos hoy",
     "revenueThisMonth": "Ingresos del mes",
     "vatCollected": "IVA recaudado",

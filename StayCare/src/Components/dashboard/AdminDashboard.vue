@@ -20,52 +20,127 @@
     <ProfileAccount v-else-if="navStore.currentPage === 'profile'" />
 
     <!-- Default dashboard overview -->
-    <LoadingPanel v-else-if="loading" />
-
     <div v-else class="space-y-6">
-      <!-- KPI Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard v-for="kpi in adminKPIs" :key="kpi.label" :label="kpi.label" :value="kpi.value" :color="kpi.color" />
-      </div>
+      <!-- Header & Global Filters (Compact single-bar layout) -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 class="text-base font-bold text-brand-700 tracking-tight">{{ $t('admin.generalSummary') }}</h2>
 
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <!-- Bar Chart -->
-        <div class="bg-white rounded-xl shadow-sm p-4 sm:p-5">
-          <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-4">{{ $t('admin.ordersThisWeek') }}</h3>
-          <div class="flex gap-2 sm:gap-3 h-40 sm:h-48">
-            <div
-              v-for="(val, i) in adminChartData.values"
-              :key="i"
-              class="flex-1 flex flex-col items-center"
+          <!-- Mode tabs (Rango | Mes | Año) -->
+          <div class="inline-flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5">
+            <button
+              type="button"
+              class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors"
+              :class="periodMode === 'range' ? 'bg-white text-brand-700 shadow-xs font-semibold' : 'text-gray-600 hover:text-gray-900'"
+              data-testid="period-mode-range"
+              @click="setPeriodMode('range')"
             >
-              <span class="text-xs font-semibold text-gray-600 shrink-0">{{ val }}</span>
-              <div class="flex-1 w-full flex items-end justify-center">
-                <div
-                  class="w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-brand-700 to-brand-400 transition-all duration-500"
-                  :style="{ height: (val / maxVal) * 100 + '%', minHeight: val > 0 ? '4px' : '0' }"
-                ></div>
-              </div>
-              <span class="text-xs text-gray-400 shrink-0">{{ adminChartData.labels[i] }}</span>
-            </div>
+              {{ $t('admin.filterByRange') }}
+            </button>
+            <button
+              type="button"
+              class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors"
+              :class="periodMode === 'month' ? 'bg-white text-brand-700 shadow-xs font-semibold' : 'text-gray-600 hover:text-gray-900'"
+              data-testid="period-mode-month"
+              @click="setPeriodMode('month')"
+            >
+              {{ $t('admin.filterByMonth') }}
+            </button>
+            <button
+              type="button"
+              class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors"
+              :class="periodMode === 'year' ? 'bg-white text-brand-700 shadow-xs font-semibold' : 'text-gray-600 hover:text-gray-900'"
+              data-testid="period-mode-year"
+              @click="setPeriodMode('year')"
+            >
+              {{ $t('admin.filterByYear') }}
+            </button>
           </div>
+
+          <!-- Active date selector -->
+          <DateRangeFilter
+            v-if="periodMode === 'range'"
+            id-prefix="admin-dashboard"
+            :from="rangeFrom"
+            :to="rangeTo"
+            @update:from="setRangeFrom"
+            @update:to="setRangeTo"
+            @clear="resetRangeDates"
+          />
+          <select
+            v-else-if="periodMode === 'month'"
+            v-model="selectedMonth"
+            data-testid="dashboard-month-select"
+            class="rounded-lg border border-gray-200 bg-white text-gray-700 text-xs px-2.5 py-1.5
+                   focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent cursor-pointer"
+          >
+            <option v-for="m in monthOptions" :key="m.value" :value="m.value" class="text-gray-800">
+              {{ m.label }}
+            </option>
+          </select>
+          <select
+            v-else
+            v-model="selectedYear"
+            data-testid="dashboard-year-select"
+            class="rounded-lg border border-gray-200 bg-white text-gray-700 text-xs px-2.5 py-1.5
+                   focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent cursor-pointer"
+          >
+            <option v-for="y in yearOptions" :key="y" :value="y" class="text-gray-800">
+              {{ y }}
+            </option>
+          </select>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="bg-white rounded-xl shadow-sm">
-          <div class="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
-            <h3 class="text-sm sm:text-base font-semibold text-gray-800">{{ $t('admin.recentActivity') }}</h3>
-          </div>
-          <div class="divide-y divide-gray-50">
-            <div v-for="a in adminActivity" :key="a.id" class="px-4 sm:px-5 py-3 hover:bg-gray-50 transition-colors">
-              <div class="flex items-center justify-between">
-                <p class="text-sm font-medium text-gray-800">{{ a.action }}</p>
-                <span class="text-xs text-gray-400 whitespace-nowrap ml-3">{{ a.time }}</span>
+        <ClientFilterSelect v-model="selectedClientId" />
+      </div>
+
+      <LoadingPanel v-if="loading" />
+
+      <template v-else>
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+          <KpiCard v-for="kpi in adminKPIs" :key="kpi.label" :label="kpi.label" :value="kpi.value" :color="kpi.color" />
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <!-- Bar Chart -->
+          <div class="bg-white rounded-xl shadow-sm p-4 sm:p-5">
+            <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-4">{{ $t('admin.ordersThisWeek') }}</h3>
+            <div class="flex gap-2 sm:gap-3 h-40 sm:h-48">
+              <div
+                v-for="(val, i) in adminChartData.values"
+                :key="i"
+                class="flex-1 flex flex-col items-center"
+              >
+                <span class="text-xs font-semibold text-gray-600 shrink-0">{{ val }}</span>
+                <div class="flex-1 w-full flex items-end justify-center">
+                  <div
+                    class="w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-brand-700 to-brand-400 transition-all duration-500"
+                    :style="{ height: (val / maxVal) * 100 + '%', minHeight: val > 0 ? '4px' : '0' }"
+                  ></div>
+                </div>
+                <span class="text-xs text-gray-400 shrink-0">{{ adminChartData.labels[i] }}</span>
               </div>
-              <p class="text-xs text-gray-500 mt-0.5">{{ a.detail }}</p>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="bg-white rounded-xl shadow-sm">
+            <div class="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
+              <h3 class="text-sm sm:text-base font-semibold text-gray-800">{{ $t('admin.recentActivity') }}</h3>
+            </div>
+            <div class="divide-y divide-gray-50">
+              <div v-for="a in adminActivity" :key="a.id" class="px-4 sm:px-5 py-3 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-gray-800">{{ a.action }}</p>
+                  <span class="text-xs text-gray-400 whitespace-nowrap ml-3">{{ a.time }}</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">{{ a.detail }}</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -73,7 +148,10 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AppButton from '../ui/AppButton.vue'
 import KpiCard from '../ui/KpiCard.vue'
+import ClientFilterSelect from '../ui/ClientFilterSelect.vue'
+import DateRangeFilter from '../ui/DateRangeFilter.vue'
 import OrdersList from '../pages/shared/OrdersList.vue'
 import OrderDetail from '../pages/shared/OrderDetail.vue'
 import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
@@ -93,40 +171,109 @@ import LoadingPanel from '../ui/LoadingPanel.vue'
 import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import { useNavStore } from '../../stores/nav.js'
+import { useUiStore } from '../../stores/ui.js'
 import { fetchOrders } from '../../api/orders'
 import { mapOrderForList } from '@/utils/orderMappers'
-import { fetchDashboardStats } from '../../api/reports'
+import { fetchDashboardOverview } from '../../api/reports'
+import { useDashboardFilters } from '../../composables/dashboard/useDashboardFilters'
 import { getCurrentWeekBounds } from '@/utils/date'
+import { formatApiErrorMessage } from '@/utils/errors'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const navStore = useNavStore()
+const uiStore = useUiStore()
+
+const {
+  periodMode,
+  rangeFrom,
+  rangeTo,
+  selectedMonth,
+  selectedYear,
+  selectedClientId,
+  monthOptions,
+  yearOptions,
+  overviewParams,
+  setPeriodMode,
+  setRangeFrom,
+  setRangeTo,
+  resetRangeDates,
+} = useDashboardFilters(locale)
 
 const weeklyOrders = ref([])
 const recentOrders = ref([])
-const dashboardStats = ref(null)
+const overviewData = ref({
+  ordersReceived: 0,
+  itemsTotal: 0,
+  itemsProcessed: 0,
+  itemsPending: 0,
+  itemsDelivered: 0,
+})
 const loading = ref(true)
+let latestOverviewRequestId = 0
+let isInitialLoaded = false
+
+function normalizeOverviewData(res) {
+  return {
+    ordersReceived: Number(res?.ordersReceived) || 0,
+    itemsTotal: Number(res?.itemsTotal) || 0,
+    itemsProcessed: Number(res?.itemsProcessed) || 0,
+    itemsPending: Number(res?.itemsPending) || 0,
+    itemsDelivered: Number(res?.itemsDelivered) || 0,
+  }
+}
+
+async function loadOverviewData() {
+  const params = overviewParams.value
+  if (!params.from || !params.to) return
+  const requestId = ++latestOverviewRequestId
+  try {
+    const res = await fetchDashboardOverview(params)
+    if (requestId !== latestOverviewRequestId) return
+    overviewData.value = normalizeOverviewData(res)
+  } catch (err) {
+    if (requestId !== latestOverviewRequestId) return
+    uiStore.showError(formatApiErrorMessage(err, t('admin.errorLoadDashboard'), t))
+  }
+}
 
 async function loadDashboardData() {
   try {
     loading.value = true
     const { fromStr, toStr } = getCurrentWeekBounds()
+    const requestId = ++latestOverviewRequestId
 
-    const [weeklyOrdersData, recentOrdersData, statsData] = await Promise.all([
+    const [weeklyOrdersData, recentOrdersData, overviewRes] = await Promise.all([
       fetchOrders({ from: fromStr, to: toStr, limit: '200' }).catch(() => []),
       fetchOrders({ limit: '6' }).catch(() => []),
-      fetchDashboardStats().catch(() => null),
+      fetchDashboardOverview(overviewParams.value).catch((err) => {
+        if (requestId === latestOverviewRequestId) {
+          uiStore.showError(formatApiErrorMessage(err, t('admin.errorLoadDashboard'), t))
+        }
+        return null
+      }),
     ])
     weeklyOrders.value = (weeklyOrdersData ?? []).map(mapOrderForList)
     recentOrders.value = (recentOrdersData ?? []).map(mapOrderForList)
-    dashboardStats.value = statsData
-  } catch {
-    /* stays empty */
+    if (requestId === latestOverviewRequestId && overviewRes) {
+      overviewData.value = normalizeOverviewData(overviewRes)
+    }
+    isInitialLoaded = true
   } finally {
     loading.value = false
   }
 }
 
 onMounted(loadDashboardData)
+
+watch(
+  () => [overviewParams.value.from, overviewParams.value.to, overviewParams.value.clientId],
+  () => {
+    // Only refetch overview when user modifies filters after the initial full load
+    if (navStore.currentPage === 'dashboard' && isInitialLoaded) {
+      loadOverviewData()
+    }
+  }
+)
 
 watch(() => navStore.currentPage, (page) => {
   if (page === 'dashboard') {
@@ -135,21 +282,20 @@ watch(() => navStore.currentPage, (page) => {
 })
 
 const adminKPIs = computed(() => {
-  const stats = dashboardStats.value || {}
-  const todayOrders = stats.todayOrders || 0
-  const monthRevenue = stats.monthlyRevenue || 0
-  const vatCollected = stats.monthlyVat || 0
-  
-  const totalOrders = stats.totalOrders || 0
-  const activeOrders = stats.activeOrders || 0
-  const delivered = Math.max(0, totalOrders - activeOrders)
-  const sla = totalOrders > 0 ? Math.round((delivered / totalOrders) * 100) : 0
+  const {
+    ordersReceived,
+    itemsTotal,
+    itemsProcessed,
+    itemsPending,
+    itemsDelivered,
+  } = overviewData.value
 
   return [
-    { label: t('admin.ordersToday'), value: todayOrders, color: 'blue' },
-    { label: t('admin.revenueThisMonth'), value: `€${monthRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'green' },
-    { label: t('admin.vatCollected'), value: `€${vatCollected.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`, color: 'purple' },
-    { label: t('admin.slaCompliance'), value: `${sla}%`, color: 'yellow' },
+    { label: t('admin.ordersReceived'), value: ordersReceived, color: 'blue' },
+    { label: t('admin.itemsTotal'), value: itemsTotal, color: 'cyan' },
+    { label: t('admin.itemsProcessed'), value: itemsProcessed, color: 'purple' },
+    { label: t('admin.itemsPending'), value: itemsPending, color: 'amber' },
+    { label: t('admin.itemsDelivered'), value: itemsDelivered, color: 'green' },
   ]
 })
 
