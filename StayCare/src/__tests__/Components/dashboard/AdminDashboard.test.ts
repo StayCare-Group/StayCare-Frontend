@@ -11,14 +11,11 @@ const showSuccessMock = vi.fn()
 vi.mock('@/api/client', () => ({ apiFetch: vi.fn() }))
 vi.mock('@/router', () => ({ default: { push: vi.fn(), currentRoute: { value: {} } } }))
 
-vi.mock('@/api/orders', async () => {
-  const actual = await vi.importActual('@/api/orders')
-  return { ...actual, fetchOrders: vi.fn() }
-})
-
 vi.mock('@/api/reports', () => ({
   fetchDashboardStats: vi.fn(),
   fetchDashboardOverview: vi.fn(),
+  fetchDashboardDailyOrders: vi.fn(),
+  fetchDashboardAlerts: vi.fn(),
 }))
 
 vi.mock('@/stores/auth.js', () => ({
@@ -65,6 +62,12 @@ const COMPONENT_STUBS = {
     template: '<div class="kpi-card" :data-label="label" :data-value="value" :data-color="color" />',
     props: ['label', 'value', 'color'],
   },
+  AlertsCard: {
+    name: 'AlertsCard',
+    template: '<div data-testid="alerts-card" :data-total="alerts?.totalAlerts" />',
+    props: ['alerts', 'loading'],
+    emits: ['view-order'],
+  },
 }
 
 function createTestI18n() {
@@ -73,27 +76,13 @@ function createTestI18n() {
 
 async function mountDashboard(
   currentPage = 'dashboard',
-  weeklyOrders = [],
-  recentOrders = [],
-  statsData: any = null,
-  overviewData: any = null
+  overviewData: any = null,
+  dailyOrdersData: any = null,
+  alertsData: any = null
 ) {
-  const { fetchOrders } = await import('@/api/orders')
-  const { fetchDashboardStats, fetchDashboardOverview } = await import('@/api/reports')
+  const { fetchDashboardOverview, fetchDashboardDailyOrders, fetchDashboardAlerts } =
+    await import('@/api/reports')
 
-  vi.mocked(fetchOrders).mockImplementation(async (params?: Record<string, string>) => {
-    if (params?.limit === '6') return recentOrders
-    return weeklyOrders
-  })
-  vi.mocked(fetchDashboardStats).mockResolvedValue(
-    statsData || {
-      todayOrders: 5,
-      monthlyRevenue: 1200,
-      monthlyVat: 216,
-      totalOrders: 10,
-      activeOrders: 2,
-    }
-  )
   vi.mocked(fetchDashboardOverview).mockResolvedValue(
     overviewData || {
       ordersReceived: 24,
@@ -101,6 +90,33 @@ async function mountDashboard(
       itemsProcessed: 120,
       itemsPending: 80,
       itemsDelivered: 180,
+    }
+  )
+  vi.mocked(fetchDashboardDailyOrders).mockResolvedValue(
+    dailyOrdersData || {
+      granularity: 'day',
+      points: [
+        { date: '2026-11-01', orders: 10 },
+        { date: '2026-11-02', orders: 14 },
+      ],
+    }
+  )
+  vi.mocked(fetchDashboardAlerts).mockResolvedValue(
+    alertsData || {
+      thresholdHours: 24,
+      totalAlerts: 1,
+      overduePickups: [
+        {
+          orderId: 'ord-1',
+          orderNumber: 'ORD-001',
+          clientId: 'client-1',
+          clientName: 'Client 1',
+          status: 'pending',
+          hoursDelayed: 26,
+          referenceDate: '2026-11-09T18:00:00.000Z',
+        },
+      ],
+      stalledOrders: [],
     }
   )
 
@@ -120,9 +136,9 @@ async function mountDashboard(
   return {
     wrapper,
     navStore,
-    fetchOrders: vi.mocked(fetchOrders),
-    fetchDashboardStats: vi.mocked(fetchDashboardStats),
     fetchDashboardOverview: vi.mocked(fetchDashboardOverview),
+    fetchDashboardDailyOrders: vi.mocked(fetchDashboardDailyOrders),
+    fetchDashboardAlerts: vi.mocked(fetchDashboardAlerts),
   }
 }
 
@@ -133,11 +149,13 @@ describe('AdminDashboard.vue', () => {
     showSuccessMock.mockReset()
   })
 
-  it('fetches dashboard overview, weekly orders and recent 6 orders on mount', async () => {
-    const { fetchOrders, fetchDashboardOverview } = await mountDashboard()
+  it('fetches dashboard overview and daily orders series on mount', async () => {
+    const { wrapper, fetchDashboardOverview, fetchDashboardDailyOrders, fetchDashboardAlerts } =
+      await mountDashboard()
 
     expect(fetchDashboardOverview).toHaveBeenCalledOnce()
-    expect(fetchOrders).toHaveBeenCalledTimes(2)
+    expect(fetchDashboardDailyOrders).toHaveBeenCalledOnce()
+    expect(fetchDashboardAlerts).toHaveBeenCalledOnce()
 
     const overviewArg = fetchDashboardOverview.mock.calls[0][0]
     expect(overviewArg).toHaveProperty('from')
@@ -145,31 +163,20 @@ describe('AdminDashboard.vue', () => {
     expect(overviewArg.from).toMatch(/^\d{4}-\d{2}-01$/)
     expect(overviewArg.to).toMatch(/^\d{4}-\d{2}-\d{2}$/)
 
-    // Call 1: weekly orders with from and to date params
-    const call1 = fetchOrders.mock.calls[0][0] as Record<string, string>
-    expect(call1).toHaveProperty('from')
-    expect(call1).toHaveProperty('to')
-    expect(call1.limit).toBe('200')
-
-    // Call 2: recent orders limited to 6
-    const call2 = fetchOrders.mock.calls[1][0] as Record<string, string>
-    expect(call2.limit).toBe('6')
+    expect(fetchDashboardDailyOrders.mock.calls[0][0]).toEqual(overviewArg)
+    expect(fetchDashboardAlerts).toHaveBeenCalledWith({ clientId: undefined })
+    expect(wrapper.find('[data-testid="orders-line-chart-svg"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="alerts-card"]').exists()).toBe(true)
   })
 
   it('renders all 5 KPI cards with overview ordersReceived, itemsTotal, itemsProcessed, itemsPending & itemsDelivered', async () => {
-    const { wrapper } = await mountDashboard(
-      'dashboard',
-      [],
-      [],
-      null,
-      {
-        ordersReceived: 42,
-        itemsTotal: 615,
-        itemsProcessed: 200,
-        itemsPending: 115,
-        itemsDelivered: 300,
-      }
-    )
+    const { wrapper } = await mountDashboard('dashboard', {
+      ordersReceived: 42,
+      itemsTotal: 615,
+      itemsProcessed: 200,
+      itemsPending: 115,
+      itemsDelivered: 300,
+    })
 
     const kpiCards = wrapper.findAllComponents({ name: 'KpiCard' })
     expect(kpiCards).toHaveLength(5)
@@ -186,15 +193,25 @@ describe('AdminDashboard.vue', () => {
     expect(kpiCards[4].props('value')).toBe(300)
   })
 
-  it('refetches overview when switching period mode to year or selecting a client', async () => {
-    const { wrapper, fetchDashboardOverview } = await mountDashboard()
+  it('refetches overview and daily orders when switching period mode to year, and only refetches alerts when selecting a client', async () => {
+    const {
+      wrapper,
+      fetchDashboardOverview,
+      fetchDashboardDailyOrders,
+      fetchDashboardAlerts,
+    } = await mountDashboard()
     expect(fetchDashboardOverview).toHaveBeenCalledTimes(1)
+    expect(fetchDashboardDailyOrders).toHaveBeenCalledTimes(1)
+    expect(fetchDashboardAlerts).toHaveBeenCalledTimes(1)
 
     await wrapper.find('[data-testid="period-mode-year"]').trigger('click')
     await flushPromises()
 
     expect(fetchDashboardOverview).toHaveBeenCalledTimes(2)
-    const yearCall = fetchDashboardOverview.mock.calls[1][0]
+    expect(fetchDashboardDailyOrders).toHaveBeenCalledTimes(2)
+    // Changing date range does not refetch real-time alerts
+    expect(fetchDashboardAlerts).toHaveBeenCalledTimes(1)
+    const yearCall = fetchDashboardDailyOrders.mock.calls[1][0]
     expect(yearCall.from).toMatch(/^\d{4}-01-01$/)
     expect(yearCall.to).toMatch(/^\d{4}-12-31$/)
 
@@ -202,12 +219,16 @@ describe('AdminDashboard.vue', () => {
     await flushPromises()
 
     expect(fetchDashboardOverview).toHaveBeenCalledTimes(3)
-    expect(fetchDashboardOverview.mock.calls[2][0].clientId).toBe('client-123')
+    expect(fetchDashboardDailyOrders).toHaveBeenCalledTimes(3)
+    expect(fetchDashboardAlerts).toHaveBeenCalledTimes(2)
+    expect(fetchDashboardDailyOrders.mock.calls[2][0].clientId).toBe('client-123')
+    expect(fetchDashboardAlerts).toHaveBeenLastCalledWith({ clientId: 'client-123' })
   })
 
-  it('shows a toast error when fetchDashboardOverview fails', async () => {
-    const { fetchDashboardOverview } = await import('@/api/reports')
+  it('shows a single toast error when dashboard metrics requests fail', async () => {
+    const { fetchDashboardOverview, fetchDashboardDailyOrders } = await import('@/api/reports')
     vi.mocked(fetchDashboardOverview).mockRejectedValueOnce(new Error('Network error'))
+    vi.mocked(fetchDashboardDailyOrders).mockRejectedValueOnce(new Error('Network error'))
 
     setActivePinia(createPinia())
     const { useNavStore } = await import('@/stores/nav.js')

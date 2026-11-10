@@ -103,42 +103,18 @@
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <!-- Bar Chart -->
-          <div class="bg-white rounded-xl shadow-sm p-4 sm:p-5">
-            <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-4">{{ $t('admin.ordersThisWeek') }}</h3>
-            <div class="flex gap-2 sm:gap-3 h-40 sm:h-48">
-              <div
-                v-for="(val, i) in adminChartData.values"
-                :key="i"
-                class="flex-1 flex flex-col items-center"
-              >
-                <span class="text-xs font-semibold text-gray-600 shrink-0">{{ val }}</span>
-                <div class="flex-1 w-full flex items-end justify-center">
-                  <div
-                    class="w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-brand-700 to-brand-400 transition-all duration-500"
-                    :style="{ height: (val / maxVal) * 100 + '%', minHeight: val > 0 ? '4px' : '0' }"
-                  ></div>
-                </div>
-                <span class="text-xs text-gray-400 shrink-0">{{ adminChartData.labels[i] }}</span>
-              </div>
-            </div>
-          </div>
+          <!-- Orders per Day Line Chart -->
+          <OrdersLineChart
+            :points="dailyOrdersSeries.points"
+            :granularity="dailyOrdersSeries.granularity"
+          />
 
-          <!-- Recent Activity -->
-          <div class="bg-white rounded-xl shadow-sm">
-            <div class="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
-              <h3 class="text-sm sm:text-base font-semibold text-gray-800">{{ $t('admin.recentActivity') }}</h3>
-            </div>
-            <div class="divide-y divide-gray-50">
-              <div v-for="a in adminActivity" :key="a.id" class="px-4 sm:px-5 py-3 hover:bg-gray-50 transition-colors">
-                <div class="flex items-center justify-between">
-                  <p class="text-sm font-medium text-gray-800">{{ a.action }}</p>
-                  <span class="text-xs text-gray-400 whitespace-nowrap ml-3">{{ a.time }}</span>
-                </div>
-                <p class="text-xs text-gray-500 mt-0.5">{{ a.detail }}</p>
-              </div>
-            </div>
-          </div>
+          <!-- Real-Time Alerts Card -->
+          <AlertsCard
+            :alerts="alertsData"
+            :loading="alertsLoading"
+            @view-order="handleViewOrder"
+          />
         </div>
       </template>
     </div>
@@ -148,10 +124,11 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import AppButton from '../ui/AppButton.vue'
 import KpiCard from '../ui/KpiCard.vue'
 import ClientFilterSelect from '../ui/ClientFilterSelect.vue'
 import DateRangeFilter from '../ui/DateRangeFilter.vue'
+import OrdersLineChart from './OrdersLineChart.vue'
+import AlertsCard from './AlertsCard.vue'
 import OrdersList from '../pages/shared/OrdersList.vue'
 import OrderDetail from '../pages/shared/OrderDetail.vue'
 import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
@@ -172,11 +149,12 @@ import PickupConfirm from '../pages/driver/PickupConfirm.vue'
 import DeliveryConfirm from '../pages/driver/DeliveryConfirm.vue'
 import { useNavStore } from '../../stores/nav.js'
 import { useUiStore } from '../../stores/ui.js'
-import { fetchOrders } from '../../api/orders'
-import { mapOrderForList } from '@/utils/orderMappers'
-import { fetchDashboardOverview } from '../../api/reports'
+import {
+  fetchDashboardOverview,
+  fetchDashboardDailyOrders,
+  fetchDashboardAlerts,
+} from '../../api/reports'
 import { useDashboardFilters } from '../../composables/dashboard/useDashboardFilters'
-import { getCurrentWeekBounds } from '@/utils/date'
 import { formatApiErrorMessage } from '@/utils/errors'
 
 const { t, locale } = useI18n()
@@ -199,8 +177,6 @@ const {
   resetRangeDates,
 } = useDashboardFilters(locale)
 
-const weeklyOrders = ref([])
-const recentOrders = ref([])
 const overviewData = ref({
   ordersReceived: 0,
   itemsTotal: 0,
@@ -208,8 +184,20 @@ const overviewData = ref({
   itemsPending: 0,
   itemsDelivered: 0,
 })
+const dailyOrdersSeries = ref({
+  granularity: 'day',
+  points: [],
+})
+const alertsData = ref({
+  thresholdHours: 24,
+  totalAlerts: 0,
+  overduePickups: [],
+  stalledOrders: [],
+})
 const loading = ref(true)
-let latestOverviewRequestId = 0
+const alertsLoading = ref(false)
+let latestFilterRequestId = 0
+let latestAlertsRequestId = 0
 let isInitialLoaded = false
 
 function normalizeOverviewData(res) {
@@ -222,41 +210,84 @@ function normalizeOverviewData(res) {
   }
 }
 
-async function loadOverviewData() {
+function normalizeDailyOrdersSeries(res) {
+  return {
+    granularity: res?.granularity === 'month' ? 'month' : 'day',
+    points: Array.isArray(res?.points)
+      ? res.points.map((p) => ({
+          date: String(p?.date ?? ''),
+          orders: Number(p?.orders) || 0,
+        }))
+      : [],
+  }
+}
+
+function normalizeAlertsData(res) {
+  return {
+    thresholdHours: Number(res?.thresholdHours) || 24,
+    totalAlerts: Number(res?.totalAlerts) || 0,
+    overduePickups: Array.isArray(res?.overduePickups) ? res.overduePickups : [],
+    stalledOrders: Array.isArray(res?.stalledOrders) ? res.stalledOrders : [],
+  }
+}
+
+function handleViewOrder(orderId) {
+  if (orderId) {
+    navStore.goToDetail('order-detail', orderId)
+  }
+}
+
+async function loadFilteredDashboardMetrics() {
   const params = overviewParams.value
   if (!params.from || !params.to) return
-  const requestId = ++latestOverviewRequestId
+  const requestId = ++latestFilterRequestId
+  let errorShown = false
+
+  const handleError = (err) => {
+    if (requestId === latestFilterRequestId && !errorShown) {
+      errorShown = true
+      uiStore.showError(formatApiErrorMessage(err, t('admin.errorLoadDashboard'), t))
+    }
+    return null
+  }
+
+  const [overviewRes, dailyOrdersRes] = await Promise.all([
+    fetchDashboardOverview(params).catch(handleError),
+    fetchDashboardDailyOrders(params).catch(handleError),
+  ])
+
+  if (requestId !== latestFilterRequestId) return
+  if (overviewRes) {
+    overviewData.value = normalizeOverviewData(overviewRes)
+  }
+  if (dailyOrdersRes) {
+    dailyOrdersSeries.value = normalizeDailyOrdersSeries(dailyOrdersRes)
+  }
+}
+
+async function loadDashboardAlerts() {
+  const requestId = ++latestAlertsRequestId
+  alertsLoading.value = true
+
   try {
-    const res = await fetchDashboardOverview(params)
-    if (requestId !== latestOverviewRequestId) return
-    overviewData.value = normalizeOverviewData(res)
+    const res = await fetchDashboardAlerts({ clientId: overviewParams.value.clientId })
+    if (requestId !== latestAlertsRequestId) return
+    alertsData.value = normalizeAlertsData(res)
   } catch (err) {
-    if (requestId !== latestOverviewRequestId) return
-    uiStore.showError(formatApiErrorMessage(err, t('admin.errorLoadDashboard'), t))
+    if (requestId === latestAlertsRequestId) {
+      uiStore.showError(formatApiErrorMessage(err, t('admin.errorLoadAlerts'), t))
+    }
+  } finally {
+    if (requestId === latestAlertsRequestId) {
+      alertsLoading.value = false
+    }
   }
 }
 
 async function loadDashboardData() {
   try {
     loading.value = true
-    const { fromStr, toStr } = getCurrentWeekBounds()
-    const requestId = ++latestOverviewRequestId
-
-    const [weeklyOrdersData, recentOrdersData, overviewRes] = await Promise.all([
-      fetchOrders({ from: fromStr, to: toStr, limit: '200' }).catch(() => []),
-      fetchOrders({ limit: '6' }).catch(() => []),
-      fetchDashboardOverview(overviewParams.value).catch((err) => {
-        if (requestId === latestOverviewRequestId) {
-          uiStore.showError(formatApiErrorMessage(err, t('admin.errorLoadDashboard'), t))
-        }
-        return null
-      }),
-    ])
-    weeklyOrders.value = (weeklyOrdersData ?? []).map(mapOrderForList)
-    recentOrders.value = (recentOrdersData ?? []).map(mapOrderForList)
-    if (requestId === latestOverviewRequestId && overviewRes) {
-      overviewData.value = normalizeOverviewData(overviewRes)
-    }
+    await Promise.all([loadFilteredDashboardMetrics(), loadDashboardAlerts()])
     isInitialLoaded = true
   } finally {
     loading.value = false
@@ -267,10 +298,17 @@ onMounted(loadDashboardData)
 
 watch(
   () => [overviewParams.value.from, overviewParams.value.to, overviewParams.value.clientId],
-  () => {
-    // Only refetch overview when user modifies filters after the initial full load
-    if (navStore.currentPage === 'dashboard' && isInitialLoaded) {
-      loadOverviewData()
+  ([from, to, clientId], [prevFrom, prevTo, prevClientId]) => {
+    if (navStore.currentPage !== 'dashboard' || !isInitialLoaded) return
+
+    const datesChanged = from !== prevFrom || to !== prevTo
+    const clientChanged = clientId !== prevClientId
+
+    if (datesChanged || clientChanged) {
+      loadFilteredDashboardMetrics()
+    }
+    if (clientChanged) {
+      loadDashboardAlerts()
     }
   }
 )
@@ -297,54 +335,5 @@ const adminKPIs = computed(() => {
     { label: t('admin.itemsPending'), value: itemsPending, color: 'amber' },
     { label: t('admin.itemsDelivered'), value: itemsDelivered, color: 'green' },
   ]
-})
-
-const adminChartData = computed(() => {
-  const dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  const labels = [t('common.dayMon'), t('common.dayTue'), t('common.dayWed'), t('common.dayThu'), t('common.dayFri'), t('common.daySat'), t('common.daySun')]
-  const dayMap = {}
-  for (const k of dayKeys) dayMap[k] = 0
-
-  const { monday, sunday } = getCurrentWeekBounds()
-
-  for (const o of weeklyOrders.value) {
-    const dateStr = o.createdAt
-    if (dateStr) {
-      const parts = dateStr.split('-').map(Number)
-      if (parts.length === 3 && !parts.some(isNaN)) {
-        const d = new Date(parts[0], parts[1] - 1, parts[2])
-        if (d >= monday && d <= sunday) {
-          const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-          const dayName = dayNames[d.getDay()]
-          if (dayMap[dayName] !== undefined) dayMap[dayName]++
-        }
-      }
-    }
-  }
-  return {
-    labels,
-    values: dayKeys.map(k => dayMap[k] || 0),
-  }
-})
-
-const maxVal = computed(() => Math.max(...adminChartData.value.values, 1))
-
-const adminActivity = computed(() => {
-  return recentOrders.value.slice(0, 6).map((o, i) => {
-    const statusAction = {
-      pending: t('admin.newOrderPlaced'),
-      delivered: t('admin.orderCompleted'),
-      completed: t('admin.orderCompleted'),
-      invoiced: t('admin.orderCompleted'),
-      transit: t('admin.orderInTransit'),
-      ready_to_delivery: t('admin.orderReady'),
-    }
-    return {
-      id: i + 1,
-      action: statusAction[o.status] || t('admin.orderUpdated'),
-      detail: `${o.id} — ${o.client}`,
-      time: o.pickupDate || '',
-    }
-  })
 })
 </script>
