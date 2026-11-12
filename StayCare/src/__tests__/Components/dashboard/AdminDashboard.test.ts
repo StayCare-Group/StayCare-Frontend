@@ -16,6 +16,7 @@ vi.mock('@/api/reports', () => ({
   fetchDashboardOverview: vi.fn(),
   fetchDashboardDailyOrders: vi.fn(),
   fetchDashboardAlerts: vi.fn(),
+  fetchDashboardComparison: vi.fn(),
 }))
 
 vi.mock('@/stores/auth.js', () => ({
@@ -67,6 +68,11 @@ const COMPONENT_STUBS = {
     template: '<div data-testid="alerts-card" :data-total="alerts?.totalAlerts" />',
     props: ['alerts', 'loading'],
     emits: ['view-order'],
+  },
+  MonthlyComparisonCard: {
+    name: 'MonthlyComparisonCard',
+    template: '<div data-testid="monthly-comparison-card" :data-client-id="clientId" />',
+    props: ['clientId'],
   },
 }
 

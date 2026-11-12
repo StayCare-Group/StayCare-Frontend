@@ -139,6 +139,9 @@
             @view-order="handleViewOrder"
           />
         </div>
+
+        <!-- Monthly Comparison Table -->
+        <MonthlyComparisonCard :client-id="overviewParams.clientId" />
       </template>
     </div>
   </div>
@@ -154,6 +157,7 @@ import OrdersLineChart from './OrdersLineChart.vue'
 import AlertsCard from './AlertsCard.vue'
 import ItemsInProcessCard from './ItemsInProcessCard.vue'
 import ItemConditionChart from './ItemConditionChart.vue'
+import MonthlyComparisonCard from './MonthlyComparisonCard.vue'
 import OrdersList from '../pages/shared/OrdersList.vue'
 import OrderDetail from '../pages/shared/OrderDetail.vue'
 import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'

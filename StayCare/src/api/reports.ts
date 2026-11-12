@@ -94,3 +94,42 @@ export async function fetchDashboardAlerts(
   const query = params?.clientId ? `?clientId=${encodeURIComponent(params.clientId)}` : ''
   return apiFetch(`/api/reports/dashboard/alerts${query}`)
 }
+
+export type DashboardComparisonIndicatorKey =
+  | 'totalItems'
+  | 'totalOrders'
+  | 'totalStained'
+  | 'totalInvoiced'
+
+export interface DashboardMonthlyComparisonRow {
+  key: DashboardComparisonIndicatorKey
+  monthA: number
+  monthB: number
+  difference: number
+  variationPercent: number | null
+}
+
+export interface DashboardMonthlyComparisonResponse {
+  monthA: string
+  monthB: string
+  rows: DashboardMonthlyComparisonRow[]
+}
+
+export interface FetchDashboardComparisonParams {
+  monthA: string
+  monthB: string
+  clientId?: string
+}
+
+export async function fetchDashboardComparison(
+  params: FetchDashboardComparisonParams
+): Promise<DashboardMonthlyComparisonResponse> {
+  const query = new URLSearchParams()
+  query.set('monthA', params.monthA)
+  query.set('monthB', params.monthB)
+  if (params.clientId) {
+    query.set('clientId', params.clientId)
+  }
+  return apiFetch(`/api/reports/dashboard/comparison?${query.toString()}`)
+}
+
