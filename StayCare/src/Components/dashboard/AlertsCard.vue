@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-2.5 gap-2 flex-wrap flex-shrink-0">
       <div class="flex items-center gap-2">
-        <h3 class="text-sm sm:text-base font-semibold text-gray-800">
+        <h3 class="text-sm font-semibold text-brand-900">
           {{ $t('admin.alertsTitle') }}
         </h3>
         <span
@@ -93,7 +93,7 @@
           <!-- Left: Order info -->
           <div class="min-w-0 flex-1 mr-3">
             <div class="flex items-center gap-2">
-              <span class="text-xs sm:text-sm font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
+              <span class="text-xs font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
                 {{ item.orderNumber }}
               </span>
               <StatusBadge :status="item.status" />

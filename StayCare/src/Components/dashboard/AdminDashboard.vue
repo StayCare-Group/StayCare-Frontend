@@ -102,6 +102,29 @@
           <KpiCard v-for="kpi in adminKPIs" :key="kpi.label" :label="kpi.label" :value="kpi.value" :color="kpi.color" />
         </div>
 
+        <!-- Block B: Items in Process + Item Condition + Orders to Pick Up / Deliver -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <ItemsInProcessCard :items-in-process="overviewData.itemsInProcess" />
+
+          <ItemConditionChart :conditions="overviewData.itemConditions" />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+            <KpiCard
+              data-testid="orders-to-pickup-card"
+              class="flex flex-col justify-between p-5"
+              :label="$t('admin.ordersToPickup')"
+              :value="overviewData.ordersToPickup"
+            />
+
+            <KpiCard
+              data-testid="orders-to-deliver-card"
+              class="flex flex-col justify-between p-5"
+              :label="$t('admin.ordersToDeliver')"
+              :value="overviewData.ordersToDeliver"
+            />
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <!-- Orders per Day Line Chart -->
           <OrdersLineChart
@@ -129,6 +152,8 @@ import ClientFilterSelect from '../ui/ClientFilterSelect.vue'
 import DateRangeFilter from '../ui/DateRangeFilter.vue'
 import OrdersLineChart from './OrdersLineChart.vue'
 import AlertsCard from './AlertsCard.vue'
+import ItemsInProcessCard from './ItemsInProcessCard.vue'
+import ItemConditionChart from './ItemConditionChart.vue'
 import OrdersList from '../pages/shared/OrdersList.vue'
 import OrderDetail from '../pages/shared/OrderDetail.vue'
 import OrderCreateForm from '../pages/shared/OrderCreateForm.vue'
@@ -183,6 +208,20 @@ const overviewData = ref({
   itemsProcessed: 0,
   itemsPending: 0,
   itemsDelivered: 0,
+  ordersToPickup: 0,
+  ordersToDeliver: 0,
+  itemsInProcess: {
+    washing: 0,
+    drying: 0,
+    ironing: 0,
+    qualityCheck: 0,
+  },
+  itemConditions: {
+    good: 0,
+    bad: 0,
+    stained: 0,
+    total: 0,
+  },
 })
 const dailyOrdersSeries = ref({
   granularity: 'day',
@@ -201,12 +240,29 @@ let latestAlertsRequestId = 0
 let isInitialLoaded = false
 
 function normalizeOverviewData(res) {
+  const good = Number(res?.itemConditions?.good) || 0
+  const bad = Number(res?.itemConditions?.bad) || 0
+  const stained = Number(res?.itemConditions?.stained) || 0
   return {
     ordersReceived: Number(res?.ordersReceived) || 0,
     itemsTotal: Number(res?.itemsTotal) || 0,
     itemsProcessed: Number(res?.itemsProcessed) || 0,
     itemsPending: Number(res?.itemsPending) || 0,
     itemsDelivered: Number(res?.itemsDelivered) || 0,
+    ordersToPickup: Number(res?.ordersToPickup) || 0,
+    ordersToDeliver: Number(res?.ordersToDeliver) || 0,
+    itemsInProcess: {
+      washing: Number(res?.itemsInProcess?.washing) || 0,
+      drying: Number(res?.itemsInProcess?.drying) || 0,
+      ironing: Number(res?.itemsInProcess?.ironing) || 0,
+      qualityCheck: Number(res?.itemsInProcess?.qualityCheck) || 0,
+    },
+    itemConditions: {
+      good,
+      bad,
+      stained,
+      total: Number(res?.itemConditions?.total) || (good + bad + stained),
+    },
   }
 }
 

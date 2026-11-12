@@ -59,7 +59,7 @@ const COMPONENT_STUBS = {
   },
   KpiCard: {
     name: 'KpiCard',
-    template: '<div class="kpi-card" :data-label="label" :data-value="value" :data-color="color" />',
+    template: '<div class="kpi-card" :data-label="label" :data-value="value" :data-color="color">{{ label }} {{ value }}</div>',
     props: ['label', 'value', 'color'],
   },
   AlertsCard: {
@@ -169,17 +169,31 @@ describe('AdminDashboard.vue', () => {
     expect(wrapper.find('[data-testid="alerts-card"]').exists()).toBe(true)
   })
 
-  it('renders all 5 KPI cards with overview ordersReceived, itemsTotal, itemsProcessed, itemsPending & itemsDelivered', async () => {
+  it('renders all 5 KPI cards, Items in Process bars, Item Condition chart and Orders to Pick Up / Deliver cards', async () => {
     const { wrapper } = await mountDashboard('dashboard', {
       ordersReceived: 42,
       itemsTotal: 615,
       itemsProcessed: 200,
       itemsPending: 115,
       itemsDelivered: 300,
+      ordersToPickup: 7,
+      ordersToDeliver: 5,
+      itemsInProcess: {
+        washing: 80,
+        drying: 50,
+        ironing: 40,
+        qualityCheck: 30,
+      },
+      itemConditions: {
+        good: 450,
+        bad: 20,
+        stained: 30,
+        total: 500,
+      },
     })
 
     const kpiCards = wrapper.findAllComponents({ name: 'KpiCard' })
-    expect(kpiCards).toHaveLength(5)
+    expect(kpiCards).toHaveLength(7)
 
     expect(kpiCards[0].props('label')).toBe(en.admin.ordersReceived)
     expect(kpiCards[0].props('value')).toBe(42)
@@ -191,6 +205,25 @@ describe('AdminDashboard.vue', () => {
     expect(kpiCards[3].props('value')).toBe(115)
     expect(kpiCards[4].props('label')).toBe(en.admin.itemsDelivered)
     expect(kpiCards[4].props('value')).toBe(300)
+    expect(kpiCards[5].props('label')).toBe(en.admin.ordersToPickup)
+    expect(kpiCards[5].props('value')).toBe(7)
+    expect(kpiCards[6].props('label')).toBe(en.admin.ordersToDeliver)
+    expect(kpiCards[6].props('value')).toBe(5)
+
+    expect(wrapper.find('[data-testid="items-in-process-total"]').text()).toBe('200')
+    expect(wrapper.find('[data-testid="process-stage-washing"]').text()).toContain('80')
+    expect(wrapper.find('[data-testid="process-stage-drying"]').text()).toContain('50')
+    expect(wrapper.find('[data-testid="process-stage-ironing"]').text()).toContain('40')
+    expect(wrapper.find('[data-testid="process-stage-qualityCheck"]').text()).toContain('30')
+
+    expect(wrapper.find('[data-testid="item-condition-total"]').text()).toBe('500')
+    expect(wrapper.find('[data-testid="condition-row-good"]').text()).toContain('450')
+    expect(wrapper.find('[data-testid="condition-row-good"]').text()).toContain('90%')
+    expect(wrapper.find('[data-testid="condition-row-bad"]').text()).toContain('20')
+    expect(wrapper.find('[data-testid="condition-row-stained"]').text()).toContain('30')
+
+    expect(wrapper.find('[data-testid="orders-to-pickup-card"]').text()).toContain('7')
+    expect(wrapper.find('[data-testid="orders-to-deliver-card"]').text()).toContain('5')
   })
 
   it('refetches overview and daily orders when switching period mode to year, and only refetches alerts when selecting a client', async () => {
@@ -256,6 +289,6 @@ describe('AdminDashboard.vue', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="orders-list"]').exists()).toBe(false)
-    expect(wrapper.findAllComponents({ name: 'KpiCard' })).toHaveLength(5)
+    expect(wrapper.findAllComponents({ name: 'KpiCard' })).toHaveLength(7)
   })
 })

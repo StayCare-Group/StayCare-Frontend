@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white rounded-xl shadow-sm p-4 sm:p-5">
-    <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-3">
+    <h3 class="text-sm font-semibold text-brand-900 mb-3">
       {{ $t('admin.ordersTrend') }}
     </h3>
 
@@ -22,8 +22,8 @@
       >
         <defs>
           <linearGradient id="orders-line-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="currentColor" class="text-brand-500" stop-opacity="0.22" />
-            <stop offset="100%" stop-color="currentColor" class="text-brand-500" stop-opacity="0.0" />
+            <stop offset="0%" stop-color="currentColor" class="text-brand-950" stop-opacity="0.22" />
+            <stop offset="100%" stop-color="currentColor" class="text-brand-950" stop-opacity="0.0" />
           </linearGradient>
         </defs>
 
@@ -40,23 +40,11 @@
           stroke-dasharray="3 3"
         />
 
-        <!-- Soft area fill under the line -->
+        <!-- Soft area fill under the points -->
         <polygon
           v-if="areaPolygonPoints"
           :points="areaPolygonPoints"
           fill="url(#orders-line-area)"
-        />
-
-        <!-- Main line -->
-        <polyline
-          v-if="polylinePoints"
-          data-testid="orders-line-polyline"
-          :points="polylinePoints"
-          fill="none"
-          class="stroke-brand-600"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
         />
 
         <!-- Data points, value labels & X-axis labels -->

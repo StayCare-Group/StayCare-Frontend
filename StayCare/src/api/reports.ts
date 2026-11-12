@@ -6,12 +6,30 @@ export interface DashboardOverviewParams {
   clientId?: string
 }
 
+export interface DashboardItemsInProcess {
+  washing: number
+  drying: number
+  ironing: number
+  qualityCheck: number
+}
+
+export interface DashboardItemConditions {
+  good: number
+  bad: number
+  stained: number
+  total: number
+}
+
 export interface DashboardOverviewResponse {
   ordersReceived: number
   itemsTotal: number
   itemsPending: number
   itemsProcessed: number
   itemsDelivered: number
+  ordersToPickup: number
+  ordersToDeliver: number
+  itemsInProcess: DashboardItemsInProcess
+  itemConditions: DashboardItemConditions
 }
 
 export type DashboardSeriesGranularity = 'day' | 'month'
