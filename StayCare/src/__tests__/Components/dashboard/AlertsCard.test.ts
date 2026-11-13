@@ -47,6 +47,7 @@ describe('AlertsCard.vue', () => {
               status: 'pending',
               hoursDelayed: 32,
               referenceDate: '2026-11-09T13:00:00.000Z',
+              specialNotes: 'Call client upon arrival',
             },
           ],
           stalledOrders: [
@@ -83,6 +84,7 @@ describe('AlertsCard.vue', () => {
     expect(items).toHaveLength(1)
     expect(items[0].text()).toContain('ORD-101')
     expect(items[0].text()).toContain('Client Alpha')
+    expect(items[0].text()).toContain(en.facility.notes)
 
     // Click stalled tab
     await wrapper.find('[data-testid="tab-stalled-orders"]').trigger('click')

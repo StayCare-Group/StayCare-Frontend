@@ -17,16 +17,16 @@ const sidebarOpen = ref(false)
 </script>
 
 <template>
-  <div class="flex min-h-screen lg:h-screen overflow-hidden relative">
+  <div class="flex min-h-screen lg:h-screen overflow-hidden relative print:block print:h-auto print:min-h-0 print:overflow-visible">
 
     <!-- Unified responsive Sidebar -->
-    <Sidebar :role="role" v-model:open="sidebarOpen" />
+    <Sidebar class="print:hidden" :role="role" v-model:open="sidebarOpen" />
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col min-w-0 min-h-screen lg:h-screen relative z-[1]">
-      <TopHeader :role="role" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen lg:h-screen relative z-[1] print:block print:h-auto print:min-h-0">
+      <TopHeader class="print:hidden" :role="role" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
-      <main class="flex-1 p-4 lg:p-6 overflow-y-auto overflow-x-hidden">
+      <main class="flex-1 p-4 lg:p-6 overflow-y-auto overflow-x-hidden print:p-0 print:overflow-visible">
         <ClientDashboard v-if="role === 'client'" />
         <DriverDashboard v-else-if="role === 'driver'" />
         <FacilityDashboard v-else-if="role === 'staff'" />

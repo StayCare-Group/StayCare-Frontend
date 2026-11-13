@@ -79,6 +79,7 @@ export interface DashboardAlertItem {
   status: string
   hoursDelayed: number
   referenceDate: string
+  specialNotes?: string | null
 }
 
 export interface DashboardAlertsResponse {
@@ -99,6 +100,7 @@ export type DashboardComparisonIndicatorKey =
   | 'totalItems'
   | 'totalOrders'
   | 'totalStained'
+  | 'totalIroned'
   | 'totalInvoiced'
 
 export interface DashboardMonthlyComparisonRow {

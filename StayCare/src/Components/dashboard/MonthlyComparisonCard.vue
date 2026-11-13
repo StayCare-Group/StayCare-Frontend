@@ -104,7 +104,36 @@
             >
               <!-- Indicator label -->
               <td class="py-3 pr-3 font-medium text-gray-800 whitespace-nowrap">
-                {{ row.label }}
+                <div class="inline-flex items-center gap-1.5">
+                  <span>{{ row.label }}</span>
+                  <span
+                    v-if="row.hint"
+                    class="relative inline-flex items-center group/hint cursor-help text-gray-400 hover:text-brand-600 focus:outline-none"
+                    tabindex="0"
+                    :aria-label="row.hint"
+                    :data-testid="`comparison-hint-${row.key}`"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                    <span
+                      role="tooltip"
+                      class="pointer-events-none hidden group-hover/hint:block group-focus/hint:block absolute left-full top-1/2 -translate-y-1/2 ml-2 z-20 w-56 rounded-lg bg-gray-900 px-2.5 py-1.5 text-[11px] font-normal leading-snug text-white shadow-lg whitespace-normal"
+                    >
+                      {{ row.hint }}
+                    </span>
+                  </span>
+                </div>
               </td>
 
               <!-- Month 1 Value -->
@@ -153,6 +182,7 @@ import {
 } from '@/api/reports'
 import { useUiStore } from '@/stores/ui'
 import { formatApiErrorMessage } from '@/utils/errors'
+import { formatNumberWithDots, formatCurrencyAmountWithDots } from '@/utils/number'
 
 const props = defineProps<{
   clientId?: string
@@ -213,38 +243,34 @@ const indicatorLabels: Record<DashboardComparisonIndicatorKey, string> = {
   totalItems: 'admin.indicatorTotalItems',
   totalOrders: 'admin.indicatorTotalOrders',
   totalStained: 'admin.indicatorTotalStained',
+  totalIroned: 'admin.indicatorTotalIroned',
   totalInvoiced: 'admin.indicatorTotalInvoiced',
+}
+
+const indicatorHints: Partial<Record<DashboardComparisonIndicatorKey, string>> = {
+  totalIroned: 'admin.indicatorTotalIronedHint',
 }
 
 function formatValue(key: DashboardComparisonIndicatorKey, val: number): string {
   if (key === 'totalInvoiced') {
-    return `€${val.toLocaleString(locale.value || 'en', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`
+    return `€${formatCurrencyAmountWithDots(val)}`
   }
-  return val.toLocaleString(locale.value || 'en')
+  return formatNumberWithDots(val)
 }
 
 function formatDiff(key: DashboardComparisonIndicatorKey, diff: number): string {
   if (key === 'totalInvoiced') {
     if (diff > 0) {
-      return `+€${diff.toLocaleString(locale.value || 'en', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`
+      return `+€${formatCurrencyAmountWithDots(diff)}`
     }
     if (diff < 0) {
-      return `-€${Math.abs(diff).toLocaleString(locale.value || 'en', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`
+      return `-€${formatCurrencyAmountWithDots(Math.abs(diff))}`
     }
-    return '€0.00'
+    return '€0,00'
   }
 
-  if (diff > 0) return `+${diff.toLocaleString(locale.value || 'en')}`
-  return diff.toLocaleString(locale.value || 'en')
+  if (diff > 0) return `+${formatNumberWithDots(diff)}`
+  return formatNumberWithDots(diff)
 }
 
 const displayRows = computed(() => {
@@ -254,6 +280,7 @@ const displayRows = computed(() => {
         { key: 'totalItems' as const, monthA: 0, monthB: 0, difference: 0, variationPercent: null },
         { key: 'totalOrders' as const, monthA: 0, monthB: 0, difference: 0, variationPercent: null },
         { key: 'totalStained' as const, monthA: 0, monthB: 0, difference: 0, variationPercent: null },
+        { key: 'totalIroned' as const, monthA: 0, monthB: 0, difference: 0, variationPercent: null },
         { key: 'totalInvoiced' as const, monthA: 0, monthB: 0, difference: 0, variationPercent: null },
       ]
 
@@ -277,9 +304,12 @@ const displayRows = computed(() => {
         ? '—'
         : `${r.variationPercent > 0 ? '+' : ''}${r.variationPercent}%`
 
+    const hintKey = indicatorHints[r.key]
+
     return {
       key: r.key,
       label: t(indicatorLabels[r.key] || r.key),
+      hint: hintKey ? t(hintKey) : null,
       formattedA: formatValue(r.key, r.monthA),
       formattedB: formatValue(r.key, r.monthB),
       formattedDiff: formatDiff(r.key, r.difference),

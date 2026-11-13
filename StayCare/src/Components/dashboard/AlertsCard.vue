@@ -11,7 +11,7 @@
           :class="totalCount > 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'"
           class="px-2 py-0.5 rounded-full text-xs font-semibold"
         >
-          {{ totalCount }}
+          {{ formatNumberWithDots(totalCount) }}
         </span>
       </div>
 
@@ -29,7 +29,7 @@
             v-if="overduePickups.length > 0"
             class="px-1.5 py-0.2 rounded-full text-[10px] bg-red-100 text-red-700 font-semibold"
           >
-            {{ overduePickups.length }}
+            {{ formatNumberWithDots(overduePickups.length) }}
           </span>
         </button>
 
@@ -45,7 +45,7 @@
             v-if="stalledOrders.length > 0"
             class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-700 font-semibold"
           >
-            {{ stalledOrders.length }}
+            {{ formatNumberWithDots(stalledOrders.length) }}
           </span>
         </button>
       </div>
@@ -81,7 +81,7 @@
       <div
         v-else
         data-testid="alerts-list"
-        class="flex-1 min-h-0 max-h-40 xl:max-h-none overflow-y-auto space-y-2 pr-1"
+        class="flex-1 min-h-0 max-h-40 xl:max-h-none overflow-y-auto space-y-2 pr-1 print:max-h-none print:overflow-visible"
       >
         <div
           v-for="item in activeItems"
@@ -103,23 +103,26 @@
             </p>
           </div>
 
-          <!-- Right: Delay tag & arrow -->
+          <!-- Right: Delay tag, optional notes & arrow -->
           <div class="flex items-center gap-2 flex-shrink-0">
-            <span
-              :class="item.hoursDelayed >= 48 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
-              class="px-2 py-0.5 rounded-md text-[11px] font-medium border flex items-center gap-1"
-            >
-              <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>
-                {{
-                  activeTab === 'pickups'
-                    ? $t('admin.hoursDelayed', { hours: item.hoursDelayed })
-                    : $t('admin.hoursStalled', { hours: item.hoursDelayed })
-                }}
+            <div class="flex flex-col items-end gap-1">
+              <span
+                :class="item.hoursDelayed >= 48 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+                class="px-2 py-0.5 rounded-md text-[11px] font-medium border flex items-center gap-1"
+              >
+                <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>
+                  {{
+                    activeTab === 'pickups'
+                      ? $t('admin.hoursDelayed', { hours: item.hoursDelayed })
+                      : $t('admin.hoursStalled', { hours: item.hoursDelayed })
+                  }}
+                </span>
               </span>
-            </span>
+              <OrderNotesBadge :notes="item.specialNotes || ''" />
+            </div>
 
             <svg
               class="w-4 h-4 text-gray-300 group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all"
@@ -139,6 +142,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import StatusBadge from '../ui/StatusBadge.vue'
+import OrderNotesBadge from '../ui/OrderNotesBadge.vue'
+import { formatNumberWithDots } from '@/utils/number'
 
 const props = defineProps({
   alerts: {

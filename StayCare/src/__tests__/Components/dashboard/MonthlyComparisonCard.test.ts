@@ -35,6 +35,7 @@ describe('MonthlyComparisonCard.vue', () => {
         { key: 'totalItems', monthA: 800, monthB: 1000, difference: 200, variationPercent: 25 },
         { key: 'totalOrders', monthA: 40, monthB: 50, difference: 10, variationPercent: 25 },
         { key: 'totalStained', monthA: 10, monthB: 15, difference: 5, variationPercent: 50 },
+        { key: 'totalIroned', monthA: 500, monthB: 650, difference: 150, variationPercent: 30 },
         { key: 'totalInvoiced', monthA: 5000, monthB: 6500.5, difference: 1500.5, variationPercent: 30 },
       ],
     })
@@ -51,13 +52,23 @@ describe('MonthlyComparisonCard.vue', () => {
     expect(callArg.monthB).toMatch(/^\d{4}-\d{2}$/)
 
     expect(wrapper.find('[data-testid="comparison-row-totalItems"]').text()).toContain('800')
-    expect(wrapper.find('[data-testid="comparison-row-totalItems"]').text()).toContain('1,000')
+    expect(wrapper.find('[data-testid="comparison-row-totalItems"]').text()).toContain('1.000')
     expect(wrapper.find('[data-testid="comparison-row-totalItems"]').text()).toContain('+200')
     expect(wrapper.find('[data-testid="comparison-row-totalItems"]').text()).toContain('+25%')
 
-    expect(wrapper.find('[data-testid="comparison-row-totalInvoiced"]').text()).toContain('€5,000.00')
-    expect(wrapper.find('[data-testid="comparison-row-totalInvoiced"]').text()).toContain('€6,500.50')
-    expect(wrapper.find('[data-testid="comparison-row-totalInvoiced"]').text()).toContain('+€1,500.50')
+    const ironedRow = wrapper.find('[data-testid="comparison-row-totalIroned"]')
+    expect(ironedRow.text()).toContain('500')
+    expect(ironedRow.text()).toContain('650')
+    expect(ironedRow.text()).toContain('+150')
+    expect(ironedRow.text()).toContain('+30%')
+    expect(wrapper.find('[data-testid="comparison-hint-totalIroned"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="comparison-hint-totalIroned"]').text()).toContain(
+      en.admin.indicatorTotalIronedHint
+    )
+
+    expect(wrapper.find('[data-testid="comparison-row-totalInvoiced"]').text()).toContain('€5.000,00')
+    expect(wrapper.find('[data-testid="comparison-row-totalInvoiced"]').text()).toContain('€6.500,50')
+    expect(wrapper.find('[data-testid="comparison-row-totalInvoiced"]').text()).toContain('+€1.500,50')
     expect(wrapper.find('[data-testid="comparison-row-totalInvoiced"]').text()).toContain('+30%')
   })
 

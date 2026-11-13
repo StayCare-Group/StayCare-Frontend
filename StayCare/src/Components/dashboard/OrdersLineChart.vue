@@ -57,7 +57,7 @@
             stroke-width="2"
             data-testid="orders-line-point"
           >
-            <title>{{ pt.date }}: {{ pt.orders }}</title>
+            <title>{{ pt.date }}: {{ formatNumberWithDots(pt.orders) }}</title>
           </circle>
 
           <text
@@ -68,7 +68,7 @@
             class="fill-brand-700 text-[10px] font-semibold select-none"
             data-testid="orders-line-value"
           >
-            {{ pt.orders }}
+            {{ formatNumberWithDots(pt.orders) }}
           </text>
 
           <text
@@ -91,6 +91,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DashboardOrdersPoint, DashboardSeriesGranularity } from '@/api/reports'
+import { formatNumberWithDots } from '@/utils/number'
 
 const props = withDefaults(
   defineProps<{

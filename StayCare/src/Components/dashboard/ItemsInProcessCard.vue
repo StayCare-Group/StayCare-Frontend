@@ -11,7 +11,7 @@
         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-150 text-brand-700 tabular-nums"
         data-testid="items-in-process-total"
       >
-        {{ totalInProcess }}
+        {{ formatNumberWithDots(totalInProcess) }}
       </span>
     </div>
 
@@ -24,7 +24,7 @@
       >
         <div class="flex items-center justify-between text-xs">
           <span class="font-medium text-gray-700">{{ stage.label }}</span>
-          <span class="font-bold text-brand-700 tabular-nums">{{ stage.count }}</span>
+          <span class="font-bold text-brand-700 tabular-nums">{{ formatNumberWithDots(stage.count) }}</span>
         </div>
         <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
           <div
@@ -42,6 +42,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DashboardItemsInProcess } from '../../api/reports'
+import { formatNumberWithDots } from '@/utils/number'
 
 const props = withDefaults(
   defineProps<{

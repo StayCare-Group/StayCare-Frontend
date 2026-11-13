@@ -25,3 +25,20 @@
         color: #0d365f;
     }
 }
+
+@media print {
+    @page {
+        size: landscape;
+        margin: 10mm;
+    }
+
+    html,
+    body,
+    #app {
+        min-height: auto !important;
+        height: auto !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

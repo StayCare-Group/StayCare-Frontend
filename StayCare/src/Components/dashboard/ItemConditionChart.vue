@@ -11,7 +11,7 @@
         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-150 text-brand-700 tabular-nums"
         data-testid="item-condition-total"
       >
-        {{ totalItems }}
+        {{ formatNumberWithDots(totalItems) }}
       </span>
     </div>
 
@@ -51,7 +51,7 @@
             :stroke-dashoffset="-seg.dashOffset"
             class="transition-all duration-300"
           >
-            <title>{{ seg.label }}: {{ seg.count }} ({{ seg.percentFormatted }}%)</title>
+            <title>{{ seg.label }}: {{ formatNumberWithDots(seg.count) }} ({{ seg.percentFormatted }}%)</title>
           </circle>
         </svg>
       </div>
@@ -72,7 +72,7 @@
             <span class="font-medium text-gray-700 truncate">{{ item.label }}</span>
           </div>
           <div class="flex items-center gap-1 shrink-0 tabular-nums">
-            <span class="font-bold text-brand-700">{{ item.count }}</span>
+            <span class="font-bold text-brand-700">{{ formatNumberWithDots(item.count) }}</span>
             <span class="text-gray-500">({{ item.percentFormatted }}%)</span>
           </div>
         </div>
@@ -85,6 +85,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DashboardItemConditions } from '../../api/reports'
+import { formatNumberWithDots } from '@/utils/number'
 
 const RADIUS = 49
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
