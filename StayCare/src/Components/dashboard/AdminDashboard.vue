@@ -104,30 +104,8 @@
           </select>
         </div>
 
-        <!-- Current Date & Time + Client Filter -->
-        <div class="flex flex-wrap items-center gap-3">
-          <div
-            data-testid="dashboard-current-datetime"
-            class="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 border border-gray-200/80 px-2.5 py-1.5 text-xs font-medium text-gray-600 tabular-nums"
-          >
-            <svg
-              class="w-3.5 h-3.5 text-brand-600 shrink-0"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.75"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-              />
-            </svg>
-            <span>{{ currentDateTimeLabel }}</span>
-          </div>
-
+        <!-- Client Filter + Print/PDF -->
+        <div class="flex flex-wrap items-center gap-2.5">
           <ClientFilterSelect v-model="selectedClientId" />
 
           <button
@@ -210,7 +188,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import KpiCard from '../ui/KpiCard.vue'
 import ClientFilterSelect from '../ui/ClientFilterSelect.vue'
@@ -246,9 +224,11 @@ import {
   fetchDashboardAlerts,
 } from '../../api/reports'
 import { useDashboardFilters } from '../../composables/dashboard/useDashboardFilters'
+import { useCurrentDateTime } from '@/composables/useCurrentDateTime'
 import { formatApiErrorMessage } from '@/utils/errors'
 
 const { t, locale } = useI18n()
+const { currentDateTimeLabel } = useCurrentDateTime(locale)
 const navStore = useNavStore()
 const uiStore = useUiStore()
 
@@ -423,27 +403,6 @@ async function loadDashboardData() {
 onMounted(() => {
   loadDashboardData()
 })
-
-const currentNow = ref(new Date())
-const clockInterval = setInterval(() => {
-  currentNow.value = new Date()
-}, 15000)
-
-onUnmounted(() => {
-  clearInterval(clockInterval)
-})
-
-const currentDateTimeLabel = computed(() =>
-  new Intl.DateTimeFormat(locale.value || 'en', {
-    weekday: 'short',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(currentNow.value)
-)
 
 watch(
   () => [overviewParams.value.from, overviewParams.value.to, overviewParams.value.clientId],

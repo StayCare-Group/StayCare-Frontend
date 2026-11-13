@@ -11,6 +11,29 @@
       </div>
     </div>
     <div class="flex items-center gap-2 sm:gap-4">
+      <!-- Live Date & Time -->
+      <div
+        data-testid="header-current-datetime"
+        class="hidden md:inline-flex items-center gap-1.5 rounded-lg bg-gray-50 border border-gray-200/80 px-2.5 py-1.5 text-xs font-medium text-gray-600 tabular-nums"
+      >
+        <svg
+          class="w-3.5 h-3.5 text-brand-600 shrink-0"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.75"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+          />
+        </svg>
+        <span>{{ currentDateTimeLabel }}</span>
+      </div>
+
       <!-- Profile button — desktop -->
       <button
         v-if="authUser?.email"
@@ -50,9 +73,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../../stores/auth.js'
 import { useNavStore } from '../../stores/nav.js'
 import { getRoleLabel } from '../../constants/roles'
+import { useCurrentDateTime } from '@/composables/useCurrentDateTime'
 
 const props = defineProps({
   role: String,
@@ -60,6 +85,8 @@ const props = defineProps({
 defineEmits(['toggle-sidebar'])
 
 const router = useRouter()
+const { locale } = useI18n()
+const { currentDateTimeLabel } = useCurrentDateTime(locale)
 const auth = useAuthStore()
 const navStore = useNavStore()
 const authUser = computed(() => auth.user)
