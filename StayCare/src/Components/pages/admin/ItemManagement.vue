@@ -16,6 +16,17 @@
       <template #cell-name="{ value }">
         <span class="font-medium text-gray-800">{{ value }}</span>
       </template>
+      <template #cell-category="{ value }">
+        <span class="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-brand-150/60 text-brand-800">
+          {{ $t(`admin.garmentCategory.${value || 'others'}`) }}
+        </span>
+      </template>
+      <template #cell-requiresIroning="{ value }">
+        <span
+          class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+          :class="value ? 'bg-brand-150/60 text-brand-800' : 'bg-gray-100 text-gray-500'"
+        >{{ value ? $t('common.yes') : $t('common.no') }}</span>
+      </template>
       <template #cell-unitPrice="{ value }">
         <span class="text-gray-700">&euro;{{ value.toFixed(2) }}</span>
       </template>
@@ -66,16 +77,36 @@
         </div>
 
         <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.itemCategory') }}</label>
+          <select
+            v-model="modalForm.category"
+            class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40"
+          >
+            <option v-for="cat in ITEM_CATEGORIES" :key="cat" :value="cat">
+              {{ $t(`admin.garmentCategory.${cat}`) }}
+            </option>
+          </select>
+        </div>
+
+        <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">{{ $t('admin.unitPrice') }} (&euro;)</label>
           <input v-model.number="modalForm.unitPrice" type="number" step="0.01" min="0" required
             class="w-full border-2 border-gray-300 bg-gray-50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/40"
             placeholder="0.00" />
         </div>
 
-        <div class="flex items-center gap-2">
-          <input v-model="modalForm.active" type="checkbox" id="item-active"
-            class="w-4 h-4 text-brand-700 border-gray-300 rounded focus:ring-brand-400" />
-          <label for="item-active" class="text-sm font-medium text-gray-600">{{ $t('admin.active') }}</label>
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-2">
+            <input v-model="modalForm.requiresIroning" type="checkbox" id="item-requires-ironing"
+              class="w-4 h-4 text-brand-700 border-gray-300 rounded focus:ring-brand-400" />
+            <label for="item-requires-ironing" class="text-sm font-medium text-gray-600">{{ $t('admin.requiresIroning') }}</label>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input v-model="modalForm.active" type="checkbox" id="item-active"
+              class="w-4 h-4 text-brand-700 border-gray-300 rounded focus:ring-brand-400" />
+            <label for="item-active" class="text-sm font-medium text-gray-600">{{ $t('admin.active') }}</label>
+          </div>
         </div>
       </div>
 
@@ -132,7 +163,7 @@ import AppButton from '../../ui/AppButton.vue'
 import LoadingPanel from '../../ui/LoadingPanel.vue'
 import AppModal from '../../ui/AppModal.vue'
 import AppPagination from '../../ui/AppPagination.vue'
-import { getItems, createItem, updateItem, deleteItem, mapItemForManagement } from '../../../api/items'
+import { getItems, createItem, updateItem, deleteItem, mapItemForManagement, ITEM_CATEGORIES } from '../../../api/items'
 
 const { t } = useI18n()
 
@@ -146,6 +177,8 @@ const totalPages = ref(1)
 const itemHeaders = computed(() => [
   { key: 'code', label: t('admin.itemCode') },
   { key: 'name', label: t('admin.itemName') },
+  { key: 'category', label: t('admin.itemCategory') },
+  { key: 'requiresIroning', label: t('admin.requiresIroning'), thClass: 'text-center', tdClass: 'text-center' },
   { key: 'unitPrice', label: t('admin.unitPrice'), thClass: 'text-right', tdClass: 'text-right' },
   { key: 'active', label: t('common.status'), thClass: 'text-center', tdClass: 'text-center' },
   { key: 'actions', label: t('admin.actions'), thClass: 'text-right', tdClass: 'text-right' },
@@ -202,16 +235,23 @@ onMounted(loadItems)
 // Modal state
 const showModal = ref(false)
 const editingItem = ref(null)
-const modalForm = ref({ code: '', name: '', unitPrice: 0, active: true })
+const modalForm = ref({ code: '', name: '', category: 'others', requiresIroning: false, unitPrice: 0, active: true })
 const modalError = ref('')
 const saving = ref(false)
 
 function openModal(item) {
   editingItem.value = item
   if (item) {
-    modalForm.value = { code: item.code, name: item.name, unitPrice: item.unitPrice, active: item.active }
+    modalForm.value = {
+      code: item.code,
+      name: item.name,
+      category: item.category || 'others',
+      requiresIroning: Boolean(item.requiresIroning),
+      unitPrice: item.unitPrice,
+      active: item.active,
+    }
   } else {
-    modalForm.value = { code: '', name: '', unitPrice: 0, active: true }
+    modalForm.value = { code: '', name: '', category: 'others', requiresIroning: false, unitPrice: 0, active: true }
   }
   modalError.value = ''
   showModal.value = true
@@ -228,6 +268,8 @@ async function handleSave() {
     const payload = {
       item_code: modalForm.value.code,
       name: modalForm.value.name,
+      category: modalForm.value.category || 'others',
+      requires_ironing: Boolean(modalForm.value.requiresIroning),
       base_price: modalForm.value.unitPrice,
       is_active: modalForm.value.active,
     }

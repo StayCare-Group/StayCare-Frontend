@@ -1,5 +1,15 @@
 import { apiFetch } from './client'
 
+export const ITEM_CATEGORIES = [
+  'sheets',
+  'covers',
+  'towels',
+  'mats_and_cloths',
+  'others',
+] as const
+
+export type ItemCategory = (typeof ITEM_CATEGORIES)[number]
+
 export async function getItems(
   activeOnly = false,
   { page = 1, limit = 10, search = '' } = {}
@@ -83,6 +93,8 @@ export function mapItemForCatalog(item: any) {
     id: item.id ?? item._id,
     code: item.item_code,
     name: item.name,
+    category: (item.category ?? 'others') as ItemCategory,
+    requiresIroning: item.requires_ironing === true || item.requires_ironing === 1,
     unitPrice: Number(item.base_price ?? 0),
     active: item.is_active !== false && item.is_active !== 0,
   }
@@ -93,6 +105,8 @@ export function mapItemForManagement(item: any) {
     _id: item._id ?? item.id,
     code: item.item_code ?? '',
     name: item.name ?? '',
+    category: (item.category ?? 'others') as ItemCategory,
+    requiresIroning: item.requires_ironing === true || item.requires_ironing === 1,
     unitPrice: Number(item.base_price ?? 0),
     active: item.is_active !== false && item.is_active !== 0,
   }

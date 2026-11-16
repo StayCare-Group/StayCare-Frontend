@@ -1,4 +1,5 @@
 import { apiFetch } from './client'
+import type { ItemCategory } from './items'
 
 export interface DashboardOverviewParams {
   from: string
@@ -133,5 +134,30 @@ export async function fetchDashboardComparison(
     query.set('clientId', params.clientId)
   }
   return apiFetch(`/api/reports/dashboard/comparison?${query.toString()}`)
+}
+
+export interface DashboardTopGarmentItem {
+  category: ItemCategory
+  quantity: number
+  percentage: number
+}
+
+export interface DashboardGarmentProcessItem {
+  category: ItemCategory
+  washing: number
+  drying: number
+  ironing: number
+}
+
+export interface DashboardGarmentsSummaryResponse {
+  totalItems: number
+  topGarments: DashboardTopGarmentItem[]
+  processSummary: DashboardGarmentProcessItem[]
+}
+
+export async function fetchDashboardGarments(
+  params: DashboardOverviewParams
+): Promise<DashboardGarmentsSummaryResponse> {
+  return apiFetch(`/api/reports/dashboard/garments?${buildDashboardFilterQuery(params)}`)
 }
 

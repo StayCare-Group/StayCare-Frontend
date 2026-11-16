@@ -180,6 +180,18 @@
           />
         </div>
 
+        <!-- Block C5: Top Garments + Process Summary -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 print:grid-cols-2 print:gap-4 print:break-inside-avoid">
+          <TopGarmentsCard
+            :items="garmentsData.topGarments"
+            :total-items="garmentsData.totalItems"
+          />
+
+          <ProcessSummaryCard
+            :items="garmentsData.processSummary"
+          />
+        </div>
+
         <!-- Monthly Comparison Table -->
         <MonthlyComparisonCard class="print:break-inside-avoid" :client-id="overviewParams.clientId" />
       </template>
@@ -197,6 +209,8 @@ import OrdersLineChart from './OrdersLineChart.vue'
 import AlertsCard from './AlertsCard.vue'
 import ItemsInProcessCard from './ItemsInProcessCard.vue'
 import ItemConditionChart from './ItemConditionChart.vue'
+import TopGarmentsCard from './TopGarmentsCard.vue'
+import ProcessSummaryCard from './ProcessSummaryCard.vue'
 import MonthlyComparisonCard from './MonthlyComparisonCard.vue'
 import OrdersList from '../pages/shared/OrdersList.vue'
 import OrderDetail from '../pages/shared/OrderDetail.vue'
@@ -222,6 +236,7 @@ import {
   fetchDashboardOverview,
   fetchDashboardDailyOrders,
   fetchDashboardAlerts,
+  fetchDashboardGarments,
 } from '../../api/reports'
 import { useDashboardFilters } from '../../composables/dashboard/useDashboardFilters'
 import { useCurrentDateTime } from '@/composables/useCurrentDateTime'
@@ -272,6 +287,11 @@ const overviewData = ref({
 const dailyOrdersSeries = ref({
   granularity: 'day',
   points: [],
+})
+const garmentsData = ref({
+  totalItems: 0,
+  topGarments: [],
+  processSummary: [],
 })
 const alertsData = ref({
   thresholdHours: 24,
@@ -357,9 +377,10 @@ async function loadFilteredDashboardMetrics() {
     return null
   }
 
-  const [overviewRes, dailyOrdersRes] = await Promise.all([
+  const [overviewRes, dailyOrdersRes, garmentsRes] = await Promise.all([
     fetchDashboardOverview(params).catch(handleError),
     fetchDashboardDailyOrders(params).catch(handleError),
+    fetchDashboardGarments(params).catch(handleError),
   ])
 
   if (requestId !== latestFilterRequestId) return
@@ -368,6 +389,13 @@ async function loadFilteredDashboardMetrics() {
   }
   if (dailyOrdersRes) {
     dailyOrdersSeries.value = normalizeDailyOrdersSeries(dailyOrdersRes)
+  }
+  if (garmentsRes) {
+    garmentsData.value = {
+      totalItems: Number(garmentsRes?.totalItems) || 0,
+      topGarments: Array.isArray(garmentsRes?.topGarments) ? garmentsRes.topGarments : [],
+      processSummary: Array.isArray(garmentsRes?.processSummary) ? garmentsRes.processSummary : [],
+    }
   }
 }
 
