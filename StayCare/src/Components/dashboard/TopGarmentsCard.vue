@@ -62,9 +62,9 @@ const props = withDefaults(
 const { t } = useI18n()
 
 const BAR_CLASSES = [
+  'bg-brand-900',
   'bg-brand-800',
   'bg-brand-700',
-  'bg-brand-500',
   'bg-brand-400',
   'bg-brand-300',
 ]

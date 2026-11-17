@@ -100,14 +100,14 @@ async function mountDashboard(
       { category: 'sheets', quantity: 180, percentage: 47.4 },
       { category: 'towels', quantity: 100, percentage: 26.3 },
       { category: 'covers', quantity: 60, percentage: 15.8 },
-      { category: 'mats_and_cloths', quantity: 25, percentage: 6.6 },
+      { category: 'pillows', quantity: 25, percentage: 6.6 },
       { category: 'others', quantity: 15, percentage: 3.9 },
     ],
     processSummary: [
       { category: 'sheets', washing: 160, drying: 140, ironing: 120 },
       { category: 'covers', washing: 55, drying: 50, ironing: 45 },
       { category: 'towels', washing: 90, drying: 85, ironing: 80 },
-      { category: 'mats_and_cloths', washing: 20, drying: 18, ironing: 15 },
+      { category: 'pillows', washing: 20, drying: 18, ironing: 15 },
       { category: 'others', washing: 12, drying: 10, ironing: 8 },
     ],
   })

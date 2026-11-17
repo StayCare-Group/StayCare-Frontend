@@ -4,7 +4,7 @@ export const ITEM_CATEGORIES = [
   'sheets',
   'covers',
   'towels',
-  'mats_and_cloths',
+  'pillows',
   'others',
 ] as const
 

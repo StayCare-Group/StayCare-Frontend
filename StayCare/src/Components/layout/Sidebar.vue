@@ -1,10 +1,10 @@
 <template>
   <!-- Overlay – mobile only -->
-  <div v-if="open" class="fixed inset-0 bg-brand-950/40 z-40 lg:hidden" @click="emit('update:open', false)" />
+  <div v-if="open" class="fixed inset-0 bg-brand-950/40 z-40 lg:hidden print:hidden" @click="emit('update:open', false)" />
 
   <!-- Sidebar: drawer on mobile, static fixed column on lg+ -->
   <aside
-    class="fixed lg:static inset-y-0 left-0 z-50 bg-[#F8FAFC] border-r border-gray-100 flex flex-col transform transition-all duration-300 ease-in-out lg:translate-x-0 shrink-0"
+    class="fixed lg:static inset-y-0 left-0 z-50 bg-[#F8FAFC] border-r border-gray-100 flex flex-col transform transition-all duration-300 ease-in-out lg:translate-x-0 shrink-0 print:hidden"
     :class="[
       open ? 'translate-x-0' : '-translate-x-full',
       isCollapsed ? 'lg:w-[68px] w-64' : 'w-64'

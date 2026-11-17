@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-6 py-3 flex items-center justify-between">
+  <header class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-6 py-3 flex items-center justify-between print:hidden">
     <div class="flex items-center gap-3">
       <!-- Hamburger for mobile -->
       <button class="lg:hidden text-gray-500 hover:text-gray-700" @click="$emit('toggle-sidebar')">
